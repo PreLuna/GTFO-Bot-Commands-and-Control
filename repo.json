@@ -1,5 +1,5 @@
 {
-  "SchemaVersion": 2,
+  "SchemaVersion": 3,
   "Repository": "GTFO-Bot-Commands-and-Control",
   "Modules": [
     {
@@ -14,8 +14,24 @@
       "CompileDependencies": [],
       "Kind": "frozen-migrated",
       "LegacyGuid": "wanglocal.coopbotscustom",
-      "Baseline": "baseline/CoopBotsCustom/WangLocal.CoopBotsCustom.dll",
-      "BaselineSHA256": "785D4F98DF64BB059EF82E25960C61EA2A7D707D85A64401B1A12F3980FA987F"
+      "Baseline": "CoopBotsCustom/baseline/WangLocal.CoopBotsCustom.dll",
+      "BaselineSHA256": "785D4F98DF64BB059EF82E25960C61EA2A7D707D85A64401B1A12F3980FA987F",
+      "ModuleRoot": "CoopBotsCustom",
+      "Name": "AI／机器人协同",
+      "DependencyDetails": [
+        {
+          "Guid": "com.sinai.unityexplorer",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        },
+        {
+          "Guid": "CHTR",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        }
+      ]
     },
     {
       "Id": "Captain",
@@ -31,11 +47,35 @@
       "Kind": "managed-migrated",
       "Resources": [
         {
-          "Path": "src/Captain/中文词典.json",
+          "Path": "Captain/src/中文词典.json",
           "Name": "PreLuna.Captain.zh-CN.json"
         }
       ],
-      "LegacyGuid": "wanglocal.captain"
+      "LegacyGuid": "wanglocal.captain",
+      "ModuleRoot": "Captain",
+      "SourceRoot": "Captain/src",
+      "Name": "队长公共核心与中文显示",
+      "DependencyDetails": [
+        {
+          "Guid": "CHTR",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        },
+        {
+          "Guid": "PreLuna.CoopBotsCustom",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        },
+        {
+          "Guid": "com.fridos.smartping",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        }
+      ],
+      "TestsRoot": "Captain/tests"
     },
     {
       "Id": "Captain.Commands",
@@ -51,7 +91,31 @@
         "Captain"
       ],
       "Kind": "managed-migrated",
-      "LegacyGuid": "wanglocal.captain.commands"
+      "LegacyGuid": "wanglocal.captain.commands",
+      "ModuleRoot": "Captain.Commands",
+      "SourceRoot": "Captain.Commands/src",
+      "Name": "队长指令与任务仲裁",
+      "DependencyDetails": [
+        {
+          "Guid": "PreLuna.Captain",
+          "DependencyFlags": 1,
+          "Kind": "Hard",
+          "DeclaredVersion": "0.5.4"
+        },
+        {
+          "Guid": "CHTR",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        },
+        {
+          "Guid": "PreLuna.CoopBotsCustom",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        }
+      ],
+      "TestsRoot": "Captain.Commands/tests"
     },
     {
       "Id": "Captain.Boosters",
@@ -66,7 +130,25 @@
         "Captain"
       ],
       "Kind": "managed-migrated",
-      "LegacyGuid": "wanglocal.captain.boosters"
+      "LegacyGuid": "wanglocal.captain.boosters",
+      "ModuleRoot": "Captain.Boosters",
+      "SourceRoot": "Captain.Boosters/src",
+      "Name": "人机强化剂",
+      "DependencyDetails": [
+        {
+          "Guid": "PreLuna.Captain",
+          "DependencyFlags": 1,
+          "Kind": "Hard",
+          "DeclaredVersion": ">=0.5.1 <0.6.0"
+        },
+        {
+          "Guid": "dev.AuriRex.gtfo.TheArchive",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        }
+      ],
+      "TestsRoot": "Captain.Boosters/tests"
     },
     {
       "Id": "Captain.Fixes",
@@ -81,7 +163,25 @@
         "Captain"
       ],
       "Kind": "managed-migrated",
-      "LegacyGuid": "wanglocal.captain.fixes"
+      "LegacyGuid": "wanglocal.captain.fixes",
+      "ModuleRoot": "Captain.Fixes",
+      "SourceRoot": "Captain.Fixes/src",
+      "Name": "队长兼容修复",
+      "DependencyDetails": [
+        {
+          "Guid": "PreLuna.Captain",
+          "DependencyFlags": 1,
+          "Kind": "Hard",
+          "DeclaredVersion": ">=0.5.1 <0.6.0"
+        },
+        {
+          "Guid": "com.fridos.smartping",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        }
+      ],
+      "TestsRoot": "Captain.Fixes/tests"
     },
     {
       "Id": "HeadCamera",
@@ -91,7 +191,12 @@
       "DependencyGuids": [],
       "CompileDependencies": [],
       "Kind": "managed-migrated",
-      "LegacyGuid": "wanglocal.headcamera"
+      "LegacyGuid": "wanglocal.headcamera",
+      "ModuleRoot": "HeadCamera",
+      "SourceRoot": "HeadCamera/src",
+      "Name": "头戴摄像头",
+      "DependencyDetails": [],
+      "TestsRoot": "HeadCamera/tests"
     },
     {
       "Id": "MicroMaster",
@@ -109,7 +214,47 @@
         "HeadCamera"
       ],
       "Kind": "managed-migrated",
-      "LegacyGuid": "wanglocal.micromaster"
+      "LegacyGuid": "wanglocal.micromaster",
+      "ModuleRoot": "MicroMaster",
+      "SourceRoot": "MicroMaster/src",
+      "Name": "微操大师／直接接管",
+      "DependencyDetails": [
+        {
+          "Guid": "PreLuna.HeadCamera",
+          "DependencyFlags": 1,
+          "Kind": "Hard",
+          "DeclaredVersion": "0.3.0"
+        },
+        {
+          "Guid": "PreLuna.Captain",
+          "DependencyFlags": 1,
+          "Kind": "Hard",
+          "DeclaredVersion": "0.5.4"
+        },
+        {
+          "Guid": "PreLuna.Captain.Commands",
+          "DependencyFlags": 1,
+          "Kind": "Hard",
+          "DeclaredVersion": "0.5.39"
+        },
+        {
+          "Guid": "PreLuna.CoopBotsCustom",
+          "DependencyFlags": 1,
+          "Kind": "Hard",
+          "DeclaredVersion": "1.0.12"
+        }
+      ],
+      "TestsRoot": "MicroMaster/tests"
     }
+  ],
+  "InputRoots": [
+    "Captain",
+    "Captain.Boosters",
+    "Captain.Commands",
+    "Captain.Fixes",
+    "CoopBotsCustom",
+    "HeadCamera",
+    "IntegrationTests",
+    "MicroMaster"
   ]
 }

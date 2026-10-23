@@ -9,9 +9,9 @@
 .vscode/
 .idea/
 *.dll
-!baseline/
-!baseline/**/
-!baseline/**/*.dll
+!CoopBotsCustom/baseline/
+!CoopBotsCustom/baseline/**/
+!CoopBotsCustom/baseline/WangLocal.CoopBotsCustom.dll
 *.pdb
 *.log
 *.zip

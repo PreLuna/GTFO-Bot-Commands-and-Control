@@ -9,13 +9,8 @@
     },
     {
       "Path": ".gitignore",
-      "SHA256": "9E6206F653FF3BC2FD319789B5CF5A21B6316588A00BD2C24540A344A9EAE8A0",
-      "Bytes": 228
-    },
-    {
-      "Path": "baseline/CoopBotsCustom/WangLocal.CoopBotsCustom.dll",
-      "SHA256": "785D4F98DF64BB059EF82E25960C61EA2A7D707D85A64401B1A12F3980FA987F",
-      "Bytes": 183808
+      "SHA256": "8453DCBB544F0014EECF68C66481DFEBCBC82FF95D28E231EE3C6AEE953AAD8A",
+      "Bytes": 293
     },
     {
       "Path": "Build.ps1",
@@ -23,9 +18,904 @@
       "Bytes": 491
     },
     {
+      "Path": "Captain.Boosters/src/BoosterConditionCompat.cs",
+      "SHA256": "9D9C6456339413B4760943E65CCE96EEDDF7AAE238FDBB20509850A4271180ED",
+      "Bytes": 6652
+    },
+    {
+      "Path": "Captain.Boosters/src/BoosterSelection.cs",
+      "SHA256": "8F1FB081AD3EB12308B07983666F4878C2EFB2B412C201E9FD38D4676AD9979E",
+      "Bytes": 8809
+    },
+    {
+      "Path": "Captain.Boosters/src/BoosterViewPolicy.cs",
+      "SHA256": "7BDBDBA83E8BE0DD16CE7C29B82F80344AD93687B5E0B842B8FF5C7D316FEC86",
+      "Bytes": 1937
+    },
+    {
+      "Path": "Captain.Boosters/src/BotBoosterAdapter.cs",
+      "SHA256": "008F0EEF111DE1A04C52B478394D91AE8D754267B99E36EC6E0E494E29DEC5C0",
+      "Bytes": 55804
+    },
+    {
+      "Path": "Captain.Boosters/src/BotBoosterHud.cs",
+      "SHA256": "2DE1847157B6983EF67B613D3598D24FC0072EC6F7FAA50568B796D8AEB69483",
+      "Bytes": 5947
+    },
+    {
+      "Path": "Captain.Boosters/src/BotBoosterLayout.cs",
+      "SHA256": "7C1C7FE910ADA2FEB9D1CD4B44292175A460034839D1924166783C6AE3A368C1",
+      "Bytes": 4413
+    },
+    {
+      "Path": "Captain.Boosters/src/BotBoosterView.cs",
+      "SHA256": "8367F813CE7DABE75966110D624B9AF83C09AC81E8E3DFB5983F5E58C67BF3F0",
+      "Bytes": 9120
+    },
+    {
+      "Path": "Captain.Boosters/src/ModuleEntry.cs",
+      "SHA256": "032F977D1E6342D9738C3B96BA1351D8C55D2C7DC9CCE7B4F85279B75FED1B7A",
+      "Bytes": 1119
+    },
+    {
+      "Path": "Captain.Boosters/src/NativeBoosterState.cs",
+      "SHA256": "92ECF40E20D499BE841CB83898E23E0E19A7C17CF9187DAE2EC892C756350012",
+      "Bytes": 1930
+    },
+    {
+      "Path": "Captain.Boosters/tests/BoosterAdapterMocks.cs",
+      "SHA256": "4EE0CDEA1F5F4F25A0C067BEC80842895DE92FCEE4FE19DE76075AAC3A1ED218",
+      "Bytes": 21531
+    },
+    {
+      "Path": "Captain.Boosters/tests/BoosterAdapterTests.cs",
+      "SHA256": "1E26E1B03031E952E88F07D74D7D54E8894FC5E339E47C93B004FE57FE7904EB",
+      "Bytes": 24563
+    },
+    {
+      "Path": "Captain.Boosters/tests/BoosterConditionHarmonyFixture.cs",
+      "SHA256": "A432F809CDD0B4CDAD1B3410AAD9418BB26F3D16B6313E788A182D172FFDCDEC",
+      "Bytes": 2404
+    },
+    {
+      "Path": "Captain.Boosters/tests/BoosterConditionHarmonyTests.cs",
+      "SHA256": "E7026970A3CFBC9DFA2F63AC722E763A4B3FE9889B5B6121A44CDF96FFB2D3FB",
+      "Bytes": 3263
+    },
+    {
+      "Path": "Captain.Boosters/tests/BoosterConditionMocks.cs",
+      "SHA256": "DAC9C836CF2725E0EF7C7B08E732E2775FE6BB4E5D47BCF8A95FDB77D08E9BDC",
+      "Bytes": 970
+    },
+    {
+      "Path": "Captain.Boosters/tests/BoosterConditionTests.cs",
+      "SHA256": "C058E2C2258C1A87AECFD037C38CBF9E9CFEDE09B373F447157CE081D2976461",
+      "Bytes": 4955
+    },
+    {
+      "Path": "Captain.Boosters/tests/BoosterPolicyTests.cs",
+      "SHA256": "CC359395B998F1AACAC5D2C22D500565F9D16507C05CE20A1B2D5F28AE8FA20A",
+      "Bytes": 7738
+    },
+    {
+      "Path": "Captain.Commands/src/AutoPickupAdapter.cs",
+      "SHA256": "2C340705F925C6ACBED2B5B047E666B4F84DAC66A75D67ED3EAE9A75DC3BFAFC",
+      "Bytes": 14439
+    },
+    {
+      "Path": "Captain.Commands/src/AutoPickupPolicy.cs",
+      "SHA256": "B0A0E4B1C5DD69991F9B5726D83DEA3E9B3F5461B9BA5B7211069703CEA54228",
+      "Bytes": 1099
+    },
+    {
+      "Path": "Captain.Commands/src/BotControlService.cs",
+      "SHA256": "3F1C7786547CDEF1910A984F5A4D1C28CC614D1DB854DA9CA8685DA98C399AA0",
+      "Bytes": 20048
+    },
+    {
+      "Path": "Captain.Commands/src/BotTaskBridge.cs",
+      "SHA256": "76CAAA7BBF99B8E4AA2BF0D46E6FF337A21EEF39A9171A1B20C24EC7260BC874",
+      "Bytes": 4246
+    },
+    {
+      "Path": "Captain.Commands/src/CaptainCommandCatalog.cs",
+      "SHA256": "B2B552E77B81299F93F3803348D5982A7C6BCDFAD43342FE3F9D5D56CB38CB0C",
+      "Bytes": 44495
+    },
+    {
+      "Path": "Captain.Commands/src/CaptainMenuInput.cs",
+      "SHA256": "2AF51A940E0E79B31BC0929EFA81AA34E9B170D9B4B3411855953EE7E857D3C8",
+      "Bytes": 9006
+    },
+    {
+      "Path": "Captain.Commands/src/CaptainMenuTree.cs",
+      "SHA256": "5595F0D46A9625BAECF68E41A97CC94B5EA632450D90C9BE2D7D567CE781A64F",
+      "Bytes": 3990
+    },
+    {
+      "Path": "Captain.Commands/src/CollectTaskAdapter.cs",
+      "SHA256": "124DB61E24F4B617C5CADBEA98C244B522CB4413100D1BE9B0E83D9CA7D6BD63",
+      "Bytes": 11846
+    },
+    {
+      "Path": "Captain.Commands/src/CollectTaskPolicy.cs",
+      "SHA256": "CFFA2EBAEB8AE0F408444133CA2C9188DCADB6B22894786C5D84B5B9A95BDD3A",
+      "Bytes": 6410
+    },
+    {
+      "Path": "Captain.Commands/src/ContainerBridge.cs",
+      "SHA256": "D8A9FC156C1E0DED172E7763C8F3B416205A1399F35471CBC59BFBEECF918366",
+      "Bytes": 3371
+    },
+    {
+      "Path": "Captain.Commands/src/ControlCombatContract.cs",
+      "SHA256": "358E99FEA865B397790C3E613F0691B6F38C9887FE64C154597594B62EB6529D",
+      "Bytes": 315
+    },
+    {
+      "Path": "Captain.Commands/src/ControlCombatTask.cs",
+      "SHA256": "4790FE125338F7B673E039247CE062C4B98FA08D5148E9E92ADFB2A510B6E0AD",
+      "Bytes": 3592
+    },
+    {
+      "Path": "Captain.Commands/src/ControlCommandAdapter.cs",
+      "SHA256": "BBD22229E014820235B65EE5364A0CF0576F6646B9B73E7A74A30902CF71A1A1",
+      "Bytes": 18669
+    },
+    {
+      "Path": "Captain.Commands/src/ControlCommandPolicy.cs",
+      "SHA256": "B8FB0D71CF8477F17CC5A2C01C797E1779D036CCC55D53648FD2286CE69E44F2",
+      "Bytes": 838
+    },
+    {
+      "Path": "Captain.Commands/src/FocusControlTask.cs",
+      "SHA256": "F371CC762C1BEFF35B848DDDCEC8C580C20CC8C3E5E515C0481B8A7E40B0F51E",
+      "Bytes": 8197
+    },
+    {
+      "Path": "Captain.Commands/src/FocusOrders.cs",
+      "SHA256": "B7909C2B131B1126EC55FCFE6AB099086E00D298E5018509C752C0DB4A1F0DEA",
+      "Bytes": 10604
+    },
+    {
+      "Path": "Captain.Commands/src/GuardCombat.cs",
+      "SHA256": "D3A4445BB03D7D11BF52CB85FC9644AC0CED3398EC705CC8E251519E42A4FF33",
+      "Bytes": 7411
+    },
+    {
+      "Path": "Captain.Commands/src/GuardPolicy.cs",
+      "SHA256": "5D940111BF26F1BE0CE0641CB7778ABA0BA7DD36378D06B1C2EA1E4081D622F8",
+      "Bytes": 1248
+    },
+    {
+      "Path": "Captain.Commands/src/GuardTargets.cs",
+      "SHA256": "39714020419A333B9F82DBDBFFCF3FAFE869DA5A9DD52EF22A5506182FA765EE",
+      "Bytes": 6722
+    },
+    {
+      "Path": "Captain.Commands/src/ItemActionAuthorization.cs",
+      "SHA256": "9AE03DC0DA56D9D5EE10E311C5046C33967D07F4FB70B443DA9C14038A98710C",
+      "Bytes": 5437
+    },
+    {
+      "Path": "Captain.Commands/src/ItemArrivalPolicy.cs",
+      "SHA256": "05F0AF5360261229C653F144589FE6A05CADBCBFFA7B3599720D1D4714BE8CBE",
+      "Bytes": 637
+    },
+    {
+      "Path": "Captain.Commands/src/ItemInteractionGeometry.cs",
+      "SHA256": "82C5336466A433E473F1A663CC718A316EDB1C8D6C3DF503BCF5537C9CB4DA81",
+      "Bytes": 4199
+    },
+    {
+      "Path": "Captain.Commands/src/ItemRegion.cs",
+      "SHA256": "1320CE20473F54275568AF74315CA053A1E6801F7A8B35BEEDBFFB87A0B51B2F",
+      "Bytes": 2272
+    },
+    {
+      "Path": "Captain.Commands/src/ItemTargetResolver.cs",
+      "SHA256": "1521F0E4F92AD81446716A080F3B7D4FDAD525698770979A60075F9E7F38F103",
+      "Bytes": 4262
+    },
+    {
+      "Path": "Captain.Commands/src/ItemTaskAdapter.cs",
+      "SHA256": "0A36A63D2173F38E74D7CBC35792F7ECF10D8103DA6B32D92B44651FF3135DC9",
+      "Bytes": 76408
+    },
+    {
+      "Path": "Captain.Commands/src/ItemTaskPolicy.cs",
+      "SHA256": "9F75EDCD0D54286ACE68F68C49CF9338E10CF29F226D1155CA30187706076B12",
+      "Bytes": 9824
+    },
+    {
+      "Path": "Captain.Commands/src/ItemTaskSession.cs",
+      "SHA256": "6BB5C26DBD032060DDB69869B76307BB3AA89EB5A0A4CCD2DC0AF5F97C03D556",
+      "Bytes": 21796
+    },
+    {
+      "Path": "Captain.Commands/src/ItemWorldIndex.cs",
+      "SHA256": "E29EE25E93DE827C18AE1DBED5829FD264093B5D977A6C706A84C99DB55534CD",
+      "Bytes": 3252
+    },
+    {
+      "Path": "Captain.Commands/src/KillBorrowPolicy.cs",
+      "SHA256": "CC449457CEE52301774AD19C1A374DD6C42E672D8BA2FC3999E8D24966D7FF63",
+      "Bytes": 3150
+    },
+    {
+      "Path": "Captain.Commands/src/KillCombatBridge.cs",
+      "SHA256": "010A4ACE1FF929331E423762527F61ABC7EE1F739D2616789ECC067EE1A64A90",
+      "Bytes": 5452
+    },
+    {
+      "Path": "Captain.Commands/src/KillContinuationPolicy.cs",
+      "SHA256": "AF7BC810862BC4DD00BC8A78EC87D378A4FD3F2E3EA9FD667864468F60B7BC8C",
+      "Bytes": 1324
+    },
+    {
+      "Path": "Captain.Commands/src/KillMeleeAdapter.cs",
+      "SHA256": "A7784AE0D4CDD5A183947BAF7813C0CC7B4B197A75785785DD987449BA257387",
+      "Bytes": 8768
+    },
+    {
+      "Path": "Captain.Commands/src/KillPositionAdapter.cs",
+      "SHA256": "4811B68FD7FEAC5267D55AA417BF092A709ADC950F5B2772AA7B4729757CD149",
+      "Bytes": 4423
+    },
+    {
+      "Path": "Captain.Commands/src/KnownContainerIndex.cs",
+      "SHA256": "C4C60E1423832D191D753F55E5CDD52475B35DA7A26C6FDBC46F2BCFD609C544",
+      "Bytes": 9264
+    },
+    {
+      "Path": "Captain.Commands/src/KnownInteractionIndex.cs",
+      "SHA256": "C167BDC1B4B2273D2D8E4222A8C78BC5FE4A5534FFB825CF23417EA86052BBBD",
+      "Bytes": 14306
+    },
+    {
+      "Path": "Captain.Commands/src/KnownSupplyIndex.cs",
+      "SHA256": "C8D00A266637B0417BB1CD8419EA9FE9DB750DB2215C2131AE391BEB2AFEFAC4",
+      "Bytes": 7768
+    },
+    {
+      "Path": "Captain.Commands/src/KnownSupplyLedger.cs",
+      "SHA256": "4295A6BBD8E1E9021C83FB8AEE680F009F5E04A00447AFC7B7E44B576179D21B",
+      "Bytes": 1974
+    },
+    {
+      "Path": "Captain.Commands/src/KnownTerminalIndex.cs",
+      "SHA256": "E9C9607A17B991DBF1D9C28E0B6C09A042F71F617CF4F5BC90E6927C4E7DCC80",
+      "Bytes": 7416
+    },
+    {
+      "Path": "Captain.Commands/src/MarkedOpenTarget.cs",
+      "SHA256": "2026141F99EC961E9C5327B5FBEADF1D6F334FD16AEED3682B01E8D2DFAD2242",
+      "Bytes": 12663
+    },
+    {
+      "Path": "Captain.Commands/src/ModuleEntry.cs",
+      "SHA256": "6C590FF82933339D48DAECB265EB58C6960A8728BE7702437F0359B6EFDA0875",
+      "Bytes": 1234
+    },
+    {
+      "Path": "Captain.Commands/src/MovementOrders.cs",
+      "SHA256": "4E86BC8BC34149ECAC3E11FDB7102F21CB21C9D4BC5E13C790DF3EF4E55CEE2E",
+      "Bytes": 49178
+    },
+    {
+      "Path": "Captain.Commands/src/NativePickupAdapter.cs",
+      "SHA256": "0C5A3D2C911C55A9360151754444AA084E62ED5F74B712A13E6027C45E40646A",
+      "Bytes": 16987
+    },
+    {
+      "Path": "Captain.Commands/src/OpenTargetLocks.cs",
+      "SHA256": "B177622129532CD3B5843A90A29CB86EAF650D0BAEEBCBA642D70E720B7B3BAA",
+      "Bytes": 1893
+    },
+    {
+      "Path": "Captain.Commands/src/OpenTaskAdapter.cs",
+      "SHA256": "BB3A2B6BD1B0D2767EC8538633293C05F8C4D2ECA5439BA618F7F72FEB4D6BCD",
+      "Bytes": 31652
+    },
+    {
+      "Path": "Captain.Commands/src/OpenTaskDiagnostics.cs",
+      "SHA256": "D8CFA69C3D580568B45E915954D5A06EA56A5DE1F64D67AC31532EE5FE8E1B59",
+      "Bytes": 2876
+    },
+    {
+      "Path": "Captain.Commands/src/OpenTaskPolicy.cs",
+      "SHA256": "15EC1B4FB9809871420EB397B39B289E8CAE6D2694D8257346EF46A41229E87D",
+      "Bytes": 8829
+    },
+    {
+      "Path": "Captain.Commands/src/PickupPromptHud.cs",
+      "SHA256": "267943F456611E3B9A13BC4FD308A880FB4201FF57F78C0F552E2BC80B3F9454",
+      "Bytes": 4909
+    },
+    {
+      "Path": "Captain.Commands/src/PickupPromptQueue.cs",
+      "SHA256": "D89BF61B367AEBD809D428051F5D38F322111CC9818F004517C4455E49871A33",
+      "Bytes": 1333
+    },
+    {
+      "Path": "Captain.Commands/src/PositionMarks.cs",
+      "SHA256": "6EBA8B6321BDA1B5A9CE02BE99D47DC3F9818AC57EE37AC394DD1EDDF1736EE9",
+      "Bytes": 5999
+    },
+    {
+      "Path": "Captain.Commands/src/PositionTaskPolicy.cs",
+      "SHA256": "A2C807A74A7D1D66EF046C6CBA321AE432E4898C024C4E4B5557F374F85CD425",
+      "Bytes": 6135
+    },
+    {
+      "Path": "Captain.Commands/src/RescueOrders.cs",
+      "SHA256": "B66E95514DD658B1E4BA992E26C4027A24F2A97B61A3AEAA7F7A2270280889DA",
+      "Bytes": 24618
+    },
+    {
+      "Path": "Captain.Commands/src/RescuePolicy.cs",
+      "SHA256": "E6507479FAA4FC3BE45729F0A9BCFFFB41C3FB10B5CC305BD1777E181E8F3120",
+      "Bytes": 5140
+    },
+    {
+      "Path": "Captain.Commands/src/ResourceUseAdapter.cs",
+      "SHA256": "7F51E478258D4A8D396EB6AAE6FC8D50DAEE974E4828F8115D601BB2AD0A84AD",
+      "Bytes": 33083
+    },
+    {
+      "Path": "Captain.Commands/src/ResourceUsePolicy.cs",
+      "SHA256": "2D08C07B134012269DF45AB0E8E57C1B68AD33376645CE4431817ED73BC6B27E",
+      "Bytes": 1846
+    },
+    {
+      "Path": "Captain.Commands/src/RouteNavigation.cs",
+      "SHA256": "C2F82728F25DF44B69CA496780FBCA2390669C13C6805C9320E9627FC712424F",
+      "Bytes": 9821
+    },
+    {
+      "Path": "Captain.Commands/src/RoutePolicy.cs",
+      "SHA256": "5712E52636CADD1F4C71FFACF945278626510420EF6B77BF2824729583C5F4B7",
+      "Bytes": 2391
+    },
+    {
+      "Path": "Captain.Commands/src/RouteTargets.cs",
+      "SHA256": "970F0750A625F81DC9FF2679FD191CDF6515F822659551063960D902A6EF1AD2",
+      "Bytes": 2008
+    },
+    {
+      "Path": "Captain.Commands/src/RouteTraversal.cs",
+      "SHA256": "2979B6A6244E7EFABB26EDC32308FB19136B4D839F941ED7395270970892D546",
+      "Bytes": 8640
+    },
+    {
+      "Path": "Captain.Commands/src/SearchMarker.cs",
+      "SHA256": "8FF51FD67C9BFF244DB7FE4F42289FF44ECCF6988FFB885F206F20E9CFD42985",
+      "Bytes": 2164
+    },
+    {
+      "Path": "Captain.Commands/src/SearchTaskAdapter.cs",
+      "SHA256": "64D777FB52A08E9F5928CD9CD2CEA62DD7D8C4DD8D35DA8566781BB13A82BF5A",
+      "Bytes": 8826
+    },
+    {
+      "Path": "Captain.Commands/src/SearchTaskPolicy.cs",
+      "SHA256": "B29380518343CE6588A77B514942F2B052C35A1204462107C1DDD3653F222896",
+      "Bytes": 1233
+    },
+    {
+      "Path": "Captain.Commands/src/SearchTraversal.cs",
+      "SHA256": "29B2B589591E64EA979A9D7B29818C5ED5B1FCEE4A6CC98B41C5BBFE60F20707",
+      "Bytes": 5818
+    },
+    {
+      "Path": "Captain.Commands/src/SharedMeleeBridge.cs",
+      "SHA256": "6E8140266851221AC97AA12659E5EC0CF8F5E520DFE099FA4B112DA08429F368",
+      "Bytes": 9468
+    },
+    {
+      "Path": "Captain.Commands/src/SingleKillAdapter.cs",
+      "SHA256": "2E191C6E0AA652B258BC4924FC1A4BF626CAB1B55D31CD1984CF04A72FA2B449",
+      "Bytes": 49465
+    },
+    {
+      "Path": "Captain.Commands/src/SingleKillPolicy.cs",
+      "SHA256": "932A0EFF860AB35597767F46066810FF726BC9FC50F5A0FD42E10759B7CFD297",
+      "Bytes": 4989
+    },
+    {
+      "Path": "Captain.Commands/src/SpecialItemAccess.cs",
+      "SHA256": "F0E389550CAB03D7F99B86D32C654E2E3A07F9F78F6B7F2265F2383300ED6235",
+      "Bytes": 2052
+    },
+    {
+      "Path": "Captain.Commands/src/SpecialItemPolicy.cs",
+      "SHA256": "F46C8204B230BF5DBA6A70DF8DBE64C09F4DCAFED4B3237EDDAA0418B274DD72",
+      "Bytes": 779
+    },
+    {
+      "Path": "Captain.Commands/src/StackCompatibility.cs",
+      "SHA256": "ECE470D4B15A0CB49277E01A181ADE788FDE1A7138D6F26E47A17FE68D0903DA",
+      "Bytes": 13833
+    },
+    {
+      "Path": "Captain.Commands/src/StationPolicy.cs",
+      "SHA256": "CAD4CB81B0BC301E0A1DE92F84390138DBB97188B0E11E1A29B7B9B0E727AFE3",
+      "Bytes": 3653
+    },
+    {
+      "Path": "Captain.Commands/src/TaskBoard.cs",
+      "SHA256": "DB79750DE3A10D84342998BA61A043D987A1983D439CD02DD0CD0CB7283F62B3",
+      "Bytes": 3952
+    },
+    {
+      "Path": "Captain.Commands/src/ToolSupplyAdapter.cs",
+      "SHA256": "603B57EADC6A42E1C53EAD8C6C58F313D61D272A2E8A508645FC4A51876DF056",
+      "Bytes": 15778
+    },
+    {
+      "Path": "Captain.Commands/src/ToolSupplyPolicy.cs",
+      "SHA256": "69D441A86A27C5587FCEFDC4A4C1F207D2B9BD300F60318295656C6D40F10E03",
+      "Bytes": 3691
+    },
+    {
+      "Path": "Captain.Commands/tests/AutoPickupMocks.cs",
+      "SHA256": "F393D535D0B46CBA393E828A828343B6D14ACB3B3B52A0775D05ECE322F04F96",
+      "Bytes": 11577
+    },
+    {
+      "Path": "Captain.Commands/tests/AutoPickupTests.cs",
+      "SHA256": "30B182CFF74072DB7EC3DC0B3E38D6DD2C11DCA99080BA03DA83B169C078ECB1",
+      "Bytes": 14038
+    },
+    {
+      "Path": "Captain.Commands/tests/BorrowedItemTests.cs",
+      "SHA256": "D952BA720F3CDE4953B126F4368A87EC71DB6ABD9B781EB041BEC644742CB551",
+      "Bytes": 6156
+    },
+    {
+      "Path": "Captain.Commands/tests/BorrowedOpenTests.cs",
+      "SHA256": "EDB7BBA09EB2477A660F4C80E5846A51F07E39D4433B1D8E8F362EB3D449F078",
+      "Bytes": 3600
+    },
+    {
+      "Path": "Captain.Commands/tests/CollectTaskTests.cs",
+      "SHA256": "0CD032F5C4E2D5FA54E705AA76A2452FF19BAEB11C8CAA1B02D3D138BA18B19E",
+      "Bytes": 15977
+    },
+    {
+      "Path": "Captain.Commands/tests/ControlCommandExternalMocks.cs",
+      "SHA256": "5CE98FBEFC58374C824CC2D465D2764EEF26156584FA730CDC9E499038E644B7",
+      "Bytes": 462
+    },
+    {
+      "Path": "Captain.Commands/tests/Fixtures/CaptainRegressionStubs.cs",
+      "SHA256": "8CEE3579A92567DAD894A2E49226CFFE0FCF95164AB53044D293E83077330DF8",
+      "Bytes": 148
+    },
+    {
+      "Path": "Captain.Commands/tests/Fixtures/CombatPolicy.cs",
+      "SHA256": "BEFE8C7B4EEB43529ADF3F5D9944EC021749021424EEB37A5ABA2270D1E134B1",
+      "Bytes": 9946
+    },
+    {
+      "Path": "Captain.Commands/tests/FollowControlTests.cs",
+      "SHA256": "15950CD43DA80BDB15E37CCD9A6069C0D1AD1735F4AF7EFCEECD0E04EA0F5470",
+      "Bytes": 2664
+    },
+    {
+      "Path": "Captain.Commands/tests/GuardMocks.cs",
+      "SHA256": "62F0ED1F92F9B567496F74BEBEDFC66D51EAF30BDD5C117261AD3301866657BE",
+      "Bytes": 16839
+    },
+    {
+      "Path": "Captain.Commands/tests/GuardMovementMocks.cs",
+      "SHA256": "F05889F813626DC17BDB69BD8BC945059168C26B277C14F5F8123C3F7513CB17",
+      "Bytes": 19913
+    },
+    {
+      "Path": "Captain.Commands/tests/GuardMovementTests.cs",
+      "SHA256": "CA1F86D8B9964B6931382F28DFD0152F9D7272ACCE8CAA106DE4EF5A5684CE56",
+      "Bytes": 7345
+    },
+    {
+      "Path": "Captain.Commands/tests/GuardTests.cs",
+      "SHA256": "97EED8B15BFBED712E26F78A8648202F995D2E3D5294AF48537F4A1B00D2EA6C",
+      "Bytes": 8800
+    },
+    {
+      "Path": "Captain.Commands/tests/ItemTargetTests.cs",
+      "SHA256": "34DADA24B260703FDDA6C328DE525F1FF2AD01CCD6DF743A0E0C060235BDF581",
+      "Bytes": 4845
+    },
+    {
+      "Path": "Captain.Commands/tests/ItemTaskMocks.cs",
+      "SHA256": "C6A432C5EA5CE6E624C4A49E5BCF0197997C780F46E5CDC4285812A04B2F8118",
+      "Bytes": 20167
+    },
+    {
+      "Path": "Captain.Commands/tests/ItemTaskTests.cs",
+      "SHA256": "AE22D25281388D5AE0FF6859E680EA26E0DADB5334CE97D64210A93305B52998",
+      "Bytes": 29523
+    },
+    {
+      "Path": "Captain.Commands/tests/KillBorrowTests.cs",
+      "SHA256": "91D430DC9C098B14729501F0C2D7A2B7DD1F71588ED999ADFEDA4DFC846895C9",
+      "Bytes": 7516
+    },
+    {
+      "Path": "Captain.Commands/tests/KillContinuationMocks.cs",
+      "SHA256": "C1BF8E604E3D69024B47B36F1B486DB29DEC0026583DD0B1460DD44B570E4ACE",
+      "Bytes": 3603
+    },
+    {
+      "Path": "Captain.Commands/tests/KillContinuationTests.cs",
+      "SHA256": "3841490F8DEA7F8CD880247A73C7FD77CE250E8BDCD599DE864BE46897B08D0E",
+      "Bytes": 4678
+    },
+    {
+      "Path": "Captain.Commands/tests/KillMeleeMocks.cs",
+      "SHA256": "9BF33527DDC1ACD77DA4358AEB679C9DE3DA55138CD87398B0022A58473B5D2F",
+      "Bytes": 7105
+    },
+    {
+      "Path": "Captain.Commands/tests/KillMeleeTests.cs",
+      "SHA256": "885924299B648718A8B1875574662C029C6797A2FB82927DEAC1FF529B5617AF",
+      "Bytes": 12179
+    },
+    {
+      "Path": "Captain.Commands/tests/KnownContainerTests.cs",
+      "SHA256": "2996080D27A0D57C7A838B6DCC77E832F258CD04DBE1FA99D20E65164C752322",
+      "Bytes": 13744
+    },
+    {
+      "Path": "Captain.Commands/tests/KnownInteractionTests.cs",
+      "SHA256": "A1E8EE78F3040498F78527960D2BAD5A92C5386F788EC8086EC40A925448D20E",
+      "Bytes": 17615
+    },
+    {
+      "Path": "Captain.Commands/tests/KnownSupplyTests.cs",
+      "SHA256": "33A9927C58641060E947BD6EDF9259FFB69500C96177E3C4FE53B2C67A5BEB16",
+      "Bytes": 11434
+    },
+    {
+      "Path": "Captain.Commands/tests/KnownTerminalTests.cs",
+      "SHA256": "31786E35C4889D44445B3BFCF6A7647106815C1FCCE5E908D1836BA339F71CFE",
+      "Bytes": 13503
+    },
+    {
+      "Path": "Captain.Commands/tests/MenuInputTests.cs",
+      "SHA256": "18FC634C779AC380B4E6B88833D778AAE04AEE3B5B8BF651A2BAD4E8C3040D37",
+      "Bytes": 56762
+    },
+    {
+      "Path": "Captain.Commands/tests/MovementOrderTests.cs",
+      "SHA256": "2F7671E86173F65EDBB0A9F9CDA4A42B83DC276B956A69B6503376DF017AFC42",
+      "Bytes": 6861
+    },
+    {
+      "Path": "Captain.Commands/tests/NativeCombatMocks.cs",
+      "SHA256": "EC8AEACBCEF1E4C5F5F3DA2ED641EEF7CD23408D60E1E1B26D38F691600DF091",
+      "Bytes": 15376
+    },
+    {
+      "Path": "Captain.Commands/tests/NativeCombatTests.cs",
+      "SHA256": "66BE7065DBA3D09E24097BCD5D24FCD95129C269513B13D11BB8FD31DE68FC66",
+      "Bytes": 11064
+    },
+    {
+      "Path": "Captain.Commands/tests/NativePickupTests.cs",
+      "SHA256": "D22888D7123A4A544C34CDB153C56B2679DD0E7BF444422E7BA8B55CA71C9D88",
+      "Bytes": 19638
+    },
+    {
+      "Path": "Captain.Commands/tests/NavigationTests.cs",
+      "SHA256": "71196DEB39DC2F34AAE3CB5D97EA715CF7C788F1CD505BCB09525F80F9D1DA2F",
+      "Bytes": 17931
+    },
+    {
+      "Path": "Captain.Commands/tests/OpenAdapterMocks.cs",
+      "SHA256": "50812B5334161C62A5F50D9678EC3AC6806527817BB815B3D319C1A4484C95AE",
+      "Bytes": 13615
+    },
+    {
+      "Path": "Captain.Commands/tests/OpenAdapterTests.cs",
+      "SHA256": "B396D301C175683B57001FDA290D8A1762BC1185937298DBE528BD246A8B51BB",
+      "Bytes": 11834
+    },
+    {
+      "Path": "Captain.Commands/tests/OpenTaskTests.cs",
+      "SHA256": "06EA19D327F46C693AC3127CCBDBC2599143F4AED6F896549D2889229F1462D4",
+      "Bytes": 10002
+    },
+    {
+      "Path": "Captain.Commands/tests/RescueAdapterMocks.cs",
+      "SHA256": "2F07AD2F83B6D4A36A025FD0956D8C6EFD715522BC98BD255CF6CB0F5C811C61",
+      "Bytes": 7755
+    },
+    {
+      "Path": "Captain.Commands/tests/RescueAdapterTests.cs",
+      "SHA256": "286F451A6F8779E26350CE67BF5D361615CFBBFF70CF5B4A33A12B5851783C8E",
+      "Bytes": 8486
+    },
+    {
+      "Path": "Captain.Commands/tests/RescueTests.cs",
+      "SHA256": "73C3B6C518C645280E22B761214B369D9CD6FBF3B71941CB8921B9E0C0264236",
+      "Bytes": 5438
+    },
+    {
+      "Path": "Captain.Commands/tests/ResourceUseMocks.cs",
+      "SHA256": "0040559D83914458FE7A03EC6D1352374D4851762C705A21B5A103F361659EF0",
+      "Bytes": 10427
+    },
+    {
+      "Path": "Captain.Commands/tests/ResourceUseTests.cs",
+      "SHA256": "AE9EBA4BB7188B20930095BDB9725BD0B708FAA1AC2047F50523F34A7D8172C7",
+      "Bytes": 15407
+    },
+    {
+      "Path": "Captain.Commands/tests/SearchTaskTests.cs",
+      "SHA256": "03B3EE965A58CF1E858B9943221E17582CF0628E46D5A02228173C6FC0D8EC6B",
+      "Bytes": 20522
+    },
+    {
+      "Path": "Captain.Commands/tests/SearchTraversalTests.cs",
+      "SHA256": "1E081749E9152CE31905C2FA61FF32619B629331DE60C62D3386CFEEF53D40C2",
+      "Bytes": 9530
+    },
+    {
+      "Path": "Captain.Commands/tests/ServiceMocks.cs",
+      "SHA256": "F525A7FB86EEE4BE9D7F61593C5E647077AAB153ACFBA766BEEBB9F062BFC371",
+      "Bytes": 8533
+    },
+    {
+      "Path": "Captain.Commands/tests/ServiceTests.cs",
+      "SHA256": "5C59A646DEB6793F21C8BDDCC7608555D0293A60BE833D06B9117597CBC6E100",
+      "Bytes": 9454
+    },
+    {
+      "Path": "Captain.Commands/tests/SingleKillTests.cs",
+      "SHA256": "F5E8D50B7E75D429C29048756D171199C7499FAB6EAA79BBAA45700981207E91",
+      "Bytes": 6972
+    },
+    {
+      "Path": "Captain.Commands/tests/StationHandoffTests.cs",
+      "SHA256": "ADB236E5E582A885AFE3ABFC7A526B854D0BCE7CEE6DA958E77F4D6FF5299126",
+      "Bytes": 6351
+    },
+    {
+      "Path": "Captain.Commands/tests/StationTests.cs",
+      "SHA256": "66D77D1FACA194E85B70616635D3992A4B1485489D3D07FDA65D03C4E87E9B02",
+      "Bytes": 4973
+    },
+    {
+      "Path": "Captain.Commands/tests/TaskBoardTests.cs",
+      "SHA256": "368DEBBEA1D6B1DD13926859200B2A6A8B0EAEF49B2F20AC5118F413C08CD032",
+      "Bytes": 4735
+    },
+    {
+      "Path": "Captain.Commands/tests/ToolCombatMocks.cs",
+      "SHA256": "EE0693AAD17CC0222D4C856A60BAA74E216288545255F9CBD33C784124F9C111",
+      "Bytes": 14519
+    },
+    {
+      "Path": "Captain.Commands/tests/ToolCombatTests.cs",
+      "SHA256": "504039436F9AB2F1BE3C96B30827719B68A84CA54036A6B9EF66F68A57FE543F",
+      "Bytes": 13140
+    },
+    {
+      "Path": "Captain.Fixes/src/ModuleEntry.cs",
+      "SHA256": "D0918EC43978BD2B622CBD513F40B9472695184C576FEE3173254AE2F04F6E13",
+      "Bytes": 2006
+    },
+    {
+      "Path": "Captain.Fixes/src/SmartPingCompat.cs",
+      "SHA256": "2AEF69E918456484CC1BF38F8F01E02F7D6850D7919FE2663F51AEA90E1E9A69",
+      "Bytes": 6264
+    },
+    {
+      "Path": "Captain.Fixes/src/TerminalAliasPolicy.cs",
+      "SHA256": "8BB2D0EB6C1040010DFCB7C731FAB65A34483217B46548AB79F2CD252DE667F5",
+      "Bytes": 704
+    },
+    {
+      "Path": "Captain.Fixes/src/TerminalHelpTranslation.cs",
+      "SHA256": "5F503213DD4EB240BD91F059CA100F57156DD90DA30130F62BCD875A016C7251",
+      "Bytes": 980
+    },
+    {
+      "Path": "Captain.Fixes/tests/PickupTerminalTests.cs",
+      "SHA256": "F14102D02E464DA22C5C4A55267810A5B773671C29B5AC99C96A47963FB5E17E",
+      "Bytes": 9248
+    },
+    {
+      "Path": "Captain.Fixes/tests/TerminalCompatMocks.cs",
+      "SHA256": "962DD2A058D71D157B6F5A74AF1A9DFB1AE90F74F7F5211C285C855831E266C9",
+      "Bytes": 3254
+    },
+    {
+      "Path": "Captain/src/中文词典.json",
+      "SHA256": "4B8D4B403FE19F023839DD2B0952971F8D79793C0A00A81D0E62BB26E454A8EB",
+      "Bytes": 6809
+    },
+    {
+      "Path": "Captain/src/BotControlApi.cs",
+      "SHA256": "8E39533BFB675FC77E12C080041C0027E9993D2F674CB0F38E78520B1DFA8A14",
+      "Bytes": 5241
+    },
+    {
+      "Path": "Captain/src/BotControlCommands.cs",
+      "SHA256": "30C428A18B935E9787403C3F6FA6861822504B5081204FF3C588D4ADC46BCA1F",
+      "Bytes": 2294
+    },
+    {
+      "Path": "Captain/src/KnownTypes.cs",
+      "SHA256": "BD0A9BF9776070348B49DB56A406939419F926C5051CE7F43F916018B44153D5",
+      "Bytes": 3382
+    },
+    {
+      "Path": "Captain/src/Plugin.cs",
+      "SHA256": "DA14F2780C09BE82D69604F1472CF9AFCFE0E4D327CF61A01B53BE789DF9D86C",
+      "Bytes": 7079
+    },
+    {
+      "Path": "Captain/src/TranslationCatalog.cs",
+      "SHA256": "5E645EB0FE1A4673C601D35F6B5C4965A9E99BAE3256C9912F6278DE7F419B92",
+      "Bytes": 3631
+    },
+    {
+      "Path": "Captain/tests/KnownTypesTests.cs",
+      "SHA256": "F0F431D809EA693BF3DEAB6C22B2DFDD73E4821B616C6491D9998B01DBDC5EDA",
+      "Bytes": 3825
+    },
+    {
+      "Path": "Captain/tests/TranslationTests.cs",
+      "SHA256": "D25DCFBBB8570F4B8AFF2FFAD78AC3A182E144ACDE0DA491BA4ED428736F159F",
+      "Bytes": 2728
+    },
+    {
+      "Path": "CoopBotsCustom/baseline/WangLocal.CoopBotsCustom.dll",
+      "SHA256": "785D4F98DF64BB059EF82E25960C61EA2A7D707D85A64401B1A12F3980FA987F",
+      "Bytes": 183808
+    },
+    {
       "Path": "DEVELOPMENT.md",
-      "SHA256": "EB778E466A8769C85D67348002B84EF8F9FCCCF0657852FABF37E2532F4B3930",
-      "Bytes": 2880
+      "SHA256": "1EEBFE402C9E706871A050811687D25207DC3E59A7F8D6B57FF96C40B499CD36",
+      "Bytes": 3630
+    },
+    {
+      "Path": "HeadCamera/src/CameraHud.cs",
+      "SHA256": "86BD18F74D5143ADF4C283EC7B493B9336943C57F3734767268AEDB185FDFA1E",
+      "Bytes": 6928
+    },
+    {
+      "Path": "HeadCamera/src/CameraRuntime.cs",
+      "SHA256": "DD0825ACD0933BEF94433D8BBDD4C9F5FE2D60025B4FFDB0C5C52E2101E8DEB9",
+      "Bytes": 13741
+    },
+    {
+      "Path": "HeadCamera/src/ControlView.cs",
+      "SHA256": "ACE6F43D96CEB67478098AA81114C27A6D2DEB837787C1FAD31F1657D95A7403",
+      "Bytes": 657
+    },
+    {
+      "Path": "HeadCamera/src/HeadCameraApi.cs",
+      "SHA256": "049D261ACDA4A078C2CB12D7DAF9C00FE2ECCD9C8545A157B7E18A7D90F956AD",
+      "Bytes": 4737
+    },
+    {
+      "Path": "HeadCamera/src/HudCameraRegistry.cs",
+      "SHA256": "82A73AFC82D3CDDAE5560E5C87C8CB282237AD336406488C4F507130AD099553",
+      "Bytes": 1469
+    },
+    {
+      "Path": "HeadCamera/src/HudViewIdentityApi.cs",
+      "SHA256": "506931B29D90FD9A484F402A2DD1A80EFF450E23E18565444ED5107BD3CBBFB1",
+      "Bytes": 3376
+    },
+    {
+      "Path": "HeadCamera/src/NativeCapture.cs",
+      "SHA256": "D7D1E673379C4AAA9B0C372784FBCB5EDCF7DBF6A58243E00ED905DC372E84C1",
+      "Bytes": 22171
+    },
+    {
+      "Path": "HeadCamera/src/Plugin.cs",
+      "SHA256": "63E14FE742098AEEEF9DFF8D3BF0071180314BC4A1B51876FC41BCD1BDDD1FE9",
+      "Bytes": 7065
+    },
+    {
+      "Path": "HeadCamera/src/ToggleGesture.cs",
+      "SHA256": "533CD6D1CD2B8B02509C89FCDC559467B9ED2F44B9D7F48610F127D6A1860A41",
+      "Bytes": 1692
+    },
+    {
+      "Path": "HeadCamera/src/ViewPolicy.cs",
+      "SHA256": "C70B4D1DA7807DDEF221EFE7E500EFA8CEFD3FC61314CABEE4C02ADE63EFD843",
+      "Bytes": 3878
+    },
+    {
+      "Path": "HeadCamera/tests/HeadAimMocks.cs",
+      "SHA256": "C566BE88BB41235203E83172BB589BCC6C5B1F1E530D41373C23AF2DAB0A4CB4",
+      "Bytes": 1230
+    },
+    {
+      "Path": "HeadCamera/tests/HeadAimTests.cs",
+      "SHA256": "80580CE6E3B5B442BA5A9DF075A8540E4963263086D57E837592E1690328C510",
+      "Bytes": 2612
+    },
+    {
+      "Path": "HeadCamera/tests/PolicyTests.cs",
+      "SHA256": "61CAEDA5F5FE3D4569D1468BD6EA87D7121E243D624EBEE9AF67E2D17DC83379",
+      "Bytes": 4925
+    },
+    {
+      "Path": "IntegrationTests/CameraAndControl/MotionMocks.cs",
+      "SHA256": "56AF8A8A863826A1D830D70EB63EF671E2E6FD01829E21FF8ECF7EDED11D9D0B",
+      "Bytes": 4402
+    },
+    {
+      "Path": "IntegrationTests/CameraAndControl/MotionTests.cs",
+      "SHA256": "8B9AEE523E620D61B24F5978536D5CE85DA072537D8EF8E991C168762D8B8901",
+      "Bytes": 8153
+    },
+    {
+      "Path": "IntegrationTests/CommandsAndControl/CommandMocks.cs",
+      "SHA256": "CAB665141AB8A897C51D1CE8595B3CE73EC9589F9D2B25BDA3AA22EF96A6CE54",
+      "Bytes": 19302
+    },
+    {
+      "Path": "IntegrationTests/CommandsAndControl/CommandTests.cs",
+      "SHA256": "8AB6E5D53081A12ACB238FB402F1EF7E074349CFE8D2148149A537D1F11C0A81",
+      "Bytes": 17249
+    },
+    {
+      "Path": "IntegrationTests/Control/ControlTests.cs",
+      "SHA256": "8B8DFFCFDA163BBA9547B8697F195272D3CA50AA31F87EE5D2F83D528285F303",
+      "Bytes": 9588
+    },
+    {
+      "Path": "MicroMaster/src/BodyThreatWatch.cs",
+      "SHA256": "AA6B6EC1059FD611E8DFA2693968D02909B12FC467EDD1203AFD347EE099D6AA",
+      "Bytes": 2861
+    },
+    {
+      "Path": "MicroMaster/src/ControlHooks.cs",
+      "SHA256": "8F37C54DBD45325E9173E129AB1D289082022F621561861EF5D5DE058F94C43A",
+      "Bytes": 10035
+    },
+    {
+      "Path": "MicroMaster/src/ControlRuntime.cs",
+      "SHA256": "4E9D278B59A391E61D88E5A36583D4345D1C93E2A2B07380392BBE8AF73941CE",
+      "Bytes": 18075
+    },
+    {
+      "Path": "MicroMaster/src/ControlSafety.cs",
+      "SHA256": "3EF7551BC24AAD9F1E1D525249B8D8B2B0587BEE1CFE000114BDCD08688129DB",
+      "Bytes": 902
+    },
+    {
+      "Path": "MicroMaster/src/ManualMotionPolicy.cs",
+      "SHA256": "F34BE84A6C084ECA57DAE224C7107C2CEFC3FA91DD0A859C67E0790E6F04D54A",
+      "Bytes": 3823
+    },
+    {
+      "Path": "MicroMaster/src/NativeManualWalk.cs",
+      "SHA256": "F4505C112B36A96BCB637FD8D40FF22DF5C4FD6B1A810FA462882159E1DDF016",
+      "Bytes": 4707
+    },
+    {
+      "Path": "MicroMaster/src/Plugin.cs",
+      "SHA256": "C733121B68FF9016366BBA1D9DC4FF7EF1A5866CFC7E3A560F2BC63D8B663D64",
+      "Bytes": 5142
+    },
+    {
+      "Path": "MicroMaster/tests/RuntimeMocks.cs",
+      "SHA256": "51C3049F23AC04724F0A213ADF95AB4DA75A8A0A7B992027F325B14B8BB56422",
+      "Bytes": 8820
+    },
+    {
+      "Path": "MicroMaster/tests/RuntimeSafetyTests.cs",
+      "SHA256": "224BC9FFC0E633495A193A30C80F6DC11565A52FFBE5733642615C60CE03E53B",
+      "Bytes": 13756
     },
     {
       "Path": "NOTICE.md",
@@ -34,903 +924,18 @@
     },
     {
       "Path": "README.md",
-      "SHA256": "C8A387849D135F6CC64B1AE041F50127E578F2498C3DFCD1101B057E73FFAB88",
-      "Bytes": 1318
+      "SHA256": "2B710F836C3DCB916413ABEC004016F738B85099942CEA8C73BDB0C07050DFD9",
+      "Bytes": 2621
     },
     {
       "Path": "repo.json",
-      "SHA256": "F97D6A2D1E72E9FC8FED820CDE9A3903BB6C5B6BE671E42B031EE21283B72059",
-      "Bytes": 3056
-    },
-    {
-      "Path": "src/Captain.Boosters/BoosterConditionCompat.cs",
-      "SHA256": "9D9C6456339413B4760943E65CCE96EEDDF7AAE238FDBB20509850A4271180ED",
-      "Bytes": 6652
-    },
-    {
-      "Path": "src/Captain.Boosters/BoosterSelection.cs",
-      "SHA256": "8F1FB081AD3EB12308B07983666F4878C2EFB2B412C201E9FD38D4676AD9979E",
-      "Bytes": 8809
-    },
-    {
-      "Path": "src/Captain.Boosters/BoosterViewPolicy.cs",
-      "SHA256": "7BDBDBA83E8BE0DD16CE7C29B82F80344AD93687B5E0B842B8FF5C7D316FEC86",
-      "Bytes": 1937
-    },
-    {
-      "Path": "src/Captain.Boosters/BotBoosterAdapter.cs",
-      "SHA256": "008F0EEF111DE1A04C52B478394D91AE8D754267B99E36EC6E0E494E29DEC5C0",
-      "Bytes": 55804
-    },
-    {
-      "Path": "src/Captain.Boosters/BotBoosterHud.cs",
-      "SHA256": "2DE1847157B6983EF67B613D3598D24FC0072EC6F7FAA50568B796D8AEB69483",
-      "Bytes": 5947
-    },
-    {
-      "Path": "src/Captain.Boosters/BotBoosterLayout.cs",
-      "SHA256": "7C1C7FE910ADA2FEB9D1CD4B44292175A460034839D1924166783C6AE3A368C1",
-      "Bytes": 4413
-    },
-    {
-      "Path": "src/Captain.Boosters/BotBoosterView.cs",
-      "SHA256": "8367F813CE7DABE75966110D624B9AF83C09AC81E8E3DFB5983F5E58C67BF3F0",
-      "Bytes": 9120
-    },
-    {
-      "Path": "src/Captain.Boosters/ModuleEntry.cs",
-      "SHA256": "032F977D1E6342D9738C3B96BA1351D8C55D2C7DC9CCE7B4F85279B75FED1B7A",
-      "Bytes": 1119
-    },
-    {
-      "Path": "src/Captain.Boosters/NativeBoosterState.cs",
-      "SHA256": "92ECF40E20D499BE841CB83898E23E0E19A7C17CF9187DAE2EC892C756350012",
-      "Bytes": 1930
-    },
-    {
-      "Path": "src/Captain.Commands/AutoPickupAdapter.cs",
-      "SHA256": "2C340705F925C6ACBED2B5B047E666B4F84DAC66A75D67ED3EAE9A75DC3BFAFC",
-      "Bytes": 14439
-    },
-    {
-      "Path": "src/Captain.Commands/AutoPickupPolicy.cs",
-      "SHA256": "B0A0E4B1C5DD69991F9B5726D83DEA3E9B3F5461B9BA5B7211069703CEA54228",
-      "Bytes": 1099
-    },
-    {
-      "Path": "src/Captain.Commands/BotControlService.cs",
-      "SHA256": "3F1C7786547CDEF1910A984F5A4D1C28CC614D1DB854DA9CA8685DA98C399AA0",
-      "Bytes": 20048
-    },
-    {
-      "Path": "src/Captain.Commands/BotTaskBridge.cs",
-      "SHA256": "76CAAA7BBF99B8E4AA2BF0D46E6FF337A21EEF39A9171A1B20C24EC7260BC874",
-      "Bytes": 4246
-    },
-    {
-      "Path": "src/Captain.Commands/CaptainCommandCatalog.cs",
-      "SHA256": "B2B552E77B81299F93F3803348D5982A7C6BCDFAD43342FE3F9D5D56CB38CB0C",
-      "Bytes": 44495
-    },
-    {
-      "Path": "src/Captain.Commands/CaptainMenuInput.cs",
-      "SHA256": "2AF51A940E0E79B31BC0929EFA81AA34E9B170D9B4B3411855953EE7E857D3C8",
-      "Bytes": 9006
-    },
-    {
-      "Path": "src/Captain.Commands/CaptainMenuTree.cs",
-      "SHA256": "5595F0D46A9625BAECF68E41A97CC94B5EA632450D90C9BE2D7D567CE781A64F",
-      "Bytes": 3990
-    },
-    {
-      "Path": "src/Captain.Commands/CollectTaskAdapter.cs",
-      "SHA256": "124DB61E24F4B617C5CADBEA98C244B522CB4413100D1BE9B0E83D9CA7D6BD63",
-      "Bytes": 11846
-    },
-    {
-      "Path": "src/Captain.Commands/CollectTaskPolicy.cs",
-      "SHA256": "CFFA2EBAEB8AE0F408444133CA2C9188DCADB6B22894786C5D84B5B9A95BDD3A",
-      "Bytes": 6410
-    },
-    {
-      "Path": "src/Captain.Commands/ContainerBridge.cs",
-      "SHA256": "D8A9FC156C1E0DED172E7763C8F3B416205A1399F35471CBC59BFBEECF918366",
-      "Bytes": 3371
-    },
-    {
-      "Path": "src/Captain.Commands/ControlCombatContract.cs",
-      "SHA256": "358E99FEA865B397790C3E613F0691B6F38C9887FE64C154597594B62EB6529D",
-      "Bytes": 315
-    },
-    {
-      "Path": "src/Captain.Commands/ControlCombatTask.cs",
-      "SHA256": "4790FE125338F7B673E039247CE062C4B98FA08D5148E9E92ADFB2A510B6E0AD",
-      "Bytes": 3592
-    },
-    {
-      "Path": "src/Captain.Commands/ControlCommandAdapter.cs",
-      "SHA256": "BBD22229E014820235B65EE5364A0CF0576F6646B9B73E7A74A30902CF71A1A1",
-      "Bytes": 18669
-    },
-    {
-      "Path": "src/Captain.Commands/ControlCommandPolicy.cs",
-      "SHA256": "B8FB0D71CF8477F17CC5A2C01C797E1779D036CCC55D53648FD2286CE69E44F2",
-      "Bytes": 838
-    },
-    {
-      "Path": "src/Captain.Commands/FocusControlTask.cs",
-      "SHA256": "F371CC762C1BEFF35B848DDDCEC8C580C20CC8C3E5E515C0481B8A7E40B0F51E",
-      "Bytes": 8197
-    },
-    {
-      "Path": "src/Captain.Commands/FocusOrders.cs",
-      "SHA256": "B7909C2B131B1126EC55FCFE6AB099086E00D298E5018509C752C0DB4A1F0DEA",
-      "Bytes": 10604
-    },
-    {
-      "Path": "src/Captain.Commands/GuardCombat.cs",
-      "SHA256": "D3A4445BB03D7D11BF52CB85FC9644AC0CED3398EC705CC8E251519E42A4FF33",
-      "Bytes": 7411
-    },
-    {
-      "Path": "src/Captain.Commands/GuardPolicy.cs",
-      "SHA256": "5D940111BF26F1BE0CE0641CB7778ABA0BA7DD36378D06B1C2EA1E4081D622F8",
-      "Bytes": 1248
-    },
-    {
-      "Path": "src/Captain.Commands/GuardTargets.cs",
-      "SHA256": "39714020419A333B9F82DBDBFFCF3FAFE869DA5A9DD52EF22A5506182FA765EE",
-      "Bytes": 6722
-    },
-    {
-      "Path": "src/Captain.Commands/ItemActionAuthorization.cs",
-      "SHA256": "9AE03DC0DA56D9D5EE10E311C5046C33967D07F4FB70B443DA9C14038A98710C",
-      "Bytes": 5437
-    },
-    {
-      "Path": "src/Captain.Commands/ItemArrivalPolicy.cs",
-      "SHA256": "05F0AF5360261229C653F144589FE6A05CADBCBFFA7B3599720D1D4714BE8CBE",
-      "Bytes": 637
-    },
-    {
-      "Path": "src/Captain.Commands/ItemInteractionGeometry.cs",
-      "SHA256": "82C5336466A433E473F1A663CC718A316EDB1C8D6C3DF503BCF5537C9CB4DA81",
-      "Bytes": 4199
-    },
-    {
-      "Path": "src/Captain.Commands/ItemRegion.cs",
-      "SHA256": "1320CE20473F54275568AF74315CA053A1E6801F7A8B35BEEDBFFB87A0B51B2F",
-      "Bytes": 2272
-    },
-    {
-      "Path": "src/Captain.Commands/ItemTargetResolver.cs",
-      "SHA256": "1521F0E4F92AD81446716A080F3B7D4FDAD525698770979A60075F9E7F38F103",
-      "Bytes": 4262
-    },
-    {
-      "Path": "src/Captain.Commands/ItemTaskAdapter.cs",
-      "SHA256": "0A36A63D2173F38E74D7CBC35792F7ECF10D8103DA6B32D92B44651FF3135DC9",
-      "Bytes": 76408
-    },
-    {
-      "Path": "src/Captain.Commands/ItemTaskPolicy.cs",
-      "SHA256": "9F75EDCD0D54286ACE68F68C49CF9338E10CF29F226D1155CA30187706076B12",
-      "Bytes": 9824
-    },
-    {
-      "Path": "src/Captain.Commands/ItemTaskSession.cs",
-      "SHA256": "6BB5C26DBD032060DDB69869B76307BB3AA89EB5A0A4CCD2DC0AF5F97C03D556",
-      "Bytes": 21796
-    },
-    {
-      "Path": "src/Captain.Commands/ItemWorldIndex.cs",
-      "SHA256": "E29EE25E93DE827C18AE1DBED5829FD264093B5D977A6C706A84C99DB55534CD",
-      "Bytes": 3252
-    },
-    {
-      "Path": "src/Captain.Commands/KillBorrowPolicy.cs",
-      "SHA256": "CC449457CEE52301774AD19C1A374DD6C42E672D8BA2FC3999E8D24966D7FF63",
-      "Bytes": 3150
-    },
-    {
-      "Path": "src/Captain.Commands/KillCombatBridge.cs",
-      "SHA256": "010A4ACE1FF929331E423762527F61ABC7EE1F739D2616789ECC067EE1A64A90",
-      "Bytes": 5452
-    },
-    {
-      "Path": "src/Captain.Commands/KillContinuationPolicy.cs",
-      "SHA256": "AF7BC810862BC4DD00BC8A78EC87D378A4FD3F2E3EA9FD667864468F60B7BC8C",
-      "Bytes": 1324
-    },
-    {
-      "Path": "src/Captain.Commands/KillMeleeAdapter.cs",
-      "SHA256": "A7784AE0D4CDD5A183947BAF7813C0CC7B4B197A75785785DD987449BA257387",
-      "Bytes": 8768
-    },
-    {
-      "Path": "src/Captain.Commands/KillPositionAdapter.cs",
-      "SHA256": "4811B68FD7FEAC5267D55AA417BF092A709ADC950F5B2772AA7B4729757CD149",
-      "Bytes": 4423
-    },
-    {
-      "Path": "src/Captain.Commands/KnownContainerIndex.cs",
-      "SHA256": "C4C60E1423832D191D753F55E5CDD52475B35DA7A26C6FDBC46F2BCFD609C544",
-      "Bytes": 9264
-    },
-    {
-      "Path": "src/Captain.Commands/KnownInteractionIndex.cs",
-      "SHA256": "C167BDC1B4B2273D2D8E4222A8C78BC5FE4A5534FFB825CF23417EA86052BBBD",
-      "Bytes": 14306
-    },
-    {
-      "Path": "src/Captain.Commands/KnownSupplyIndex.cs",
-      "SHA256": "C8D00A266637B0417BB1CD8419EA9FE9DB750DB2215C2131AE391BEB2AFEFAC4",
-      "Bytes": 7768
-    },
-    {
-      "Path": "src/Captain.Commands/KnownSupplyLedger.cs",
-      "SHA256": "4295A6BBD8E1E9021C83FB8AEE680F009F5E04A00447AFC7B7E44B576179D21B",
-      "Bytes": 1974
-    },
-    {
-      "Path": "src/Captain.Commands/KnownTerminalIndex.cs",
-      "SHA256": "E9C9607A17B991DBF1D9C28E0B6C09A042F71F617CF4F5BC90E6927C4E7DCC80",
-      "Bytes": 7416
-    },
-    {
-      "Path": "src/Captain.Commands/MarkedOpenTarget.cs",
-      "SHA256": "2026141F99EC961E9C5327B5FBEADF1D6F334FD16AEED3682B01E8D2DFAD2242",
-      "Bytes": 12663
-    },
-    {
-      "Path": "src/Captain.Commands/ModuleEntry.cs",
-      "SHA256": "6C590FF82933339D48DAECB265EB58C6960A8728BE7702437F0359B6EFDA0875",
-      "Bytes": 1234
-    },
-    {
-      "Path": "src/Captain.Commands/MovementOrders.cs",
-      "SHA256": "4E86BC8BC34149ECAC3E11FDB7102F21CB21C9D4BC5E13C790DF3EF4E55CEE2E",
-      "Bytes": 49178
-    },
-    {
-      "Path": "src/Captain.Commands/NativePickupAdapter.cs",
-      "SHA256": "0C5A3D2C911C55A9360151754444AA084E62ED5F74B712A13E6027C45E40646A",
-      "Bytes": 16987
-    },
-    {
-      "Path": "src/Captain.Commands/OpenTargetLocks.cs",
-      "SHA256": "B177622129532CD3B5843A90A29CB86EAF650D0BAEEBCBA642D70E720B7B3BAA",
-      "Bytes": 1893
-    },
-    {
-      "Path": "src/Captain.Commands/OpenTaskAdapter.cs",
-      "SHA256": "BB3A2B6BD1B0D2767EC8538633293C05F8C4D2ECA5439BA618F7F72FEB4D6BCD",
-      "Bytes": 31652
-    },
-    {
-      "Path": "src/Captain.Commands/OpenTaskDiagnostics.cs",
-      "SHA256": "D8CFA69C3D580568B45E915954D5A06EA56A5DE1F64D67AC31532EE5FE8E1B59",
-      "Bytes": 2876
-    },
-    {
-      "Path": "src/Captain.Commands/OpenTaskPolicy.cs",
-      "SHA256": "15EC1B4FB9809871420EB397B39B289E8CAE6D2694D8257346EF46A41229E87D",
-      "Bytes": 8829
-    },
-    {
-      "Path": "src/Captain.Commands/PickupPromptHud.cs",
-      "SHA256": "267943F456611E3B9A13BC4FD308A880FB4201FF57F78C0F552E2BC80B3F9454",
-      "Bytes": 4909
-    },
-    {
-      "Path": "src/Captain.Commands/PickupPromptQueue.cs",
-      "SHA256": "D89BF61B367AEBD809D428051F5D38F322111CC9818F004517C4455E49871A33",
-      "Bytes": 1333
-    },
-    {
-      "Path": "src/Captain.Commands/PositionMarks.cs",
-      "SHA256": "6EBA8B6321BDA1B5A9CE02BE99D47DC3F9818AC57EE37AC394DD1EDDF1736EE9",
-      "Bytes": 5999
-    },
-    {
-      "Path": "src/Captain.Commands/PositionTaskPolicy.cs",
-      "SHA256": "A2C807A74A7D1D66EF046C6CBA321AE432E4898C024C4E4B5557F374F85CD425",
-      "Bytes": 6135
-    },
-    {
-      "Path": "src/Captain.Commands/RescueOrders.cs",
-      "SHA256": "B66E95514DD658B1E4BA992E26C4027A24F2A97B61A3AEAA7F7A2270280889DA",
-      "Bytes": 24618
-    },
-    {
-      "Path": "src/Captain.Commands/RescuePolicy.cs",
-      "SHA256": "E6507479FAA4FC3BE45729F0A9BCFFFB41C3FB10B5CC305BD1777E181E8F3120",
-      "Bytes": 5140
-    },
-    {
-      "Path": "src/Captain.Commands/ResourceUseAdapter.cs",
-      "SHA256": "7F51E478258D4A8D396EB6AAE6FC8D50DAEE974E4828F8115D601BB2AD0A84AD",
-      "Bytes": 33083
-    },
-    {
-      "Path": "src/Captain.Commands/ResourceUsePolicy.cs",
-      "SHA256": "2D08C07B134012269DF45AB0E8E57C1B68AD33376645CE4431817ED73BC6B27E",
-      "Bytes": 1846
-    },
-    {
-      "Path": "src/Captain.Commands/RouteNavigation.cs",
-      "SHA256": "C2F82728F25DF44B69CA496780FBCA2390669C13C6805C9320E9627FC712424F",
-      "Bytes": 9821
-    },
-    {
-      "Path": "src/Captain.Commands/RoutePolicy.cs",
-      "SHA256": "5712E52636CADD1F4C71FFACF945278626510420EF6B77BF2824729583C5F4B7",
-      "Bytes": 2391
-    },
-    {
-      "Path": "src/Captain.Commands/RouteTargets.cs",
-      "SHA256": "970F0750A625F81DC9FF2679FD191CDF6515F822659551063960D902A6EF1AD2",
-      "Bytes": 2008
-    },
-    {
-      "Path": "src/Captain.Commands/RouteTraversal.cs",
-      "SHA256": "2979B6A6244E7EFABB26EDC32308FB19136B4D839F941ED7395270970892D546",
-      "Bytes": 8640
-    },
-    {
-      "Path": "src/Captain.Commands/SearchMarker.cs",
-      "SHA256": "8FF51FD67C9BFF244DB7FE4F42289FF44ECCF6988FFB885F206F20E9CFD42985",
-      "Bytes": 2164
-    },
-    {
-      "Path": "src/Captain.Commands/SearchTaskAdapter.cs",
-      "SHA256": "64D777FB52A08E9F5928CD9CD2CEA62DD7D8C4DD8D35DA8566781BB13A82BF5A",
-      "Bytes": 8826
-    },
-    {
-      "Path": "src/Captain.Commands/SearchTaskPolicy.cs",
-      "SHA256": "B29380518343CE6588A77B514942F2B052C35A1204462107C1DDD3653F222896",
-      "Bytes": 1233
-    },
-    {
-      "Path": "src/Captain.Commands/SearchTraversal.cs",
-      "SHA256": "29B2B589591E64EA979A9D7B29818C5ED5B1FCEE4A6CC98B41C5BBFE60F20707",
-      "Bytes": 5818
-    },
-    {
-      "Path": "src/Captain.Commands/SharedMeleeBridge.cs",
-      "SHA256": "6E8140266851221AC97AA12659E5EC0CF8F5E520DFE099FA4B112DA08429F368",
-      "Bytes": 9468
-    },
-    {
-      "Path": "src/Captain.Commands/SingleKillAdapter.cs",
-      "SHA256": "2E191C6E0AA652B258BC4924FC1A4BF626CAB1B55D31CD1984CF04A72FA2B449",
-      "Bytes": 49465
-    },
-    {
-      "Path": "src/Captain.Commands/SingleKillPolicy.cs",
-      "SHA256": "932A0EFF860AB35597767F46066810FF726BC9FC50F5A0FD42E10759B7CFD297",
-      "Bytes": 4989
-    },
-    {
-      "Path": "src/Captain.Commands/SpecialItemAccess.cs",
-      "SHA256": "F0E389550CAB03D7F99B86D32C654E2E3A07F9F78F6B7F2265F2383300ED6235",
-      "Bytes": 2052
-    },
-    {
-      "Path": "src/Captain.Commands/SpecialItemPolicy.cs",
-      "SHA256": "F46C8204B230BF5DBA6A70DF8DBE64C09F4DCAFED4B3237EDDAA0418B274DD72",
-      "Bytes": 779
-    },
-    {
-      "Path": "src/Captain.Commands/StackCompatibility.cs",
-      "SHA256": "ECE470D4B15A0CB49277E01A181ADE788FDE1A7138D6F26E47A17FE68D0903DA",
-      "Bytes": 13833
-    },
-    {
-      "Path": "src/Captain.Commands/StationPolicy.cs",
-      "SHA256": "CAD4CB81B0BC301E0A1DE92F84390138DBB97188B0E11E1A29B7B9B0E727AFE3",
-      "Bytes": 3653
-    },
-    {
-      "Path": "src/Captain.Commands/TaskBoard.cs",
-      "SHA256": "DB79750DE3A10D84342998BA61A043D987A1983D439CD02DD0CD0CB7283F62B3",
-      "Bytes": 3952
-    },
-    {
-      "Path": "src/Captain.Commands/ToolSupplyAdapter.cs",
-      "SHA256": "603B57EADC6A42E1C53EAD8C6C58F313D61D272A2E8A508645FC4A51876DF056",
-      "Bytes": 15778
-    },
-    {
-      "Path": "src/Captain.Commands/ToolSupplyPolicy.cs",
-      "SHA256": "69D441A86A27C5587FCEFDC4A4C1F207D2B9BD300F60318295656C6D40F10E03",
-      "Bytes": 3691
-    },
-    {
-      "Path": "src/Captain.Fixes/ModuleEntry.cs",
-      "SHA256": "D0918EC43978BD2B622CBD513F40B9472695184C576FEE3173254AE2F04F6E13",
-      "Bytes": 2006
-    },
-    {
-      "Path": "src/Captain.Fixes/SmartPingCompat.cs",
-      "SHA256": "2AEF69E918456484CC1BF38F8F01E02F7D6850D7919FE2663F51AEA90E1E9A69",
-      "Bytes": 6264
-    },
-    {
-      "Path": "src/Captain.Fixes/TerminalAliasPolicy.cs",
-      "SHA256": "8BB2D0EB6C1040010DFCB7C731FAB65A34483217B46548AB79F2CD252DE667F5",
-      "Bytes": 704
-    },
-    {
-      "Path": "src/Captain.Fixes/TerminalHelpTranslation.cs",
-      "SHA256": "5F503213DD4EB240BD91F059CA100F57156DD90DA30130F62BCD875A016C7251",
-      "Bytes": 980
-    },
-    {
-      "Path": "src/Captain/中文词典.json",
-      "SHA256": "4B8D4B403FE19F023839DD2B0952971F8D79793C0A00A81D0E62BB26E454A8EB",
-      "Bytes": 6809
-    },
-    {
-      "Path": "src/Captain/BotControlApi.cs",
-      "SHA256": "8E39533BFB675FC77E12C080041C0027E9993D2F674CB0F38E78520B1DFA8A14",
-      "Bytes": 5241
-    },
-    {
-      "Path": "src/Captain/BotControlCommands.cs",
-      "SHA256": "30C428A18B935E9787403C3F6FA6861822504B5081204FF3C588D4ADC46BCA1F",
-      "Bytes": 2294
-    },
-    {
-      "Path": "src/Captain/KnownTypes.cs",
-      "SHA256": "BD0A9BF9776070348B49DB56A406939419F926C5051CE7F43F916018B44153D5",
-      "Bytes": 3382
-    },
-    {
-      "Path": "src/Captain/Plugin.cs",
-      "SHA256": "DA14F2780C09BE82D69604F1472CF9AFCFE0E4D327CF61A01B53BE789DF9D86C",
-      "Bytes": 7079
-    },
-    {
-      "Path": "src/Captain/TranslationCatalog.cs",
-      "SHA256": "5E645EB0FE1A4673C601D35F6B5C4965A9E99BAE3256C9912F6278DE7F419B92",
-      "Bytes": 3631
-    },
-    {
-      "Path": "src/HeadCamera/CameraHud.cs",
-      "SHA256": "86BD18F74D5143ADF4C283EC7B493B9336943C57F3734767268AEDB185FDFA1E",
-      "Bytes": 6928
-    },
-    {
-      "Path": "src/HeadCamera/CameraRuntime.cs",
-      "SHA256": "DD0825ACD0933BEF94433D8BBDD4C9F5FE2D60025B4FFDB0C5C52E2101E8DEB9",
-      "Bytes": 13741
-    },
-    {
-      "Path": "src/HeadCamera/ControlView.cs",
-      "SHA256": "ACE6F43D96CEB67478098AA81114C27A6D2DEB837787C1FAD31F1657D95A7403",
-      "Bytes": 657
-    },
-    {
-      "Path": "src/HeadCamera/HeadCameraApi.cs",
-      "SHA256": "049D261ACDA4A078C2CB12D7DAF9C00FE2ECCD9C8545A157B7E18A7D90F956AD",
-      "Bytes": 4737
-    },
-    {
-      "Path": "src/HeadCamera/HudCameraRegistry.cs",
-      "SHA256": "82A73AFC82D3CDDAE5560E5C87C8CB282237AD336406488C4F507130AD099553",
-      "Bytes": 1469
-    },
-    {
-      "Path": "src/HeadCamera/HudViewIdentityApi.cs",
-      "SHA256": "506931B29D90FD9A484F402A2DD1A80EFF450E23E18565444ED5107BD3CBBFB1",
-      "Bytes": 3376
-    },
-    {
-      "Path": "src/HeadCamera/NativeCapture.cs",
-      "SHA256": "D7D1E673379C4AAA9B0C372784FBCB5EDCF7DBF6A58243E00ED905DC372E84C1",
-      "Bytes": 22171
-    },
-    {
-      "Path": "src/HeadCamera/Plugin.cs",
-      "SHA256": "63E14FE742098AEEEF9DFF8D3BF0071180314BC4A1B51876FC41BCD1BDDD1FE9",
-      "Bytes": 7065
-    },
-    {
-      "Path": "src/HeadCamera/ToggleGesture.cs",
-      "SHA256": "533CD6D1CD2B8B02509C89FCDC559467B9ED2F44B9D7F48610F127D6A1860A41",
-      "Bytes": 1692
-    },
-    {
-      "Path": "src/HeadCamera/ViewPolicy.cs",
-      "SHA256": "C70B4D1DA7807DDEF221EFE7E500EFA8CEFD3FC61314CABEE4C02ADE63EFD843",
-      "Bytes": 3878
-    },
-    {
-      "Path": "src/MicroMaster/BodyThreatWatch.cs",
-      "SHA256": "AA6B6EC1059FD611E8DFA2693968D02909B12FC467EDD1203AFD347EE099D6AA",
-      "Bytes": 2861
-    },
-    {
-      "Path": "src/MicroMaster/ControlHooks.cs",
-      "SHA256": "8F37C54DBD45325E9173E129AB1D289082022F621561861EF5D5DE058F94C43A",
-      "Bytes": 10035
-    },
-    {
-      "Path": "src/MicroMaster/ControlRuntime.cs",
-      "SHA256": "4E9D278B59A391E61D88E5A36583D4345D1C93E2A2B07380392BBE8AF73941CE",
-      "Bytes": 18075
-    },
-    {
-      "Path": "src/MicroMaster/ControlSafety.cs",
-      "SHA256": "3EF7551BC24AAD9F1E1D525249B8D8B2B0587BEE1CFE000114BDCD08688129DB",
-      "Bytes": 902
-    },
-    {
-      "Path": "src/MicroMaster/ManualMotionPolicy.cs",
-      "SHA256": "F34BE84A6C084ECA57DAE224C7107C2CEFC3FA91DD0A859C67E0790E6F04D54A",
-      "Bytes": 3823
-    },
-    {
-      "Path": "src/MicroMaster/NativeManualWalk.cs",
-      "SHA256": "F4505C112B36A96BCB637FD8D40FF22DF5C4FD6B1A810FA462882159E1DDF016",
-      "Bytes": 4707
-    },
-    {
-      "Path": "src/MicroMaster/Plugin.cs",
-      "SHA256": "C733121B68FF9016366BBA1D9DC4FF7EF1A5866CFC7E3A560F2BC63D8B663D64",
-      "Bytes": 5142
+      "SHA256": "8B70649294D0736E06358A4ABA85C10E84B500F524EF9C51E295A35919B7D990",
+      "Bytes": 6993
     },
     {
       "Path": "Test.ps1",
-      "SHA256": "1271D6DDBDDE1574CBC126659CEE831B34C1768015DD46ACBAC070DC017F7A20",
-      "Bytes": 7759
-    },
-    {
-      "Path": "tests/Captain.Boosters/BoosterAdapterMocks.cs",
-      "SHA256": "4EE0CDEA1F5F4F25A0C067BEC80842895DE92FCEE4FE19DE76075AAC3A1ED218",
-      "Bytes": 21531
-    },
-    {
-      "Path": "tests/Captain.Boosters/BoosterAdapterTests.cs",
-      "SHA256": "1E26E1B03031E952E88F07D74D7D54E8894FC5E339E47C93B004FE57FE7904EB",
-      "Bytes": 24563
-    },
-    {
-      "Path": "tests/Captain.Boosters/BoosterConditionHarmonyFixture.cs",
-      "SHA256": "A432F809CDD0B4CDAD1B3410AAD9418BB26F3D16B6313E788A182D172FFDCDEC",
-      "Bytes": 2404
-    },
-    {
-      "Path": "tests/Captain.Boosters/BoosterConditionHarmonyTests.cs",
-      "SHA256": "E7026970A3CFBC9DFA2F63AC722E763A4B3FE9889B5B6121A44CDF96FFB2D3FB",
-      "Bytes": 3263
-    },
-    {
-      "Path": "tests/Captain.Boosters/BoosterConditionMocks.cs",
-      "SHA256": "DAC9C836CF2725E0EF7C7B08E732E2775FE6BB4E5D47BCF8A95FDB77D08E9BDC",
-      "Bytes": 970
-    },
-    {
-      "Path": "tests/Captain.Boosters/BoosterConditionTests.cs",
-      "SHA256": "C058E2C2258C1A87AECFD037C38CBF9E9CFEDE09B373F447157CE081D2976461",
-      "Bytes": 4955
-    },
-    {
-      "Path": "tests/Captain.Boosters/BoosterPolicyTests.cs",
-      "SHA256": "CC359395B998F1AACAC5D2C22D500565F9D16507C05CE20A1B2D5F28AE8FA20A",
-      "Bytes": 7738
-    },
-    {
-      "Path": "tests/Captain.Commands/AutoPickupMocks.cs",
-      "SHA256": "F393D535D0B46CBA393E828A828343B6D14ACB3B3B52A0775D05ECE322F04F96",
-      "Bytes": 11577
-    },
-    {
-      "Path": "tests/Captain.Commands/AutoPickupTests.cs",
-      "SHA256": "30B182CFF74072DB7EC3DC0B3E38D6DD2C11DCA99080BA03DA83B169C078ECB1",
-      "Bytes": 14038
-    },
-    {
-      "Path": "tests/Captain.Commands/CollectTaskTests.cs",
-      "SHA256": "0CD032F5C4E2D5FA54E705AA76A2452FF19BAEB11C8CAA1B02D3D138BA18B19E",
-      "Bytes": 15977
-    },
-    {
-      "Path": "tests/Captain.Commands/ControlCommandExternalMocks.cs",
-      "SHA256": "5CE98FBEFC58374C824CC2D465D2764EEF26156584FA730CDC9E499038E644B7",
-      "Bytes": 462
-    },
-    {
-      "Path": "tests/Captain.Commands/GuardMocks.cs",
-      "SHA256": "62F0ED1F92F9B567496F74BEBEDFC66D51EAF30BDD5C117261AD3301866657BE",
-      "Bytes": 16839
-    },
-    {
-      "Path": "tests/Captain.Commands/GuardMovementMocks.cs",
-      "SHA256": "F05889F813626DC17BDB69BD8BC945059168C26B277C14F5F8123C3F7513CB17",
-      "Bytes": 19913
-    },
-    {
-      "Path": "tests/Captain.Commands/GuardMovementTests.cs",
-      "SHA256": "CA1F86D8B9964B6931382F28DFD0152F9D7272ACCE8CAA106DE4EF5A5684CE56",
-      "Bytes": 7345
-    },
-    {
-      "Path": "tests/Captain.Commands/GuardTests.cs",
-      "SHA256": "97EED8B15BFBED712E26F78A8648202F995D2E3D5294AF48537F4A1B00D2EA6C",
-      "Bytes": 8800
-    },
-    {
-      "Path": "tests/Captain.Commands/ItemTargetTests.cs",
-      "SHA256": "34DADA24B260703FDDA6C328DE525F1FF2AD01CCD6DF743A0E0C060235BDF581",
-      "Bytes": 4845
-    },
-    {
-      "Path": "tests/Captain.Commands/ItemTaskMocks.cs",
-      "SHA256": "C6A432C5EA5CE6E624C4A49E5BCF0197997C780F46E5CDC4285812A04B2F8118",
-      "Bytes": 20167
-    },
-    {
-      "Path": "tests/Captain.Commands/ItemTaskTests.cs",
-      "SHA256": "AE22D25281388D5AE0FF6859E680EA26E0DADB5334CE97D64210A93305B52998",
-      "Bytes": 29523
-    },
-    {
-      "Path": "tests/Captain.Commands/KillBorrowTests.cs",
-      "SHA256": "91D430DC9C098B14729501F0C2D7A2B7DD1F71588ED999ADFEDA4DFC846895C9",
-      "Bytes": 7516
-    },
-    {
-      "Path": "tests/Captain.Commands/KillContinuationMocks.cs",
-      "SHA256": "C1BF8E604E3D69024B47B36F1B486DB29DEC0026583DD0B1460DD44B570E4ACE",
-      "Bytes": 3603
-    },
-    {
-      "Path": "tests/Captain.Commands/KillContinuationTests.cs",
-      "SHA256": "3841490F8DEA7F8CD880247A73C7FD77CE250E8BDCD599DE864BE46897B08D0E",
-      "Bytes": 4678
-    },
-    {
-      "Path": "tests/Captain.Commands/KillMeleeMocks.cs",
-      "SHA256": "9BF33527DDC1ACD77DA4358AEB679C9DE3DA55138CD87398B0022A58473B5D2F",
-      "Bytes": 7105
-    },
-    {
-      "Path": "tests/Captain.Commands/KillMeleeTests.cs",
-      "SHA256": "885924299B648718A8B1875574662C029C6797A2FB82927DEAC1FF529B5617AF",
-      "Bytes": 12179
-    },
-    {
-      "Path": "tests/Captain.Commands/KnownContainerTests.cs",
-      "SHA256": "2996080D27A0D57C7A838B6DCC77E832F258CD04DBE1FA99D20E65164C752322",
-      "Bytes": 13744
-    },
-    {
-      "Path": "tests/Captain.Commands/KnownInteractionTests.cs",
-      "SHA256": "A1E8EE78F3040498F78527960D2BAD5A92C5386F788EC8086EC40A925448D20E",
-      "Bytes": 17615
-    },
-    {
-      "Path": "tests/Captain.Commands/KnownSupplyTests.cs",
-      "SHA256": "33A9927C58641060E947BD6EDF9259FFB69500C96177E3C4FE53B2C67A5BEB16",
-      "Bytes": 11434
-    },
-    {
-      "Path": "tests/Captain.Commands/KnownTerminalTests.cs",
-      "SHA256": "31786E35C4889D44445B3BFCF6A7647106815C1FCCE5E908D1836BA339F71CFE",
-      "Bytes": 13503
-    },
-    {
-      "Path": "tests/Captain.Commands/MenuInputTests.cs",
-      "SHA256": "18FC634C779AC380B4E6B88833D778AAE04AEE3B5B8BF651A2BAD4E8C3040D37",
-      "Bytes": 56762
-    },
-    {
-      "Path": "tests/Captain.Commands/MovementOrderTests.cs",
-      "SHA256": "2F7671E86173F65EDBB0A9F9CDA4A42B83DC276B956A69B6503376DF017AFC42",
-      "Bytes": 6861
-    },
-    {
-      "Path": "tests/Captain.Commands/NativePickupTests.cs",
-      "SHA256": "D22888D7123A4A544C34CDB153C56B2679DD0E7BF444422E7BA8B55CA71C9D88",
-      "Bytes": 19638
-    },
-    {
-      "Path": "tests/Captain.Commands/NavigationTests.cs",
-      "SHA256": "71196DEB39DC2F34AAE3CB5D97EA715CF7C788F1CD505BCB09525F80F9D1DA2F",
-      "Bytes": 17931
-    },
-    {
-      "Path": "tests/Captain.Commands/OpenAdapterMocks.cs",
-      "SHA256": "50812B5334161C62A5F50D9678EC3AC6806527817BB815B3D319C1A4484C95AE",
-      "Bytes": 13615
-    },
-    {
-      "Path": "tests/Captain.Commands/OpenAdapterTests.cs",
-      "SHA256": "B396D301C175683B57001FDA290D8A1762BC1185937298DBE528BD246A8B51BB",
-      "Bytes": 11834
-    },
-    {
-      "Path": "tests/Captain.Commands/OpenTaskTests.cs",
-      "SHA256": "06EA19D327F46C693AC3127CCBDBC2599143F4AED6F896549D2889229F1462D4",
-      "Bytes": 10002
-    },
-    {
-      "Path": "tests/Captain.Commands/RescueAdapterMocks.cs",
-      "SHA256": "2F07AD2F83B6D4A36A025FD0956D8C6EFD715522BC98BD255CF6CB0F5C811C61",
-      "Bytes": 7755
-    },
-    {
-      "Path": "tests/Captain.Commands/RescueAdapterTests.cs",
-      "SHA256": "286F451A6F8779E26350CE67BF5D361615CFBBFF70CF5B4A33A12B5851783C8E",
-      "Bytes": 8486
-    },
-    {
-      "Path": "tests/Captain.Commands/RescueTests.cs",
-      "SHA256": "73C3B6C518C645280E22B761214B369D9CD6FBF3B71941CB8921B9E0C0264236",
-      "Bytes": 5438
-    },
-    {
-      "Path": "tests/Captain.Commands/ResourceUseMocks.cs",
-      "SHA256": "0040559D83914458FE7A03EC6D1352374D4851762C705A21B5A103F361659EF0",
-      "Bytes": 10427
-    },
-    {
-      "Path": "tests/Captain.Commands/ResourceUseTests.cs",
-      "SHA256": "AE9EBA4BB7188B20930095BDB9725BD0B708FAA1AC2047F50523F34A7D8172C7",
-      "Bytes": 15407
-    },
-    {
-      "Path": "tests/Captain.Commands/SearchTaskTests.cs",
-      "SHA256": "03B3EE965A58CF1E858B9943221E17582CF0628E46D5A02228173C6FC0D8EC6B",
-      "Bytes": 20522
-    },
-    {
-      "Path": "tests/Captain.Commands/SearchTraversalTests.cs",
-      "SHA256": "1E081749E9152CE31905C2FA61FF32619B629331DE60C62D3386CFEEF53D40C2",
-      "Bytes": 9530
-    },
-    {
-      "Path": "tests/Captain.Commands/SingleKillTests.cs",
-      "SHA256": "F5E8D50B7E75D429C29048756D171199C7499FAB6EAA79BBAA45700981207E91",
-      "Bytes": 6972
-    },
-    {
-      "Path": "tests/Captain.Commands/StationTests.cs",
-      "SHA256": "66D77D1FACA194E85B70616635D3992A4B1485489D3D07FDA65D03C4E87E9B02",
-      "Bytes": 4973
-    },
-    {
-      "Path": "tests/Captain.Commands/TaskBoardTests.cs",
-      "SHA256": "368DEBBEA1D6B1DD13926859200B2A6A8B0EAEF49B2F20AC5118F413C08CD032",
-      "Bytes": 4735
-    },
-    {
-      "Path": "tests/Captain.Commands/ToolCombatMocks.cs",
-      "SHA256": "EE0693AAD17CC0222D4C856A60BAA74E216288545255F9CBD33C784124F9C111",
-      "Bytes": 14519
-    },
-    {
-      "Path": "tests/Captain.Commands/ToolCombatTests.cs",
-      "SHA256": "504039436F9AB2F1BE3C96B30827719B68A84CA54036A6B9EF66F68A57FE543F",
-      "Bytes": 13140
-    },
-    {
-      "Path": "tests/Captain.Fixes/PickupTerminalTests.cs",
-      "SHA256": "F14102D02E464DA22C5C4A55267810A5B773671C29B5AC99C96A47963FB5E17E",
-      "Bytes": 9248
-    },
-    {
-      "Path": "tests/Captain.Fixes/TerminalCompatMocks.cs",
-      "SHA256": "962DD2A058D71D157B6F5A74AF1A9DFB1AE90F74F7F5211C285C855831E266C9",
-      "Bytes": 3254
-    },
-    {
-      "Path": "tests/Captain/KnownTypesTests.cs",
-      "SHA256": "F0F431D809EA693BF3DEAB6C22B2DFDD73E4821B616C6491D9998B01DBDC5EDA",
-      "Bytes": 3825
-    },
-    {
-      "Path": "tests/Captain/TranslationTests.cs",
-      "SHA256": "D25DCFBBB8570F4B8AFF2FFAD78AC3A182E144ACDE0DA491BA4ED428736F159F",
-      "Bytes": 2728
-    },
-    {
-      "Path": "tests/HeadCamera/PolicyTests.cs",
-      "SHA256": "61CAEDA5F5FE3D4569D1468BD6EA87D7121E243D624EBEE9AF67E2D17DC83379",
-      "Bytes": 4925
-    },
-    {
-      "Path": "tests/MicroMaster/BorrowedItemTests.cs",
-      "SHA256": "D952BA720F3CDE4953B126F4368A87EC71DB6ABD9B781EB041BEC644742CB551",
-      "Bytes": 6156
-    },
-    {
-      "Path": "tests/MicroMaster/BorrowedOpenTests.cs",
-      "SHA256": "EDB7BBA09EB2477A660F4C80E5846A51F07E39D4433B1D8E8F362EB3D449F078",
-      "Bytes": 3600
-    },
-    {
-      "Path": "tests/MicroMaster/CaptainRegressionStubs.cs",
-      "SHA256": "8CEE3579A92567DAD894A2E49226CFFE0FCF95164AB53044D293E83077330DF8",
-      "Bytes": 148
-    },
-    {
-      "Path": "tests/MicroMaster/CommandMocks.cs",
-      "SHA256": "CAB665141AB8A897C51D1CE8595B3CE73EC9589F9D2B25BDA3AA22EF96A6CE54",
-      "Bytes": 19302
-    },
-    {
-      "Path": "tests/MicroMaster/CommandTests.cs",
-      "SHA256": "8AB6E5D53081A12ACB238FB402F1EF7E074349CFE8D2148149A537D1F11C0A81",
-      "Bytes": 17249
-    },
-    {
-      "Path": "tests/MicroMaster/ControlTests.cs",
-      "SHA256": "8B8DFFCFDA163BBA9547B8697F195272D3CA50AA31F87EE5D2F83D528285F303",
-      "Bytes": 9588
-    },
-    {
-      "Path": "tests/MicroMaster/FollowControlTests.cs",
-      "SHA256": "15950CD43DA80BDB15E37CCD9A6069C0D1AD1735F4AF7EFCEECD0E04EA0F5470",
-      "Bytes": 2664
-    },
-    {
-      "Path": "tests/MicroMaster/HeadAimMocks.cs",
-      "SHA256": "C566BE88BB41235203E83172BB589BCC6C5B1F1E530D41373C23AF2DAB0A4CB4",
-      "Bytes": 1230
-    },
-    {
-      "Path": "tests/MicroMaster/HeadAimTests.cs",
-      "SHA256": "80580CE6E3B5B442BA5A9DF075A8540E4963263086D57E837592E1690328C510",
-      "Bytes": 2612
-    },
-    {
-      "Path": "tests/MicroMaster/MotionMocks.cs",
-      "SHA256": "56AF8A8A863826A1D830D70EB63EF671E2E6FD01829E21FF8ECF7EDED11D9D0B",
-      "Bytes": 4402
-    },
-    {
-      "Path": "tests/MicroMaster/MotionTests.cs",
-      "SHA256": "8B9AEE523E620D61B24F5978536D5CE85DA072537D8EF8E991C168762D8B8901",
-      "Bytes": 8153
-    },
-    {
-      "Path": "tests/MicroMaster/NativeCombatMocks.cs",
-      "SHA256": "EC8AEACBCEF1E4C5F5F3DA2ED641EEF7CD23408D60E1E1B26D38F691600DF091",
-      "Bytes": 15376
-    },
-    {
-      "Path": "tests/MicroMaster/NativeCombatTests.cs",
-      "SHA256": "66BE7065DBA3D09E24097BCD5D24FCD95129C269513B13D11BB8FD31DE68FC66",
-      "Bytes": 11064
-    },
-    {
-      "Path": "tests/MicroMaster/RuntimeMocks.cs",
-      "SHA256": "51C3049F23AC04724F0A213ADF95AB4DA75A8A0A7B992027F325B14B8BB56422",
-      "Bytes": 8820
-    },
-    {
-      "Path": "tests/MicroMaster/RuntimeSafetyTests.cs",
-      "SHA256": "224BC9FFC0E633495A193A30C80F6DC11565A52FFBE5733642615C60CE03E53B",
-      "Bytes": 13756
-    },
-    {
-      "Path": "tests/MicroMaster/ServiceMocks.cs",
-      "SHA256": "F525A7FB86EEE4BE9D7F61593C5E647077AAB153ACFBA766BEEBB9F062BFC371",
-      "Bytes": 8533
-    },
-    {
-      "Path": "tests/MicroMaster/ServiceTests.cs",
-      "SHA256": "5C59A646DEB6793F21C8BDDCC7608555D0293A60BE833D06B9117597CBC6E100",
-      "Bytes": 9454
-    },
-    {
-      "Path": "tests/MicroMaster/StationHandoffTests.cs",
-      "SHA256": "ADB236E5E582A885AFE3ABFC7A526B854D0BCE7CEE6DA958E77F4D6FF5299126",
-      "Bytes": 6351
+      "SHA256": "92C2DF97AEF96E14EBB36EC87C6E11784FAFFD32CC82903A9ED765770E315D99",
+      "Bytes": 8151
     }
   ]
 }
