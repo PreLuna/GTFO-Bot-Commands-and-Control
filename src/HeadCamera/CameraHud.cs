@@ -1,0 +1,113 @@
+using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace PreLuna.HeadCamera
+{
+    internal sealed class CameraHud : IDisposable
+    {
+        GameObject root;
+        RectTransform card;
+        RawImage image;
+        TextMeshProUGUI title, status;
+        TextMeshProUGUI aim;
+        string lastTitle, lastStatus;
+        float retryAt;
+        int previousWidth;
+        int previousScreenWidth, previousScreenHeight;
+        WindowCorner previousCorner;
+        float previousX, previousY;
+        bool previousEnlarged;
+        internal bool IsVisible => root != null && root.activeInHierarchy;
+        static GameObject Rect(string name, Transform parent, Vector2 anchors, Vector2 pivot, Vector2 size, Vector2 pos)
+        {
+            var go = new GameObject(name);
+            var rt = go.AddComponent<RectTransform>();
+            rt.SetParent(parent, false); rt.anchorMin = rt.anchorMax = anchors; rt.pivot = pivot;
+            rt.sizeDelta = size; rt.anchoredPosition = pos;
+            return go;
+        }
+        public bool Ensure()
+        {
+            if (root != null) return true;
+            if (Time.unscaledTime < retryAt) return false;
+            retryAt = Time.unscaledTime + 3;
+            var template = GuiManager.PlayerLayer?.m_gameEventLog?.m_txtInput;
+            if (template?.font == null) return false;
+            try
+            {
+                root = new GameObject("PreLuna.HeadCamera.HUD"); root.AddComponent<RectTransform>();
+                var canvas = root.AddComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 45;
+                var scale = root.AddComponent<CanvasScaler>(); scale.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scale.referenceResolution = new Vector2(1920, 1080); scale.matchWidthOrHeight = .5f;
+                // A passive overlay: no raycaster, selectable, event system, focus change or cursor unlock.
+                var panel = Rect("Panel", root.transform, Vector2.one, Vector2.one, new Vector2(360, 255), Vector2.zero);
+                card = panel.GetComponent<RectTransform>();
+                var background = panel.AddComponent<Image>(); background.color = new Color(.01f, .02f, .025f, .94f); background.raycastTarget = false;
+                var picture = Rect("Feed", card, new Vector2(0, 1), new Vector2(0, 1), new Vector2(348, 196), new Vector2(6, -30));
+                image = picture.AddComponent<RawImage>(); image.color = Color.white; image.raycastTarget = false;
+                var reticle = Rect("ControlAim", image.rectTransform, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(24, 24), Vector2.zero);
+                aim = reticle.AddComponent<TextMeshProUGUI>(); aim.font = template.font; aim.fontSize = 22;
+                aim.text = "+"; aim.alignment = TextAlignmentOptions.Center; aim.color = Color.white; aim.raycastTarget = false;
+                title = Label("Title", card, template.font, 19, new Vector2(8, -3));
+                status = Label("Status", card, template.font, 16, new Vector2(8, -229));
+                previousWidth = -1; ApplyLayout(); root.SetActive(false);
+                return true;
+            }
+            catch { Dispose(); retryAt = Time.unscaledTime + 5; throw; }
+        }
+        static TextMeshProUGUI Label(string name, Transform parent, TMP_FontAsset font, float size, Vector2 position)
+        {
+            var go = Rect(name, parent, new Vector2(0, 1), new Vector2(0, 1), new Vector2(344, 26), position);
+            var value = go.AddComponent<TextMeshProUGUI>(); value.font = font; value.fontSize = size;
+            value.richText = false; value.raycastTarget = false; value.color = Color.white;
+            value.alignment = TextAlignmentOptions.MidlineLeft; value.overflowMode = TextOverflowModes.Truncate;
+            return value;
+        }
+        void ApplyLayout()
+        {
+            bool enlarged = HeadCameraApi.Enlarged;
+            int width = (int)WindowLayoutPolicy.Width(enlarged ? 960 : Math.Clamp(Plugin.WindowWidth.Value, 200, 960), Screen.width, Screen.height);
+            var corner = Plugin.Corner.Value; float x = Plugin.MarginX.Value, y = Plugin.MarginY.Value;
+            if (enlarged == previousEnlarged && width == previousWidth && corner == previousCorner && x == previousX && y == previousY
+                && Screen.width == previousScreenWidth && Screen.height == previousScreenHeight) return;
+            previousEnlarged = enlarged; previousWidth = width; previousCorner = corner; previousX = x; previousY = y;
+            previousScreenWidth = Screen.width; previousScreenHeight = Screen.height;
+            float height = (width - 12) * 9f / 16;
+            bool right = corner == WindowCorner.TopRight || corner == WindowCorner.BottomRight;
+            bool top = corner == WindowCorner.TopRight || corner == WindowCorner.TopLeft;
+            var anchor = new Vector2(right ? 1 : 0, top ? 1 : 0);
+            card.anchorMin = card.anchorMax = card.pivot = anchor; card.sizeDelta = new Vector2(width, height + 58);
+            // Clamp margins to leave the entire window on ultrawide/narrow screens too.
+            float referenceWidth = 1080f * Screen.width / Math.Max(1, Screen.height);
+            x = Math.Clamp(x, 0, Math.Max(0, referenceWidth - width)); y = Math.Clamp(y, 0, 1080 - height - 58);
+            card.anchoredPosition = new Vector2(right ? -x : x, top ? -y : y);
+            if (enlarged) {
+                card.anchorMin = card.anchorMax = card.pivot = new Vector2(.5f, .5f);
+                card.anchoredPosition = Vector2.zero;
+            }
+            image.rectTransform.sizeDelta = new Vector2(width - 12, height);
+            title.rectTransform.sizeDelta = new Vector2(width - 16, 26);
+            status.rectTransform.sizeDelta = new Vector2(width - 16, 24); status.rectTransform.anchoredPosition = new Vector2(8, -height - 32);
+        }
+        public void Show(RenderTexture texture, string name, string message)
+        {
+            if (texture == null) HeadCameraApi.RecordControlAim(null);
+            if (!Ensure()) return;
+            ApplyLayout(); root.SetActive(true);
+            image.texture = texture; image.enabled = texture != null;
+            aim.enabled = texture != null && HeadCameraApi.Busy;
+            if (name != lastTitle) { title.text = name; lastTitle = name; }
+            if (message != lastStatus) { status.text = message; lastStatus = message; }
+        }
+        public void Hide() { HeadCameraApi.RecordControlAim(null); if (root != null) root.SetActive(false); }
+        public void Dispose()
+        {
+            if (image != null) image.texture = null;
+            if (root != null) UnityEngine.Object.Destroy(root);
+            root = null; card = null; image = null; title = status = null; lastTitle = lastStatus = null; retryAt = 0;
+            aim = null;
+        }
+    }
+}

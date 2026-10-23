@@ -1,0 +1,59 @@
+using System;
+using System.Linq;
+using System.Reflection;
+using Player;
+using Gear;
+using Enemies;
+using UnityEngine;
+using PreLuna.Captain.Tasks;
+using Combat=PreLuna.CoopBotsCustom.Combat.CombatAdapter;
+using Sync=PreLuna.CoopBotsCustom.Reliability.SyncMelee;
+static class ToolCombatTests {
+ static int checks;
+ static void Check(bool ok,string why){checks++;if(!ok)throw new Exception(why);}
+ static void Call(Type type,string method,params object[] args)=>type.GetMethod(method,BindingFlags.NonPublic|BindingFlags.Static).Invoke(null,args);
+ static PlayerAIBot NewBot(int slot){var a=new PlayerAgent{PlayerSlotIndex=slot,PlayerName="bot"+slot};var b=new PlayerAIBot{Agent=a,Backpack=new()};a.Bot=b;a.Inventory=b.Inventory;PlayerManager.Current.Slots[slot]=a;PlayerBackpackManager.Bags[a.Owner.Pointer]=b.Backpack;
+  b.Backpack.Held[InventorySlot.GearClass]=new(){Instance=new ItemEquippable()};b.Backpack.AmmoStorage.Ammo[InventorySlot.GearClass]=new();
+  var pack=new ItemEquippable{PublicName="工具补给"};b.Backpack.Held[InventorySlot.ResourcePack]=new(){Instance=pack};b.Backpack.AmmoStorage.Ammo[InventorySlot.ResourcePack]=new(){AmmoInPack=5};PlayerBackpackManager.Items[pack]=new ResourcePackPickup();b.Inventory.WieldedItem=pack;
+  var root=new RootPlayerBotAction{m_bot=b};b.m_rootAction=new(){ActionBase=root};return b;
+ }
+ static void Reset(){ToolSupplyAdapter.Reset();FocusOrders.Reset();Sync.session=null;Sync.Preparations=Sync.Swings=Sync.Cancels=0;PlayerManager.Current=new();PlayerBackpackManager.Bags.Clear();PlayerBackpackManager.Items.Clear();Combat.States.Clear();ItemTaskAdapter.Blocked.Clear();ItemTaskAdapter.Messages.Clear();UnityEngine.Object.Objects.Clear();Physics.Blocked=false;Physics.Hit=null;BotTaskBridge.Permit=BotTaskBridge.Auto=true;RouteTraversal.Open=true;Time.time=0;ResourcePackFirstPerson.Consume=ResourcePackFirstPerson.Increase=true;ResourcePackFirstPerson.Calls=0;TaskBoard.Journal.Reset();SNetwork.SNet.IsMaster=true;
+  var host=NewBot(0);host.Agent.Owner.IsBot=false;
+ }
+ static ToolSupplyTarget Held()=>ToolSupplyAdapter.Capture().Single(t=>t.Slot==0&&t.Sentry==null);
+ static long Pack(PlayerAIBot bot)=>bot.Inventory.WieldedItem.Pointer.ToInt64();
+ static float PackAmmo(PlayerAIBot bot)=>bot.Backpack.AmmoStorage.GetInventorySlotAmmo(InventorySlot.ResourcePack).AmmoInPack;
+ static void Tick(float at){Time.time=at;ToolSupplyAdapter.Tick();}
+ static void Tools(){
+  Reset();var bot=NewBot(1);var t=Held();ToolSupplyAdapter.Issue(bot,t,Pack(bot));Tick(0);Check(ResourcePackFirstPerson.Calls==0,"补给时长前不消耗");Tick(2);Check(ToolSupplyAdapter.Owns(bot),"应用后进入双向核验");Tick(2.1f);Check(!ToolSupplyAdapter.Owns(bot)&&PackAmmo(bot)==4&&PlayerBackpackManager.Bags[t.Player.Owner.Pointer].AmmoStorage.GetInventorySlotAmmo(InventorySlot.GearClass).AmmoInPack==24,"携带工具一次原版补给双向确认");Tick(9);Check(ResourcePackFirstPerson.Calls==1,"核验成功不重复用包");
+  Reset();bot=NewBot(1);var owner=PlayerManager.GetLocalPlayerAgent();var bag=PlayerBackpackManager.Bags[owner.Owner.Pointer];var sentry=new SentryGunInstance{Owner=owner};bag.Deployed=sentry;t=ToolSupplyAdapter.Capture().Single(x=>x.Sentry!=null);ToolSupplyAdapter.Issue(bot,t,Pack(bot));Tick(0);Tick(2);Tick(2.1f);Check(sentry.Ammo==30&&PackAmmo(bot)==4,"已部署炮台得到原版相对弹药并扣一份");Check(bag.AmmoStorage.GetInventorySlotAmmo(InventorySlot.GearClass).AmmoInPack==4,"炮台补给不叠加到队友携带工具");Check(((SentryGunInstance_Sync)sentry.m_syncComp).Calls==1,"炮台弹量可靠同步一次");
+  foreach(var failure in new[]{0,1}){Reset();bot=NewBot(1);ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));ResourcePackFirstPerson.Consume=failure==0;ResourcePackFirstPerson.Increase=failure==1;Tick(0);Tick(2);Tick(5);Check(!ToolSupplyAdapter.Owns(bot)&&ResourcePackFirstPerson.Calls==1,"仅单边变化不能成功或重复消耗");Check(ItemTaskAdapter.Messages.Last().Contains("未同时确认"),"双向失败诊断");}
+  Reset();bot=NewBot(1);ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));ToolSupplyAdapter.Cancel(bot);Tick(0);Check(PackAmmo(bot)==5&&ResourcePackFirstPerson.Calls==0,"取消前未消耗资源");
+  Reset();bot=NewBot(1);ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));Tick(0);Tick(2);ToolSupplyAdapter.Cancel(bot);Tick(2.1f);Check(PackAmmo(bot)==4&&ResourcePackFirstPerson.Calls==1&&!ToolSupplyAdapter.Owns(bot),"应用后取消先核验，不再消耗");
+  Reset();bot=NewBot(1);ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));Tick(0);PlayerManager.GetLocalPlayerAgent().Owner=new();Tick(2);Check(ResourcePackFirstPerson.Calls==0&&!ToolSupplyAdapter.Owns(bot),"队友身份替换拒绝旧工具目标");
+  Reset();bot=NewBot(1);ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));Tick(0);BotTaskBridge.Permit=false;Tick(2);Check(ResourcePackFirstPerson.Calls==0&&!ToolSupplyAdapter.Owns(bot),"高优先级接管时使用前退出");
+  Reset();bot=NewBot(1);ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));Tick(0);Tick(2);Tick(2.1f);Check(ResourcePackFirstPerson.Calls==1,"重复菜单请求不会补两次");
+  Reset();bot=NewBot(1);bot.Agent.Position=new(30,0,0);ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));Tick(0);Tick(8);Tick(16);Tick(24);Tick(32);Check(bot.Requests==1&&ToolSupplyAdapter.Owns(bot),"原版长距离接近不中途重复请求或误超限");Tick(61);Check(!ToolSupplyAdapter.Owns(bot)&&ResourcePackFirstPerson.Calls==0,"接近总超时终止且零消耗");
+  Reset();bot=NewBot(1);Physics.Blocked=true;Physics.Hit=new(){Parent=PlayerManager.GetLocalPlayerAgent()};ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));Tick(0);Tick(2);Tick(2.1f);Check(ResourcePackFirstPerson.Calls==1,"工具目标自身碰撞体不阻止交互");
+  Reset();bot=NewBot(1);Physics.Blocked=true;Physics.Hit=new(){Parent=new object()};ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));Tick(0);Tick(2);Check(ResourcePackFirstPerson.Calls==0,"墙体阻挡不隔墙补给");
+  Reset();bot=NewBot(1);t=Held();ToolSupplyAdapter.Issue(bot,t,Pack(bot));Tick(0);PlayerBackpackManager.Bags[t.Player.Owner.Pointer].AmmoStorage.GetInventorySlotAmmo(InventorySlot.GearClass).AmmoInPack=100;Tick(2);Check(ResourcePackFirstPerson.Calls==0&&PackAmmo(bot)==5&&!ToolSupplyAdapter.Owns(bot),"使用前工具已补满则拒绝消耗");
+  Reset();bot=NewBot(1);t=Held();ToolSupplyAdapter.Issue(bot,t,Pack(bot));ResourcePackFirstPerson.Increase=false;Tick(0);Tick(2);Check(ToolSupplyAdapter.Owns(bot),"远端工具同步延迟保留核验窗口");PlayerBackpackManager.Bags[t.Player.Owner.Pointer].AmmoStorage.GetInventorySlotAmmo(InventorySlot.GearClass).AmmoInPack+=10;Tick(2.5f);Check(!ToolSupplyAdapter.Owns(bot)&&ResourcePackFirstPerson.Calls==1,"同步晚到只确认一次，不补用资源");
+  Reset();bot=NewBot(1);owner=PlayerManager.GetLocalPlayerAgent();bag=PlayerBackpackManager.Bags[owner.Owner.Pointer];sentry=new(){Owner=owner,m_syncComp=null};bag.Deployed=sentry;t=ToolSupplyAdapter.Capture().Single(x=>x.Sentry!=null);ToolSupplyAdapter.Issue(bot,t,Pack(bot));Check(!ToolSupplyAdapter.Owns(bot)&&ResourcePackFirstPerson.Calls==0,"可靠同步组件缺失时接单前拒绝");
+  Reset();bot=NewBot(1);ToolSupplyAdapter.Issue(bot,Held(),Pack(bot)+1);Check(!ToolSupplyAdapter.Owns(bot),"过期资源包身份不接单");
+  Reset();bot=NewBot(1);PlayerManager.GetLocalPlayerAgent().Position=new(20,0,0);RouteTraversal.Open=false;ToolSupplyAdapter.Issue(bot,Held(),Pack(bot));Check(!ToolSupplyAdapter.Owns(bot)&&ResourcePackFirstPerson.Calls==0,"封锁路径拒绝补给");
+ }
+ static EnemyAgent Enemy(int mode=1)=>new(){AI=new(){Mode=mode},InstanceID=53};
+ static RootPlayerBotAction Root(PlayerAIBot b)=>(RootPlayerBotAction)b.m_rootAction.ActionBase;
+ static void Focus(){
+  Reset();var b=NewBot(1);var enemy=Enemy();FocusOrders.Issue(b,enemy);Check(FocusOrders.HasState,"集火登记目标");var root=Root(b);root.m_attackAction.Prio=19;var s=new PreLuna.CoopBotsCustom.Combat.StateData{Sight=new(){Enemy=enemy},SelectedAt=0,OptionDue=8};Combat.States[b.Pointer]=s;var guns=s.Guns;Time.time=2;Call(typeof(FocusOrders),"SelectTarget",root);Check(root.m_attackAction.TargetAgent==enemy&&s.Selected==enemy&&s.SelectedID==enemy.Pointer,"实际评分适配层绑定同一敌人身份");Check(root.m_attackAction.Prio==19&&ReferenceEquals(guns,s.Guns)&&b.Requests==0,"不强改攻击优先级、不请求切枪动作");Check(s.OptionDue==0&&s.SelectedAt==2,"新目标使原有武器评分重新评估");s.OptionDue=5;s.SelectedID=new IntPtr(900);s.SelectedAt=2.9f;Time.time=3;Call(typeof(FocusOrders),"SelectTarget",root);Check(s.OptionDue==5&&s.SelectedAt==2,"重复目标不反复重置切枪稳定窗口");FocusOrders.Issue(b,enemy);Check(TaskBoard.Journal.Count==1,"重复命令复用一条任务");
+  root.m_attackAction.TargetAgent=null;BotTaskBridge.Auto=false;Call(typeof(FocusOrders),"SelectTarget",root);Check(root.m_attackAction.TargetAgent==null,"扫描／紧急任务让位");BotTaskBridge.Auto=true;s.Sight.Visible=false;Call(typeof(FocusOrders),"SelectTarget",root);Check(root.m_attackAction.TargetAgent==null,"评分视野不可见时不硬锁目标");s.Sight.Visible=true;b.Line=false;Call(typeof(FocusOrders),"SelectTarget",root);Check(root.m_attackAction.TargetAgent==null,"原版射击视线校验保留");b.Line=true;Call(typeof(FocusOrders),"SelectTarget",root);FocusOrders.Restore(b);Check(!FocusOrders.HasState&&s.Selected==null&&root.m_attackAction.TargetAgent==null&&s.SelectDue==0,"恢复自主战斗清除目标和缓存");
+  FocusOrders.Issue(b,enemy);enemy.Alive=false;FocusOrders.Tick();Check(!FocusOrders.HasState,"死亡解除手动目标");enemy.Alive=true;FocusOrders.Issue(b,enemy);enemy.InstanceID++;FocusOrders.Tick();Check(!FocusOrders.HasState,"实例身份变化解除手动目标");enemy=Enemy(4);FocusOrders.Issue(b,enemy);Check(!FocusOrders.HasState,"沉睡敌人不进入交火命令");enemy=Enemy();FocusOrders.Issue(b,enemy);PlayerManager.Current.Slots[1]=NewBot(1).Agent;FocusOrders.Tick();Check(!FocusOrders.HasState,"机器人槽位重建清除旧集火");
+ }
+ static void Shared(){
+  Reset();var b=NewBot(1);var other=NewBot(2);var host=PlayerManager.GetLocalPlayerAgent();var enemy=Enemy(4);var old=Enemy(4);var chatter=new ChatterReborn.Components.AutoCommunicator{LocalPlayer=host,m_targetAgent=old};UnityEngine.Object.Objects.Add(chatter);
+  var pick=new CaptainMenuBot(1,b.Agent.Owner.Pointer.ToInt64(),"bot1",true);SharedMeleeBridge.Prepare(enemy,new[]{pick});var view=SharedMeleeBridge.Capture();Check(view.Session==Sync.session&&Sync.session.Target==enemy&&Sync.session.Count==1&&Sync.session.Members[0].Bot==b,"菜单准备复用现有会话，只加入选中机器人");Check(chatter.m_targetAgent==old,"准备后恢复Chatter准星缓存");Check(SharedMeleeBridge.Owns(b)&&!SharedMeleeBridge.Owns(other),"参与者所有权来自同一会话");SharedMeleeBridge.Prepare(enemy,new[]{pick});Check(Sync.Preparations==1,"已有E／菜单会话不重建不取消");SharedMeleeBridge.Execute(view.Session);Check(Sync.Swings==0,"未准备好不释放攻击");Sync.session.Announced=true;Sync.session.Members[0].IsReady=true;Check(SharedMeleeBridge.Capture().Ready,"就绪状态读取原系统成员状态");SharedMeleeBridge.Execute(view.Session);Check(Sync.Swings==0,"玩家未拿近战不越过原释放规则");host.Inventory.WieldedItem=new MeleeWeaponFirstPerson();SharedMeleeBridge.Execute(new object());Check(Sync.Swings==0,"拒绝旧会话或错误目标身份");SharedMeleeBridge.Execute(view.Session);Check(Sync.Swings==1&&Sync.session.Released,"执行调用原E释放入口一次");SharedMeleeBridge.Execute(view.Session);Check(Sync.Swings==1,"重复执行不二次挥击");SharedMeleeBridge.Cancel(new object());Check(Sync.session!=null,"过期菜单取消不影响新会话");SharedMeleeBridge.Cancel(view.Session);Check(Sync.session==null&&Sync.Cancels==1,"取消清理同一个E会话");
+  ItemTaskAdapter.Blocked.Add(b.Pointer);SharedMeleeBridge.Prepare(enemy,new[]{pick});Check(Sync.session==null&&Sync.Preparations==1,"受保护物品任务不被协同抢占");ItemTaskAdapter.Blocked.Clear();enemy.Position=new(5,0,0);SharedMeleeBridge.Prepare(enemy,new[]{pick});Check(Sync.session==null,"近战准备距离保留4米门槛");
+  enemy.Position=default;Sync.session=new(){Source=host,Target=enemy,Count=1,Members=new[]{new PreLuna.CoopBotsCustom.Reliability.Member{Bot=b,IsReady=true}},Announced=true};var eView=SharedMeleeBridge.Capture();Check(eView.Session==Sync.session&&eView.Ready,"已有E键发起的会话同样可读、可执行");SharedMeleeBridge.Execute(eView.Session);Check(Sync.Swings==2,"E键会话可从菜单释放，无第二攻击控制器");
+ }
+ static void Main(){ToolSupplyAdapter.Install(new());FocusOrders.Install(new());SharedMeleeBridge.Install(new());Check(FocusOrders.Available&&SharedMeleeBridge.Available,"共享接口安装");Tools();Focus();Shared();Console.WriteLine("PASS "+checks+" actual tool/focus/shared-melee adapter tests with controlled native doubles; game animation/network not exercised.");}
+}

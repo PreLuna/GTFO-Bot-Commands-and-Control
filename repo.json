@@ -1,0 +1,115 @@
+{
+  "SchemaVersion": 2,
+  "Repository": "GTFO-Bot-Commands-and-Control",
+  "Modules": [
+    {
+      "Id": "CoopBotsCustom",
+      "Assembly": "PreLuna.CoopBotsCustom",
+      "Guid": "PreLuna.CoopBotsCustom",
+      "Version": "1.0.12",
+      "DependencyGuids": [
+        "com.sinai.unityexplorer",
+        "CHTR"
+      ],
+      "CompileDependencies": [],
+      "Kind": "frozen-migrated",
+      "LegacyGuid": "wanglocal.coopbotscustom",
+      "Baseline": "baseline/CoopBotsCustom/WangLocal.CoopBotsCustom.dll",
+      "BaselineSHA256": "785D4F98DF64BB059EF82E25960C61EA2A7D707D85A64401B1A12F3980FA987F"
+    },
+    {
+      "Id": "Captain",
+      "Assembly": "PreLuna.Captain",
+      "Guid": "PreLuna.Captain",
+      "Version": "0.5.4",
+      "DependencyGuids": [
+        "CHTR",
+        "PreLuna.CoopBotsCustom",
+        "com.fridos.smartping"
+      ],
+      "CompileDependencies": [],
+      "Kind": "managed-migrated",
+      "Resources": [
+        {
+          "Path": "src/Captain/中文词典.json",
+          "Name": "PreLuna.Captain.zh-CN.json"
+        }
+      ],
+      "LegacyGuid": "wanglocal.captain"
+    },
+    {
+      "Id": "Captain.Commands",
+      "Assembly": "PreLuna.Captain.Commands",
+      "Guid": "PreLuna.Captain.Commands",
+      "Version": "0.5.39",
+      "DependencyGuids": [
+        "PreLuna.Captain",
+        "CHTR",
+        "PreLuna.CoopBotsCustom"
+      ],
+      "CompileDependencies": [
+        "Captain"
+      ],
+      "Kind": "managed-migrated",
+      "LegacyGuid": "wanglocal.captain.commands"
+    },
+    {
+      "Id": "Captain.Boosters",
+      "Assembly": "PreLuna.Captain.Boosters",
+      "Guid": "PreLuna.Captain.Boosters",
+      "Version": "0.5.2",
+      "DependencyGuids": [
+        "PreLuna.Captain",
+        "dev.AuriRex.gtfo.TheArchive"
+      ],
+      "CompileDependencies": [
+        "Captain"
+      ],
+      "Kind": "managed-migrated",
+      "LegacyGuid": "wanglocal.captain.boosters"
+    },
+    {
+      "Id": "Captain.Fixes",
+      "Assembly": "PreLuna.Captain.Fixes",
+      "Guid": "PreLuna.Captain.Fixes",
+      "Version": "0.5.1",
+      "DependencyGuids": [
+        "PreLuna.Captain",
+        "com.fridos.smartping"
+      ],
+      "CompileDependencies": [
+        "Captain"
+      ],
+      "Kind": "managed-migrated",
+      "LegacyGuid": "wanglocal.captain.fixes"
+    },
+    {
+      "Id": "HeadCamera",
+      "Assembly": "PreLuna.HeadCamera",
+      "Guid": "PreLuna.HeadCamera",
+      "Version": "0.3.0",
+      "DependencyGuids": [],
+      "CompileDependencies": [],
+      "Kind": "managed-migrated",
+      "LegacyGuid": "wanglocal.headcamera"
+    },
+    {
+      "Id": "MicroMaster",
+      "Assembly": "PreLuna.MicroMaster",
+      "Guid": "PreLuna.MicroMaster",
+      "Version": "0.5.0",
+      "DependencyGuids": [
+        "PreLuna.HeadCamera",
+        "PreLuna.Captain",
+        "PreLuna.Captain.Commands",
+        "PreLuna.CoopBotsCustom"
+      ],
+      "CompileDependencies": [
+        "Captain",
+        "HeadCamera"
+      ],
+      "Kind": "managed-migrated",
+      "LegacyGuid": "wanglocal.micromaster"
+    }
+  ]
+}

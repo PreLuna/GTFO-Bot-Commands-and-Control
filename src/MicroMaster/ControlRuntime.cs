@@ -1,0 +1,257 @@
+using System;
+using Player;
+using SNetwork;
+using UnityEngine;
+using PreLuna.HeadCamera;
+using PreLuna.Captain.Control;
+using Il2CppInterop.Runtime.Attributes;
+using LevelGeneration;
+namespace PreLuna.MicroMaster
+{
+    public sealed class ControlRuntime : MonoBehaviour
+    {
+        public ControlRuntime(IntPtr pointer) : base(pointer) { }
+        internal static ControlRuntime Current;
+        long ticket, body, bodyOwner;
+        int bodySlot, mainThread, bodyInstance, targetInstance;
+        IntPtr floor, master;
+        CameraTarget target;
+        BotControlState state = BotControlState.Released;
+        bool registered, stopped, suspended;
+        float previousHealth, nextRegister;
+        string status;
+        readonly ManualLook look = new();
+        readonly StableEye eye = new();
+        readonly BodyThreatWatch threats = new();
+        NativeManualWalk walk;
+        ManualMotionRunner motion;
+        PUI_CommunicationMenu menu;
+        float eyeHeight, viewFov;
+        bool enlarged;
+        int qPauseFrame = -10;
+        internal bool CommandBusy => ticket != 0 && BotControlApi.CommandBusy(ticket, out _);
+        internal bool UiBlocked => FocusStateManager.CurrentState != eFocusState.FPS || !InputMapper.PlayerHasFocus
+            || PlayerChatManager.InChatMode || menu?.m_active == true || Input.GetKeyDown(KeyCode.Q) || Time.frameCount <= qPauseFrame + 1;
+        internal bool MotionAllowed => ManualMotionPolicy.InputAllowed(BlocksBody && state == BotControlState.Active,
+            FocusStateManager.CurrentState == eFocusState.FPS, Application.isFocused, PlayerChatManager.InChatMode, UiBlocked, CommandBusy);
+        internal static MoveIntent MoveKeys => ManualMotionPolicy.Keys(Input.GetKey(KeyCode.W), Input.GetKey(KeyCode.A), Input.GetKey(KeyCode.S), Input.GetKey(KeyCode.D));
+        internal bool IsOwnWalk(PlayerBotActionBase.Descriptor desc) => walk?.IsOwn(desc) == true;
+        internal bool CanWalk(PlayerAIBot bot, PlayerBotActionBase.Descriptor desc) => MotionAllowed && MoveKeys.Moving
+            && motion?.InputActive == true && walk?.Bot?.Pointer == bot?.Pointer && IsOwnWalk(desc);
+        internal bool CanUpdateWalk(PlayerBotActionWalk action) => MotionAllowed && MoveKeys.Moving && motion?.InputActive == true && IsOwnWalk(action?.DescBase);
+        internal void StopMotionNow()
+        {
+            try { motion?.Stop(); }
+            catch (Exception error) { Plugin.Instance?.Log.LogWarning("[微操大师] 步行停止异常：" + error); Exit("微调停止失败", true); }
+        }
+        internal void PrepareNativeWalk(PlayerBotActionWalk action)
+        {
+            if (!IsOwnWalk(action?.DescBase)) return;
+            try {
+                if (!CanUpdateWalk(action) || !walk.RefreshBeforeNativeStep(ManualMotionPolicy.World(MoveKeys, look.Yaw))) StopMotionNow();
+            } catch (Exception error) { Exit("步行前边界核验失败：" + error.GetBaseException().Message, true); }
+        }
+        internal bool Busy => ticket != 0 && state is BotControlState.Waiting or BotControlState.Active;
+        internal bool BlocksBody { get {
+            try { return Busy && Application.isFocused && WorldIdentityValid()
+                && BotControlApi.Controls(target.AgentIdentity, target.OwnerIdentity); }
+            catch (Exception error) { Exit("输入控制校验异常：" + error.GetBaseException().Message, true); return false; }
+        } }
+        internal long Body => body;
+        bool WorldIdentityValid()
+        {
+            if (!SNet.IsMaster || SNet.Master?.Pointer != master || master == IntPtr.Zero
+                || GameStateManager.CurrentStateName != eGameStateName.InLevel || Builder.CurrentFloor?.Pointer != floor) return false;
+            var local = PlayerManager.GetLocalPlayerAgent();
+            var agent = PlayerManager.Current?.GetPlayerAgentInSlot(target.Slot);
+            return local?.Pointer.ToInt64() == body && local.Owner?.Pointer.ToInt64() == bodyOwner
+                && local.PlayerSlotIndex == bodySlot && local.GetInstanceID() == bodyInstance && !local.IsBeingDestroyed && !local.IsBeingDespawned
+                && agent?.Pointer.ToInt64() == target.AgentIdentity && agent.Owner?.Pointer.ToInt64() == target.OwnerIdentity
+                && agent.Owner.IsBot && agent.GetInstanceID() == targetInstance && !agent.IsBeingDestroyed && !agent.IsBeingDespawned;
+        }
+        internal bool Controls(PlayerAgent agent) {
+            try { return agent?.Owner != null && BotControlApi.Controls(agent.Pointer.ToInt64(), agent.Owner.Pointer.ToInt64()); }
+            catch (Exception error) { Exit("机器人控制校验异常：" + error.GetBaseException().Message, true); return false; }
+        }
+        internal bool OwnsBot(PlayerAgent agent) => Controls(agent) || agent?.Owner != null
+            && BotControlApi.CommandOwns(agent.Pointer.ToInt64(), agent.Owner.Pointer.ToInt64());
+        public void Awake() { mainThread = Environment.CurrentManagedThreadId; Current = this; }
+        public void Update()
+        {
+            if (stopped || suspended) return;
+            try {
+                if (!registered && Time.unscaledTime >= nextRegister) {
+                    nextRegister = Time.unscaledTime + 1;
+                    registered = HeadCameraApi.RegisterControlInput(this, Request, () => Busy, () => Exit("T／摄像头关闭", true),
+                        () => Busy ? status : null, Plugin.DoubleClickWindow.Value);
+                    if (registered && !HeadCameraApi.RegisterControlView(this, View)) {
+                        HeadCameraApi.UnregisterControlInput(this); registered = false;
+                    }
+                }
+                if (!Busy) return;
+                var local = PlayerManager.GetLocalPlayerAgent();
+                string emergency = ControlSafety.Check(Plugin.Enabled.Value, SNet.IsMaster,
+                    GameStateManager.CurrentStateName == eGameStateName.InLevel, Application.isFocused,
+                    local?.Pointer.ToInt64() == body && local?.Owner?.Pointer.ToInt64() == bodyOwner && local?.PlayerSlotIndex == bodySlot,
+                    local?.Alive == true, local?.Damage?.GrabbedAtAll == true,
+                    local?.Locomotion != null && (int)local.Locomotion.m_currentStateEnum is >= 0 and <= 5,
+                    Input.GetKeyDown(Plugin.EmergencyKey.Value) || Input.GetKeyDown(KeyCode.Escape));
+                if (emergency != null) { Exit(emergency, true); return; }
+                if (!WorldIdentityValid()) { Exit("关卡／房主／队员会话身份改变", false); return; }
+                if (local.Damage == null) { Exit("本体伤害状态不可用", true); return; }
+                float health = local.Damage.Health;
+                if (!float.IsFinite(health)) { Exit("本体生命状态无效", true); return; }
+                if (ControlSafety.HealthDropped(previousHealth, health)) { Exit("本体受到伤害", true); return; }
+                previousHealth = health;
+                emergency = threats.Check(local, Time.unscaledTime, Plugin.ThreatExit.Value,
+                    Plugin.ThreatRadius.Value, Plugin.ThreatCount.Value, Plugin.ThreatConfirmation.Value);
+                if (emergency != null) { Exit(emergency, true); return; }
+                if (!HeadCameraApi.IsVisible || !HeadCameraApi.TryGetSelected(out var selected)
+                    || selected.Slot != target.Slot || selected.AgentIdentity != target.AgentIdentity || selected.OwnerIdentity != target.OwnerIdentity) { Exit("摄像头／观看对象已改变", true); return; }
+                var agent = PlayerManager.Current?.GetPlayerAgentInSlot(target.Slot);
+                if (agent?.Pointer.ToInt64() != target.AgentIdentity || agent.Owner?.Pointer.ToInt64() != target.OwnerIdentity
+                    || !agent.Alive || agent.IsBeingDestroyed || agent.IsBeingDespawned || agent.DimensionIndex != local.DimensionIndex) { Exit("机器人失效／离队／维度改变", true); return; }
+                if (!BotControlApi.Renew(ticket)) { Exit("接管心跳未被接受", true); return; }
+                var next = BotControlApi.Poll(ticket, out var reason);
+                if (next == BotControlState.Active && state != BotControlState.Active) {
+                    state = next; previousHealth = health;
+                    StartMotion(agent);
+                    Plugin.Instance.Log.LogInfo("[微操大师] 接管成功 bot=" + target.Name + "；稳定视角与WASD微调已就绪，本体输入隔离仍生效");
+                } else if (next is BotControlState.Failed or BotControlState.Released) Exit(reason ?? "接管服务结束", true);
+                if (Busy && state == BotControlState.Active) UpdateMotion(agent);
+            } catch (Exception error) {
+                Plugin.Instance?.Log.LogWarning("[微操大师] 更新异常，立即归还输入：" + error);
+                Exit("运行异常", true);
+            }
+        }
+        void StartMotion(PlayerAgent agent)
+        {
+            var bot = agent.GetComponent<PlayerAIBot>();
+            if (bot == null || !float.IsFinite(agent.EyePosition.y - agent.Position.y)) throw new InvalidOperationException("机器人运动／视点尚未准备好");
+            walk = new NativeManualWalk(bot); motion = new ManualMotionRunner(walk);
+            menu = UnityEngine.Object.FindObjectOfType<PUI_CommunicationMenu>();
+            eyeHeight = Math.Clamp(agent.EyePosition.y - agent.Position.y, 1, 1.9f);
+            eye.Reset(); viewFov = HeadCameraApi.DefaultFieldOfView; enlarged = true; qPauseFrame = -10;
+            var direction = agent.TargetLookDir.sqrMagnitude > .001f ? agent.TargetLookDir : agent.Forward;
+            look.Reset(new(direction.x, direction.y, direction.z));
+        }
+        void UpdateMotion(PlayerAgent agent)
+        {
+            if (Input.GetKeyDown(KeyCode.Q)) qPauseFrame = Time.frameCount;
+            bool allowed = MotionAllowed;
+            if (allowed) {
+                bool markClick = Input.GetMouseButtonDown(2);
+                if (markClick) MarkFromView();
+                if (Input.GetKeyDown(Plugin.ToggleViewKey.Value)) enlarged = !enlarged;
+                if (Input.GetKeyDown(Plugin.ResetViewKey.Value)) {
+                    var forward = agent.Forward; look.Reset(new(forward.x, 0, forward.z));
+                    enlarged = true; viewFov = HeadCameraApi.DefaultFieldOfView; eye.Reset();
+                } else if (!markClick) {
+                    ControlHooks.ReadMouse(out float x, out float y);
+                    look.Apply(x, y, Plugin.MouseSensitivity.Value, Plugin.InvertMouse.Value);
+                }
+                var direction = look.Direction;
+                walk.Bot.SyncValues.LookDirection = new Vector3(direction.X, direction.Y, direction.Z);
+            }
+            bool moving = motion.Tick(allowed, MoveKeys, look.Yaw);
+            status = UiBlocked ? "界面打开，微调暂停 · F8紧急退出" : "WASD微调 · 中键标记 · Q指令 · T退出";
+            if (BotControlApi.CommandBusy(ticket, out var command)) status = "指令执行：" + command + " · 微调／标记暂停 · F8紧急退出";
+            if (allowed && MoveKeys.Moving && !moving) status = "前方空间／导航不可用，已停止微调 · T退出";
+        }
+        void MarkFromView()
+        {
+            if (!HeadCameraApi.TryGetControlAim(out var rendered) || rendered.Target.Slot != target.Slot
+                || rendered.Target.AgentIdentity != target.AgentIdentity || rendered.Target.OwnerIdentity != target.OwnerIdentity) {
+                Notice("机器人镜头尚未刷新／不可见，请等画面出现后再中键标记"); return;
+            }
+            var p = rendered.Position; var d = rendered.Direction.normalized;
+            if (!BotControlApi.Mark(ticket, new BotControlRay(p.x, p.y, p.z, d.x, d.y, d.z), out var reason)) Notice(reason);
+        }
+        [HideFromIl2Cpp]
+        ControlView? View(CameraTarget selected)
+        {
+            if (state != BotControlState.Active || !BlocksBody || selected.AgentIdentity != target.AgentIdentity || selected.OwnerIdentity != target.OwnerIdentity) return null;
+            var agent = PlayerManager.Current?.GetPlayerAgentInSlot(target.Slot);
+            if (agent?.Pointer.ToInt64() != target.AgentIdentity) return null;
+            Vector3 position = agent.Position;
+            position.y = eye.Sample(position.y, eyeHeight, Time.unscaledTime);
+            var direction = look.Direction;
+            return new ControlView(target, position, new Vector3(direction.X, direction.Y, direction.Z), viewFov, enlarged, UiBlocked);
+        }
+        [HideFromIl2Cpp]
+        bool Request(CameraTarget selected)
+        {
+            if (stopped || suspended || Busy || Environment.CurrentManagedThreadId != mainThread) return false;
+            if (!Plugin.Enabled.Value) { Notice("微操大师已关闭"); return false; }
+            if (!selected.IsBot) { Notice("只能接管机器人"); return false; }
+            if (selected.Slot is < 0 or >= 4) { Notice("机器人槽位已失效"); return false; }
+            if (!BotControlApi.CommandsAvailable) { Notice("接管指令接口不可用，请安装本批配套公共核心与指令模块"); return false; }
+            var local = PlayerManager.GetLocalPlayerAgent();
+            if (local?.Owner == null || local.Damage == null || !Application.isFocused || FocusStateManager.CurrentState != eFocusState.FPS || PlayerChatManager.InChatMode) return false;
+            if (!float.IsFinite(local.Damage.Health)) { Notice("本体生命状态无效，不能接管"); return false; }
+            var agent = PlayerManager.Current?.GetPlayerAgentInSlot(selected.Slot);
+            if (Builder.CurrentFloor == null || SNet.Master == null || !SNet.IsMaster || GameStateManager.CurrentStateName != eGameStateName.InLevel
+                || agent?.Pointer.ToInt64() != selected.AgentIdentity || agent.Owner?.Pointer.ToInt64() != selected.OwnerIdentity) return false;
+            threats.Reset();
+            var danger = threats.Check(local, Time.unscaledTime, Plugin.ThreatExit.Value, Plugin.ThreatRadius.Value, Plugin.ThreatCount.Value, 0);
+            if (danger != null) { Notice("不能接管：" + danger); return false; }
+            threats.Reset();
+            if (!BotControlApi.Begin(new BotControlTarget(selected.Slot, selected.AgentIdentity, selected.OwnerIdentity), Plugin.Guid, out var nextTicket, out var reason)) {
+                Notice("接管未开始：" + reason); return false;
+            }
+            ticket = nextTicket; target = selected; body = local.Pointer.ToInt64(); bodyOwner = local.Owner.Pointer.ToInt64(); bodySlot = local.PlayerSlotIndex;
+            bodyInstance = local.GetInstanceID(); targetInstance = agent.GetInstanceID(); floor = Builder.CurrentFloor.Pointer; master = SNet.Master.Pointer;
+            previousHealth = local.Damage.Health; state = BotControlState.Waiting;
+            status = "等待任务暂停与控制权限 · T／F8取消";
+            Plugin.Instance.Log.LogInfo("[微操大师] 等待接管 bot=" + selected.Name + "；本体仍可操作"); return true;
+        }
+        internal void Damage(Dam_PlayerDamageLocal damage, float before)
+        {
+            if (!Busy || damage?.Owner?.Pointer.ToInt64() != body) return;
+            if (ControlSafety.HealthDropped(before, damage.Health) || !damage.Owner.Alive) Exit("本体受到伤害／倒地", true);
+        }
+        internal void Exit(string reason, bool recall)
+        {
+            long old = ticket;
+            // Clear the local gate BEFORE callbacks/native cleanup. Cleanup failure cannot retain input.
+            ticket = 0; state = BotControlState.Released; status = null; threats.Reset();
+            try {
+                try { motion?.Stop(); }
+                finally {
+                    try { HeadCameraApi.ClearControlView(this); }
+                    finally { if (old != 0) BotControlApi.Release(old, recall); }
+                }
+            }
+            catch (Exception error) { Plugin.Instance?.Log.LogWarning("[微操大师] 退出清理异常；本体输入已归还：" + error); }
+            if (old != 0) Notice("已退出：" + reason + "；本体操作已恢复，旧任务按原规则保留暂停");
+        }
+        static void Notice(string message)
+        {
+            Plugin.Instance?.Log.LogInfo("[微操大师] " + message);
+            try { GuiManager.PlayerLayer?.m_gameEventLog?.AddLogItem("[微操大师] " + message, eGameEventChatLogType.GameEvent); }
+            catch { /* Logging still records the result if the native HUD is unavailable. */ }
+        }
+        public void LateUpdate()
+        {
+            // Catch a lease/service loss occurring after this frame's Update.
+            if (Busy && state == BotControlState.Active && !BlocksBody) Exit("控制权限已失效", true);
+        }
+        public void OnApplicationFocus(bool focused) { if (!focused && Busy) Exit("窗口失去焦点", true); }
+        public void OnApplicationPause(bool paused) { if (paused && Busy) Exit("游戏暂停／切入后台", true); }
+        public void OnDisable() { suspended = true; if (Busy) Exit("接管组件停用", true); }
+        public void OnEnable() => suspended = false;
+        internal void StateChanging(eGameStateName next) { if (next != eGameStateName.InLevel && Busy) Exit("关卡状态切换", false); }
+        internal void Departing(PlayerAgent agent)
+        {
+            if (Busy && agent != null && (agent.Pointer.ToInt64() == body || agent.Pointer.ToInt64() == target.AgentIdentity))
+                Exit("本体／机器人离队或销毁", false);
+        }
+        internal void Shutdown()
+        {
+            if (stopped) return;
+            Exit("卸载／生命周期结束", true); HeadCameraApi.UnregisterControlInput(this);
+            registered = false; stopped = true; if (Current == this) Current = null;
+        }
+        public void OnDestroy() => Shutdown();
+    }
+}
