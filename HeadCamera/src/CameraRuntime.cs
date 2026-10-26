@@ -22,7 +22,7 @@ namespace PreLuna.HeadCamera
         readonly ControlFeedback feedback = new();
         NativeCapture capture;
         int mainThread;
-        float nextTargets, nextDiagnostics;
+        float nextTargets, nextDiagnostics, captureAspect;
         bool previouslyInLevel, allowed, stopped;
         string message;
         double elapsedTotal, elapsedMax;
@@ -199,9 +199,12 @@ namespace PreLuna.HeadCamera
                     Camera main = local.FPSCamera?.m_camera;
                     if (main == null || !RenderPipe.Initialized) { hud.Show(null, title, "等待原版相机准备完成"); return; }
                     var watch = Stopwatch.StartNew();
-                    capture ??= new NativeCapture();
-                    capture.Initialize(main, Plugin.Width.Value);
+                    float aspect = FirstPersonCapture.Aspect(controlView.HasValue, main.aspect);
+                    if (capture != null && Math.Abs(captureAspect - aspect) > .001f) { HeadCameraApi.RecordControlAim(null); DisposeCapture(); }
+                    capture ??= new NativeCapture(); captureAspect = aspect;
+                    capture.Initialize(main, Plugin.Width.Value, aspect);
                     capture.Capture(target, main, controlView);
+                    if (capture.Texture == null) { HeadCameraApi.RecordControlAim(null); hud.Show(null, title, "第一人称眼点被场景遮挡，移开后自动恢复"); return; }
                     HeadCameraApi.RecordControlAim(publishAim ? capture.CapturedView(controlView.Value) : null);
                     watch.Stop(); elapsedTotal += watch.Elapsed.TotalMilliseconds; elapsedMax = Math.Max(elapsedMax, watch.Elapsed.TotalMilliseconds); captureCount++;
                     failures.Success(); frameRate.Sample(Time.unscaledTime);
@@ -212,7 +215,7 @@ namespace PreLuna.HeadCamera
                         lastLoggedAgent = selected.AgentIdentity; lastLoggedControlled = controlView.HasValue;
                         Plugin.Instance.Log.LogInfo("[头戴摄像头] 画面提交：slot=" + selected.Slot + " name=" + selected.Name + " bot=" + selected.IsBot
                             + " controlled=" + controlView.HasValue + " suspended=" + (controlView?.Suspended == true) + " dimension=" + target.DimensionIndex + " texture=" + capture.Texture.width + "×" + capture.Texture.height
-                            + " targetPos=" + target.Position + "；画面内容仍需游戏内确认");
+                            + " targetPos=" + target.Position + " CPU提交=" + watch.Elapsed.TotalMilliseconds.ToString("F2") + "ms（非GPU计时）；画面内容仍需游戏内确认");
                     }
                 }
                 hud.Show(failures.Ready(Time.unscaledTime) ? capture?.Texture : null, title,

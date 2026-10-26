@@ -8,12 +8,12 @@ using UnityEngine;
 using PreLuna.HeadCamera;
 using PreLuna.Captain.Control;
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("0.5.14.0")]
+[assembly: AssemblyFileVersion("0.5.16.0")]
 namespace PreLuna.MicroMaster
 {
     [BepInDependency("PreLuna.FlashlightCustom", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInPlugin(Guid, "微操大师", "0.5.14")]
-    [BepInDependency("PreLuna.HeadCamera", ">=0.3.13 <0.4.0")]
+    [BepInPlugin(Guid, "微操大师", "0.5.16")]
+    [BepInDependency("PreLuna.HeadCamera", ">=0.3.14 <0.4.0")]
     [BepInDependency("PreLuna.Captain", "0.5.4")]
     [BepInDependency("PreLuna.Captain.Commands", ">=0.5.42 <0.6.0")]
     [BepInDependency("PreLuna.CoopBotsCustom", "1.0.12")]
@@ -35,7 +35,7 @@ namespace PreLuna.MicroMaster
         public override void Load()
         {
             Instance = this;
-            Log.LogInfo("[启动阶段] MicroMaster 0.5.14 BEGIN pid=" + Environment.ProcessId);
+            Log.LogInfo("[启动阶段] MicroMaster 0.5.16 BEGIN pid=" + Environment.ProcessId);
             LoadStep("读取配置", () => {
             Enabled = Config.Bind("开关", "启用", true, "房主接管、稳定观察、WASD微调；中键标记机器人镜头对象，Q下达开启、拾取、击杀、集火和退出驻守指令。");
             DoubleClickWindow = Config.Bind("按键", "双击间隔", .3f, new ConfigDescription("摄像头统一区分T单击和双击，单位秒。", new AcceptableValueRange<float>(.18f, .6f)));
@@ -57,7 +57,7 @@ namespace PreLuna.MicroMaster
                 LoadStep("可选原生手电兼容", NativeFlashlightCompatibility.Install);
                 PreLuna.Captain.Tasks.ControlPresentation.Feedback += OnFeedback;
                 LoadStep("创建接管运行器", () => runtime = AddComponent<ControlRuntime>());
-                LoadStep("保存配置", Config.Save); Log.LogInfo("微操大师0.5.14已加载：双击T接管，WASD微调，鼠标观察，中键标记物体／位置，Q下达指令／退出驻守，原生手电默认全关卡所有人机常亮（可配置为仅接管／AI自动）；敌群数量、标记与AI危险预判不再限制接管；本体受伤、倒地、被抓与生命周期变化仍自动退出；T退出，F8／Esc紧急退出。");
+                LoadStep("保存配置", Config.Save); Log.LogInfo("微操大师0.5.16已加载：双击T接管，WASD微调，鼠标观察，中键标记物体／位置，Q下达指令／退出驻守，原生手电默认全关卡所有人机常亮（可配置为仅接管／AI自动）；敌群数量、标记与AI危险预判不再限制接管；本体受伤、倒地、被抓与生命周期变化仍自动退出；T退出，F8／Esc紧急退出。");
             } catch (Exception error) {
                 PreLuna.Captain.Tasks.ControlPresentation.Feedback -= OnFeedback;
                 NativeFlashlightCompatibility.Uninstall(); NativeLightSettings.Clear(); harmony.UnpatchSelf(); Instance = null;

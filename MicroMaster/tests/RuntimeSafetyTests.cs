@@ -38,6 +38,7 @@ static class RuntimeSafetyTests
     }
     static PlayerAgent Agent(int slot,bool robot){var a=new PlayerAgent{PlayerSlotIndex=slot,Owner=new(){IsBot=robot}};a.Damage=new(){Owner=a};a.Sync.Agent=a;if(robot){a.Bot=new(){Agent=a};a.Bot.Inventory.Owner=a;}return a;}
     static void Reset(bool begin=true,bool snapshot=true){
+        Player.FlashlightInventory.AssetsAvailable=true;Player.FlashlightInventory.MissingAssetAttempts=0;
         HeadCameraApi.ThrowClear=false;NativeManualWalk.ThrowStop=false;service.ThrowRelease=false;runtime?.Shutdown();
         CullingSystem.C_CullingManager.VisibleSpotLights.Clear();Time.unscaledTime=0;Time.frameCount=0;InputMapper.FlashlightDown=false;NativeManualWalk.Blocked=false;NativeManualWalk.Stops=NativeManualWalk.Clears=0;NativeManualWalk.Own=null;Input.Held.Clear();Input.Down.Clear();Application.isFocused=true;FocusStateManager.CurrentState=eFocusState.FPS;
         Plugin.NativeLight.Value=true;Plugin.LightMode.Value=BotFlashlightMode.ControlledOnly;
@@ -62,6 +63,17 @@ static class RuntimeSafetyTests
     static Enemies.EnemyAgent Enemy(float x=1,int mode=1){var e=new Enemies.EnemyAgent{Position=new(x,0,0),CourseNode=body.CourseNode,DimensionIndex=body.DimensionIndex};e.AI.Mode=mode;body.Dimension.AgentsInDimension.Add(e);return e;}
     static void Cases(){
         Check(BotControlApi.Register(service),"测试服务注册");
+        Reset();
+        bot.transform.position=new(20,3,30);bot.EyePosition=new(99,99,99);body.transform.position=new(-20,15,-30);
+        var nativeView=HeadCameraApi.View(HeadCameraApi.Selected).Value;
+        Check(Math.Abs(nativeView.Position.y-4.8f)<.0001f&&nativeView.Position.x==20&&nativeView.Position.z==30,"接管以机器人原生第一人称数据定位，不使用本体世界坐标或远端动画头");
+        bot.Locomotion.Crouch=.5f;nativeView=HeadCameraApi.View(HeadCameraApi.Selected).Value;
+        Check(Math.Abs(nativeView.Position.y-4.4f)<.0001f,"实时跟随蹲伏过渡而非接管开始时固定眼高");
+        bot.PlayerData.camPosCrouch=new(0,.8f,0);bot.Locomotion.Crouch=1;bot.transform.position=new(20,4,30);body.FPSCamera.m_camera.fieldOfView=93;
+        nativeView=HeadCameraApi.View(HeadCameraApi.Selected).Value;
+        Check(Math.Abs(nativeView.Position.y-4.8f)<.0001f&&nativeView.Fov==93,"原生数据、身体高度与FOV变化立即生效，无额外纵向滞后");
+        bot.Locomotion.Crouch=float.NaN;bool invalidView=false;try{HeadCameraApi.View(HeadCameraApi.Selected);}catch(InvalidOperationException){invalidView=true;}
+        Check(invalidView,"拒绝无效姿态，不输出虚构的旧视点");
         Reset();runtime.OnApplicationFocus(false);Exited("失焦回调");runtime.OnApplicationFocus(true);Check(!runtime.Busy,"返回窗口不自动重接管");
         Reset();runtime.OnApplicationPause(true);Exited("后台暂停回调");
         Reset();runtime.OnDisable();Exited("组件停用");Check(!HeadCameraApi.Request(HeadCameraApi.Selected),"停用组件拒绝摄像头申请");
@@ -83,6 +95,7 @@ static class RuntimeSafetyTests
         GlobalLights();
         NativeSwitchWrites();
         RenderReadiness();
+        TeardownLights();
         Reset();runtime.CommandFeedback("已标记位置");Check(HeadCameraApi.LastNotice=="已标记位置","指令成功反馈进入接管画面");
         service.Transaction.Exit(false);Tick(.1f);Check(!runtime.Busy&&!HeadCameraApi.IsVisible&&!service.LastRecall,"驻守释放后关闭观战窗并返回本体，无错误召回");
         Reset();service.Transaction.Exit(false);runtime.LateUpdate();Check(!runtime.Busy&&!HeadCameraApi.IsVisible&&!service.LastRecall,"Q在Update后完成驻守交接也关闭窗口且不召回");
@@ -231,7 +244,7 @@ static class RuntimeSafetyTests
         Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(3.3f);SNetwork.SNet.IsMaster=false;int before=bot.Sync.Requests;Tick(3.4f);
         Check(bot.Sync.Requests==before&&!runtime.NativeLightControls(bot),"丢失房主权不继续广播开灯／归还请求");
         Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);runtime.StateChanging(eGameStateName.Lobby);
-        Check(!runtime.OwnsNativeLight(bot.Bot.Inventory.m_flashlight)&&!bot.Bot.Inventory.FlashlightEnabled,"切关前立即移除全局灯保护并归还开关");
+        Check(!runtime.OwnsNativeLight(bot.Bot.Inventory.m_flashlight)&&bot.Bot.Inventory.FlashlightEnabled,"切关前撤销托管但不回写会重新初始化的原生开关");
         Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);runtime.LevelCleanup();
         Check(!runtime.OwnsNativeLight(bot.Bot.Inventory.m_flashlight),"关卡清理不依赖接管会话存在");
         Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);Plugin.Enabled.Value=false;Tick(.2f);
@@ -266,11 +279,71 @@ static class RuntimeSafetyTests
         HeadCameraApi.Request(HeadCameraApi.Selected);runtime.Update();Check(!runtime.Busy&&!runtime.BlocksBody,"灯常亮没有放宽倒地接管限制，运行器仍取消无效目标");bot.Alive=true;
         inv.m_flashlight.range=0;bot.Sync.WantsToSetFlashlightEnabled(false,false);Check(inv.WantsFlashlightEnabled,"参数／渲染未就绪也不允许清除常亮意图");
         Check((bool)Hook("FlashlightRequest",body.Sync,false)&&(bool)Hook("FlashlightReceive",new PlayerInventoryBase{Owner=body},false),"真人开关和网络状态不受管理");
-        runtime.StateChanging(eGameStateName.Lobby);Check(!inv.WantsFlashlightEnabled&&!inv.FlashlightEnabled,"关卡退出显式恢复false不被自身补丁拒绝");
+        requests=bot.Sync.Requests;receives=inv.Receives;runtime.StateChanging(eGameStateName.Lobby);Check(inv.WantsFlashlightEnabled&&inv.FlashlightEnabled&&bot.Sync.Requests==requests&&inv.Receives==receives,"关卡退出不执行原生开关归还或新网络请求");
         Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);Plugin.NativeLight.Value=false;
         inv=bot.Bot.Inventory;inv.ReceiveSetFlashlightStatus(false,false);Check(!inv.WantsFlashlightEnabled&&!inv.FlashlightEnabled,"配置关闭立即放行原版关灯，无需等待轮询");
         Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);bot.IsBeingDespawned=true;
-        bot.Bot.Inventory.ReceiveSetFlashlightStatus(false,false);Check(!bot.Bot.Inventory.WantsFlashlightEnabled,"销毁／离队对象不继续拦截原生清理");
+        bot.Bot.Inventory.ReceiveSetFlashlightStatus(false,false);Check(bot.Bot.Inventory.WantsFlashlightEnabled&&!(bool)Hook("BeforeHelmetLight",bot.Bot.Inventory),"受管对象已标记离队时阻止迟到开关／初始化，不等待销毁回调");
+    }
+    static void TeardownLights(){
+        Reset();var owned=(BotFlashlights)typeof(ControlRuntime).GetField("lights",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).GetValue(runtime);
+        var direct=owned.Find(bot);int directRequests=bot.Sync.Requests,directReceives=bot.Bot.Inventory.Receives;
+        Player.FlashlightInventory.AssetsAvailable=false;direct.End(restoreSwitch:false);
+        Check(bot.Sync.Requests==directRequests&&bot.Bot.Inventory.Receives==directReceives&&Player.FlashlightInventory.MissingAssetAttempts==0,"灯对象的丢弃路径自身就不调用Sync／Receive，不依赖外层守卫掩盖错误");
+        Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;
+        var second=Agent(2,true);var third=Agent(3,true);PlayerManager.Current.Slots[2]=second;PlayerManager.Current.Slots[3]=third;
+        var rf=new Transform();bot.Bot.Inventory.m_flashlight.transform.Children["RF_L1"]=rf;
+        Tick(.1f);Tick(.2f);var agents=new[]{bot,second,third};
+        Check(!rf.gameObject.activeSelf,"退出前现有RF层已按原生渲染状态隐藏");
+        var before=new System.Collections.Generic.List<(int requests,int receives,int setups)>();
+        foreach(var a in agents)before.Add((a.Sync.Requests,a.Bot.Inventory.Receives,a.Bot.Inventory.HelmetSetups));
+        // The game's original quit callback releases the asset dictionary AFTER our real prefix.
+        new Globals.Global().OnApplicationQuit();
+        Check(!Player.FlashlightInventory.AssetsAvailable&&!runtime.Busy,"原生Global退出入口提前标记灯光收尾，再卸载资源");
+        Check(rf.gameObject.activeSelf,"丢弃原生开关时仍归还本地RF显隐");
+        for(int n=0;n<agents.Length;n++){
+            var a=agents[n];var inv=a.Bot.Inventory;
+            inv.PrepareHelmetFlashlight();inv.OnItemEquippableFlashlightWielded(new(){Owner=a},new());
+            a.Sync.WantsToSetFlashlightEnabled(false,false);inv.ReceiveSetFlashlightStatus(false,false);inv.SetFlashlightEnabled(true,true,false);
+            Check(a.Sync.Requests==before[n].requests&&inv.Receives==before[n].receives&&inv.HelmetSetups==before[n].setups&&inv.WeaponSetups==0,"应用退出后三个人机均不再发请求、归还开关或加载资源");
+        }
+        runtime.OnApplicationQuit();runtime.OnDisable();runtime.OnDestroy();
+        Check(ControlRuntime.Current==null,"退出回调、停用、销毁可重复且注销运行器");
+        bot.Bot.Inventory.PrepareHelmetFlashlight();
+        Check(Player.FlashlightInventory.MissingAssetAttempts==0,"运行器先销毁后仍拦住迟到原生头盔灯初始化");
+        Check((bool)Hook("BeforeHelmetLight",new PlayerInventoryBase{Owner=body})&&(bool)Hook("BeforeHelmetLight",Agent(2,true).Bot.Inventory),"真人与未受管身份不被退出守卫屏蔽");
+        Player.FlashlightInventory.AssetsAvailable=true;runtime.StateChanging(eGameStateName.InLevel);runtime.OnEnable();runtime.Update();
+        Check(!(bool)Hook("BeforeHelmetLight",bot.Bot.Inventory),"应用退出标记不可被晚到的InLevel／Enable事件撤销");
+
+        Reset();var activeInv=bot.Bot.Inventory;int requests=bot.Sync.Requests,receives=activeInv.Receives,setups=activeInv.HelmetSetups;
+        Player.FlashlightInventory.AssetsAvailable=false;runtime.StateChanging(eGameStateName.Lobby);
+        Exited("资源已失效时切关",false);
+        activeInv.PrepareHelmetFlashlight();runtime.Update();runtime.LevelCleanup();
+        Check(Player.FlashlightInventory.MissingAssetAttempts==0&&bot.Sync.Requests==requests&&activeInv.Receives==receives&&activeInv.HelmetSetups==setups,"切关前状态仍是InLevel也不重新取得灯或读取已卸载资源");
+        Check(!(bool)Hook("BeforeHelmetLight",activeInv),"重复关卡清理保留迟到初始化守卫");
+        Player.FlashlightInventory.AssetsAvailable=true;runtime.StateChanging(eGameStateName.InLevel);runtime.Update();
+        Check(runtime.AllowNativeLightSwitch(bot,true,0)&&(bool)Hook("BeforeHelmetLight",activeInv),"新关卡恢复同一有效人机的原生灯初始化");
+
+        Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);activeInv=bot.Bot.Inventory;
+        Player.FlashlightInventory.AssetsAvailable=false;runtime.Departing(bot);activeInv.PrepareHelmetFlashlight();
+        Check(Player.FlashlightInventory.MissingAssetAttempts==0&&!runtime.NativeLightControls(bot),"对象离队时丢弃灯管理，不重建头盔灯");
+        var replacement=Agent(1,true);replacement.Pointer=bot.Pointer;replacement.Owner=bot.Owner;PlayerManager.Current.Slots[1]=replacement;
+        Player.FlashlightInventory.AssetsAvailable=true;Tick(.2f);
+        Check(runtime.NativeLightControls(replacement)&&(bool)Hook("BeforeHelmetLight",replacement.Bot.Inventory),"同地址不同实例的新机器人不继承旧身份的退出守卫");
+
+        Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);activeInv=bot.Bot.Inventory;
+        Player.FlashlightInventory.AssetsAvailable=false;runtime.OnDestroy();activeInv.PrepareHelmetFlashlight();
+        Check(Player.FlashlightInventory.MissingAssetAttempts==0&&ControlRuntime.Current==null,"没有Quit回调的运行器销毁也不会写原生开关或丢失晚到守卫");
+        Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);activeInv=bot.Bot.Inventory;requests=bot.Sync.Requests;receives=activeInv.Receives;
+        Player.FlashlightInventory.AssetsAvailable=false;SNetwork.SNet.IsMaster=false;Tick(.2f);
+        Check(bot.Sync.Requests==requests&&activeInv.Receives==receives&&Player.FlashlightInventory.MissingAssetAttempts==0,"丢失房主不广播或本地回退触发资源初始化");
+        Player.FlashlightInventory.AssetsAvailable=true;SNetwork.SNet.IsMaster=true;Tick(.3f);
+        Check(runtime.NativeLightControls(bot),"有效房主恢复后可重新建立常亮管理");
+
+        Reset();activeInv=bot.Bot.Inventory;runtime.Exit("普通T退出",true);
+        Check(!activeInv.WantsFlashlightEnabled&&!activeInv.FlashlightEnabled&&(bool)Hook("BeforeHelmetLight",activeInv),"正常游戏内接管退出仍归还开关且不留下抑制身份");
+        Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);activeInv=bot.Bot.Inventory;runtime.OnDisable();
+        Check(!activeInv.FlashlightEnabled&&(bool)Hook("BeforeHelmetLight",activeInv),"正常关卡内组件停用仍恢复原灯并允许原生初始化");
     }
     static bool Gate(string name,PlayerAIBot b,PlayerBotActionBase.Descriptor d)=>name=="Request"?(bool)Hook(name,b,d,true):(bool)Hook(name,b,d);
     static void UpdateActionFollowPlayer(){}

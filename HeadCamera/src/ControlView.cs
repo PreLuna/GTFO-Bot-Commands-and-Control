@@ -12,10 +12,11 @@ namespace PreLuna.HeadCamera
             return (screenWidth / scale, screenHeight / scale);
         }
         public static float SpectatorWidth(float screenWidth, float screenHeight) => Width(float.MaxValue, screenWidth, screenHeight);
-        public static float Width(float requested, float screenWidth, float screenHeight)
+        public static float Width(float requested, float screenWidth, float screenHeight) => Width(requested, screenWidth, screenHeight, 16f / 9);
+        public static float Width(float requested, float screenWidth, float screenHeight, float aspect)
         {
             var (w, h) = ReferenceSize(screenWidth, screenHeight);
-            return Math.Max(80, Math.Min(requested, Math.Min(w - 32, (h - 90) * 16 / 9 + 12)));
+            return Math.Max(80, Math.Min(requested, Math.Min(w - 32, (h - 90) * aspect + 12)));
         }
     }
 }

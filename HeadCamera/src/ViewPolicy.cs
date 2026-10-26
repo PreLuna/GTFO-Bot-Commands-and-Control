@@ -48,8 +48,10 @@ namespace PreLuna.HeadCamera
     }
     internal static class DefaultUpgrade
     {
-        internal const int CurrentVersion = 1;
-        internal static bool Replace(int version, int current, int oldDefault) => version < CurrentVersion && current == oldDefault;
+        internal const int CurrentVersion = 2;
+        // Display migration remains v1; v2 only turns off leftover expensive diagnostics once.
+        internal static bool Replace(int version, int current, int oldDefault) => version < 1 && current == oldDefault;
+        internal static bool DisableLegacyCapture(int version, bool enabled) => version < 2 && enabled;
     }
     internal sealed class ViewSession
     {

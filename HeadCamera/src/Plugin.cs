@@ -8,14 +8,14 @@ using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("0.3.13.0")]
+[assembly: AssemblyFileVersion("0.3.15.0")]
 namespace PreLuna.HeadCamera
 {
     [BepInPlugin(Guid, "头戴摄像头", Version)]
     [BepInDependency("PreLuna.FlashlightCustom", BepInDependency.DependencyFlags.SoftDependency)]
     public sealed class Plugin : BasePlugin
     {
-        public const string Guid = "PreLuna.HeadCamera", Version = "0.3.13";
+        public const string Guid = "PreLuna.HeadCamera", Version = "0.3.15";
         internal static Plugin Instance;
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<KeyCode> ToggleKey, NextKey, PreviousKey;
@@ -40,15 +40,15 @@ namespace PreLuna.HeadCamera
             PreviousKey = Config.Bind("按键", "上一位队友", KeyCode.LeftArrow, "小窗打开时按 ← 切换到上一位队友；终端中不响应。");
             Width = Config.Bind("画面", "渲染宽度", 1280, new ConfigDescription("16:9；默认 1280×720。下次打开小窗应用，降低此值可减轻部分 GPU 开销。", new AcceptableValueRange<int>(160, 1920)));
             FramesPerSecond = Config.Bind("画面", "刷新帧率", 30, new ConfigDescription("小窗目标刷新频率；实际受主画面帧率和渲染开销限制。", new AcceptableValueRange<int>(5, 60)));
-            FieldOfView = Config.Bind("画面", "视野角度", 80f, new ConfigDescription("副相机的垂直视野，不修改玩家 FOV。", new AcceptableValueRange<float>(45f, 110f)));
+            FieldOfView = Config.Bind("画面", "视野角度", 80f, new ConfigDescription("普通观察的垂直视野；接管跟随原生第一人称，不修改玩家 FOV。", new AcceptableValueRange<float>(45f, 110f)));
             ViewDistance = Config.Bind("画面", "最大绘制距离", 80f, new ConfigDescription("米；同时受原版渲染范围限制。", new AcceptableValueRange<float>(15f, 120f)));
-            EyeOffset = Config.Bind("画面", "视点前移", .16f, new ConfigDescription("从头部沿观看方向前移，减少头部模型遮挡；有墙时自动缩短。", new AcceptableValueRange<float>(0f, .4f)));
+            EyeOffset = Config.Bind("画面", "视点前移", .16f, new ConfigDescription("仅普通观察从头部沿观看方向前移；接管使用原生第一人称眼点，不应用此前移。", new AcceptableValueRange<float>(0f, .4f)));
             WindowWidth = Config.Bind("小窗", "显示宽度", 480, new ConfigDescription("以 1920×1080 为参考分辨率。", new AcceptableValueRange<int>(200, 960)));
             Corner = Config.Bind("小窗", "位置", WindowCorner.TopRight, "TopRight 右上；TopLeft 左上；BottomRight 右下；BottomLeft 左下。");
             MarginX = Config.Bind("小窗", "水平边距", 24f, new ConfigDescription("参考分辨率像素。", new AcceptableValueRange<float>(0f, 600f)));
             MarginY = Config.Bind("小窗", "垂直边距", 150f, new ConfigDescription("默认避开屏幕顶部提示。", new AcceptableValueRange<float>(0f, 600f)));
             Diagnostics = Config.Bind("诊断", "记录渲染耗时", false, "开启后每 10 秒汇总副相机 CPU 提交耗时；不是 GPU 帧时间。没有逐帧日志。");
-            CaptureSamples = Config.Bind("诊断", "保存画面样本", false, "开窗后约 0.5 秒、2 秒各尝试采样一次；每次游戏最多 6 组，输出到 BepInEx/HeadCamera-Diagnostics。会短暂停顿，不逐帧读取。");
+            CaptureSamples = Config.Bind("诊断", "保存画面样本", false, "仅排查画面时开启，用后关闭：同步GPU读回、图像编码和存盘会明显卡顿。开窗或观察／接管切换后约0.5、2秒各尝试一次，每进程最多6组；正常游玩保持false。");
             BufferFix = Config.Bind("诊断", "修复深度缓冲", true, "正常保持 true：在原版 Setup 后补齐 Depth 与 MotionVectors。false 仅用于修复前后对照。");
             ProjectionFix = Config.Bind("诊断", "补齐投影参数", true, "正常保持 true：每次渲染提交副相机自己的投影、深度参数。false 仅用于对照。");
             OutputMode = Config.Bind("画面", "显示模式", FeedOutput.ToneMapped, "ToneMapped 正常色调处理且不透明；RawOpaque 原始颜色且不透明；OriginalAlpha 保留原始颜色与透明度；TestPattern 独立 UI 彩条，不运行副相机。");
@@ -76,7 +76,7 @@ namespace PreLuna.HeadCamera
         }
         void UpgradeDefaults()
         {
-            var version = Config.Bind("内部", "配置版本", 0, "用于一次性升级旧默认值；升级完成后保留用户自定义设置。");
+            var version = Config.Bind("内部", "配置版本", 0, "一次性升级默认值及关闭遗留诊断采样；迁移完成后保留主动设置。");
             int oldVersion = version.Value;
             if (oldVersion >= DefaultUpgrade.CurrentVersion) return;
             int changes = 0;
@@ -85,10 +85,15 @@ namespace PreLuna.HeadCamera
             if (DefaultUpgrade.Replace(oldVersion, WindowWidth.Value, 360)) { WindowWidth.Value = 480; changes++; }
             if (DefaultUpgrade.Replace(oldVersion, (int)NextKey.Value, (int)KeyCode.RightBracket)) { NextKey.Value = KeyCode.RightArrow; changes++; }
             if (DefaultUpgrade.Replace(oldVersion, (int)PreviousKey.Value, (int)KeyCode.LeftBracket)) { PreviousKey.Value = KeyCode.LeftArrow; changes++; }
+            if (DefaultUpgrade.DisableLegacyCapture(oldVersion, CaptureSamples.Value))
+            {
+                CaptureSamples.Value = false;
+                Log.LogInfo("[诊断迁移] 已关闭遗留的同步画面采样，避免观察／接管切换时GPU读回、编码和存盘卡顿；需要排查画面时可主动重新开启。");
+            }
             version.Value = DefaultUpgrade.CurrentVersion;
             if (changes > 0) Log.LogInfo("[头戴摄像头] 已一次性升级 " + changes + " 项旧默认配置；其他自定义值保留。");
         }
-        internal static string KeyLabel(KeyCode key) => key == KeyCode.LeftArrow ? "←" : key == KeyCode.RightArrow ? "→" : key.ToString();
+        internal static string KeyLabel(KeyCode key) => key.ToString(); // ASCII key names also work with the native Latin-only HUD font.
         internal static string SwitchHint => KeyLabel(PreviousKey.Value) + " / " + KeyLabel(NextKey.Value) + " 切换";
         static void FocusChanged()
         {

@@ -62,34 +62,3 @@ static class BotLightViewScopeTests
         Console.WriteLine("PASS: " + checks + " 原生人机灯副视角scope／嵌套／异常恢复检查（替身，不代表真实照明验收）");
     }
 }
-public class NativeObject {static int serial;public IntPtr Pointer=new(++serial);public T TryCast<T>() where T:class=>this as T;}
-public class CL_ShadowGenerator:NativeObject {public bool IsForced;public bool Allocated=true;}
-public static class CL_ShadowAtlas {public static CL_ShadowGenerator ForcedShadowRender;}
-public struct sCL_SpotLight {public UnityEngine.Vector3 Position,Irradiance;public float InvRangeSqr,InvNearRange,ShadowIndex;}
-public class CL_Light:NativeObject {public bool m_isOn=true,IsActive=true;public int ActiveID=2;public UnityEngine.Light UnityLight=new();}
-public class CL_SpotLight:CL_Light {public bool IsFPSFlashlight;public int ShadowID=>ShadowGenerator.Allocated?0:-1;public CL_ShadowGenerator ShadowGenerator=new();public sCL_SpotLight Data=new(){Irradiance=new(1,1,1),InvRangeSqr=.01f,InvNearRange=.5f,ShadowIndex=0};}
-public static class ClusteredRendering {public static int _FPSSpotIndex=5;}
-namespace UnityEngine {
- public struct Vector3 {public float x,y,z;public Vector3(float x,float y,float z){this.x=x;this.y=y;this.z=z;}}
- public struct Color {public float r,g,b,a;public Color(float r,float g,float b,float a){this.r=r;this.g=g;this.b=b;this.a=a;}}
- public class Transform {public string position="pos",forward="dir";}
- public class Light:NativeObject {public float range=11,intensity=.35f,spotAngle=40;public Color color=new(1,1,1,1);public Transform transform=new();}
- public static class Shader {public static int Index;public static int GetGlobalInt(int id)=>Index;public static void SetGlobalInt(int id,int v){Index=v;}}
-}
-namespace CullingSystem {
- public class C_Light:NativeObject {public bool IsShown=true;public CL_Light m_clusterLight=new CL_SpotLight();public UnityEngine.Light m_unityLight;}
- public class C_LightDynamic:C_Light {
-  public bool m_isFPSPlayerLight,ThrowOnce;public int NativeRoleWrites;
-  public C_LightDynamic(){m_unityLight=m_clusterLight.UnityLight;}
-  public bool IsFPSPlayerLight {get=>m_isFPSPlayerLight;set{NativeRoleWrites++;m_isFPSPlayerLight=value;m_clusterLight.TryCast<CL_SpotLight>().ShadowGenerator.IsForced=value;if(value&&ThrowOnce){ThrowOnce=false;throw new Exception("native role failed");}}}
-  public void SetOn(bool value){m_clusterLight.m_isOn=value;}
- }
- public static class C_CullingManager {public static List<C_Light> VisibleSpotLights=new();}
-}
-public class PlayerInventoryBase {public bool FlashlightEnabled=true,WantsFlashlightEnabled=true;public CullingSystem.C_LightDynamic m_flashlightCLight=new();public UnityEngine.Light m_flashlight;public PlayerInventoryBase(){m_flashlight=m_flashlightCLight.m_unityLight;}}
-namespace Player {
- public class Owner {public bool IsBot=true;}
- public class PlayerAIBot {public PlayerInventoryBase Inventory=new();}
- public class PlayerAgent:NativeObject {public Owner Owner=new();public PlayerAIBot Bot=new();public PlayerInventoryBase Inventory=>Bot.Inventory;public T GetComponent<T>() where T:class=>Bot as T;}
- public static class PlayerManager {public static PlayerAgent Local;public static PlayerAgent GetLocalPlayerAgent()=>Local;}
-}

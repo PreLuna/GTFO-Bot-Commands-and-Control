@@ -19,6 +19,7 @@ namespace PreLuna.HeadCamera
             // Errors here must never close the camera or trip the gameplay capture circuit.
             try
             {
+                var sampleWatch = System.Diagnostics.Stopwatch.StartNew();
                 string folder = Path.Combine(Paths.BepInExRootPath, "HeadCamera-Diagnostics", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fffffff"));
                 Directory.CreateDirectory(folder);
                 var rawStats = SaveRaw(raw, folder);
@@ -30,7 +31,7 @@ namespace PreLuna.HeadCamera
                     + " mainPosition=" + main.transform.position + " mainFOV=" + main.fieldOfView + " controlled=" + controlled + " captureState=" + captureState;
                 string state = FormattableString.Invariant($"HeadCamera={Plugin.Version}\nUTC={DateTime.UtcNow:o}\nmode={Plugin.OutputMode.Value}\nbufferFix={Plugin.BufferFix.Value}\nprojectionFix={Plugin.ProjectionFix.Value}\nHDR={camera.allowHDR} renderingPath={camera.actualRenderingPath} depthTextureMode={camera.depthTextureMode}\nnear={camera.nearClipPlane} far={camera.farClipPlane} FOV={camera.fieldOfView} aspect={camera.aspect}\ncameraPosition={camera.transform.position} cameraDirection={camera.transform.forward}\nrawSize={raw.width}x{raw.height} rawFormat={raw.format} rawSRGB={raw.sRGB}\n{outputState}\nprojection={RenderUtils.GetProjectionParams(camera)} depth={RenderUtils.GetZBufferParams(camera)}\n{context}\nraw: {rawStats}\npresented: {finalStats}\nPixel statistics do not prove scene visibility. Inspect RGB, alpha and presented images together.\n");
                 File.WriteAllText(Path.Combine(folder, "capture.txt"), state);
-                Plugin.Instance.Log.LogInfo("[头戴摄像头] 诊断样本=" + folder + "；raw " + rawStats + "；presented " + finalStats);
+                Plugin.Instance.Log.LogInfo("[头戴摄像头] 诊断样本=" + folder + "；CPU同步采样=" + sampleWatch.Elapsed.TotalMilliseconds.ToString("F2") + "ms；raw " + rawStats + "；presented " + finalStats);
             }
             catch (Exception error) { Plugin.Instance.Log.LogWarning("[头戴摄像头] 诊断采样失败（本次不重试，继续显示）：" + error); }
         }

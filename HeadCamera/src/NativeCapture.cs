@@ -37,24 +37,25 @@ namespace PreLuna.HeadCamera
         internal static bool OwnsFog(PreLitVolume value) => value is not null && ownedFog.Contains(value.Pointer.ToInt64(), value.GetInstanceID());
         static readonly Dictionary<Type, PropertyInfo[]> gpuProperties = new();
         internal static bool OwnsCluster(ClusteredRendering value) => value != null && ownedClusters.Contains(value.Pointer.ToInt64());
-        bool disposed, initialized;
+        bool disposed, initialized, frameVisible;
         bool renderActive, transparencyActive;
         Exception callbackError;
         string lastCaptureState, lastLampState;
         float nextLampNotice;
         int callbackPhases;
-        public RenderTexture Texture => initialized && !disposed ? presentation.Texture : null;
+        public RenderTexture Texture => initialized && !disposed && frameVisible ? presentation.Texture : null;
 
-        public void Initialize(Camera main, int width)
+        public void Initialize(Camera main, int width, float aspect = 16f / 9)
         {
             if (initialized) return;
             if (disposed) throw new ObjectDisposedException(nameof(NativeCapture));
+            var setupWatch = System.Diagnostics.Stopwatch.StartNew();
             var template = ClusteredRendering.Current;
             var templateFog = PreLitVolume.Current;
             if (main == null || template == null || templateFog == null || !RenderPipe.Initialized)
                 throw new InvalidOperationException("原版场景渲染器尚未准备好");
             width = Math.Clamp(width, 160, 1920);
-            int height = Math.Max(90, width * 9 / 16);
+            int height = FirstPersonCapture.Height(width, aspect);
             using var globals = new RenderGlobals();
             try
             {
@@ -115,7 +116,7 @@ namespace PreLuna.HeadCamera
                 camera.AddCommandBuffer(CameraEvent.BeforeGBuffer, beforeGBuffer);
                 camera.AddCommandBuffer(CameraEvent.BeforeLighting, beforeLighting);
                 initialized = true;
-                Plugin.Instance.Log.LogInfo("[头戴摄像头] 独立渲染器就绪：" + width + "×" + height + "；副相机无 AudioListener、FPS 控制器和玩家对象。");
+                Plugin.Instance.Log.LogInfo("[头戴摄像头] 独立渲染器就绪：" + width + "×" + height + "；CPU准备=" + setupWatch.Elapsed.TotalMilliseconds.ToString("F2") + "ms；副相机无 AudioListener、FPS 控制器和玩家对象。");
             }
             catch { Dispose(); throw; }
 
@@ -151,6 +152,7 @@ namespace PreLuna.HeadCamera
 
         public void Capture(PlayerAgent target, Camera main, ControlView? controlView = null)
         {
+            frameVisible = false;
             if (!initialized || disposed || target == null || main == null) throw new InvalidOperationException("副相机或观看对象失效");
             if (target.m_movingCuller?.CurrentNode == null) throw new InvalidOperationException("队友房间裁剪节点尚未加载");
             var head = controlView.HasValue ? null : target.GetHeadCamTransform();
@@ -159,19 +161,23 @@ namespace PreLuna.HeadCamera
             if (direction.sqrMagnitude < .001f) direction = target.Forward;
             if (direction.sqrMagnitude < .001f) direction = head != null ? head.forward : Vector3.forward;
             direction.Normalize();
-            float offset = Plugin.EyeOffset.Value;
+            float offset = controlView.HasValue ? 0 : Plugin.EyeOffset.Value;
             // Keep the view on this side of walls/doors; do not relocate any player/culler.
-            if (Physics.Raycast(eye, direction, out RaycastHit hit, offset + .04f, LayerManager.MASK_WORLD, QueryTriggerInteraction.Ignore))
+            if (!controlView.HasValue && Physics.Raycast(eye, direction, out RaycastHit hit, offset + .04f, LayerManager.MASK_WORLD, QueryTriggerInteraction.Ignore))
                 offset = Math.Max(0, hit.distance - .04f);
             camera.transform.SetPositionAndRotation(eye + direction * offset, Quaternion.LookRotation(direction, Vector3.up));
-            camera.fieldOfView = Math.Clamp(controlView?.FieldOfView ?? Plugin.FieldOfView.Value, 45, 110);
+            camera.fieldOfView = Math.Clamp(controlView?.FieldOfView ?? Plugin.FieldOfView.Value, 1, 179);
             camera.aspect = texture.width / (float)texture.height;
-            camera.nearClipPlane = .06f; camera.farClipPlane = Math.Min(main.farClipPlane, Plugin.ViewDistance.Value);
+            float near = controlView.HasValue ? FirstPersonCapture.SafeNear(eye, main.nearClipPlane, camera.fieldOfView, camera.aspect) : .06f;
+            if (near <= 0) return;
+            camera.nearClipPlane = near;
+            camera.farClipPlane = Math.Min(main.farClipPlane, Plugin.ViewDistance.Value);
             camera.cullingMask = main.cullingMask;
             ConfigureBuffers();
             culler.m_cullAgent = target.m_movingCuller; // Read the existing node; never UpdatePosition/SetCurrentNode.
             using var globals = new RenderGlobals();
             BotLightViewScope viewLight = null;
+            FirstPersonRenderScope firstPerson = null;
             bool changedVisibility = false, changedIndirect = false;
             Exception restorationFailure = null;
             string captureState = null;
@@ -191,6 +197,7 @@ namespace PreLuna.HeadCamera
                     + " nativeSceneLights=True nativeShadowUpdates=" + lighting.UpdateShadows;
                 logFrame = captureState != lastCaptureState; lastCaptureState = captureState;
                 if (logFrame) Plugin.Instance.Log.LogInfo("[摄像头阶段] 拍摄 BEGIN " + captureState + " pos=" + camera.transform.position + " HDR=" + camera.allowHDR + " path=" + camera.actualRenderingPath + " output=" + Plugin.OutputMode.Value);
+                if (controlView.HasValue) firstPerson = new FirstPersonRenderScope(target, camera);
                 viewLight = BotLightViewScope.For(target, out string lampAttempt);
                 changedVisibility = true;
                 culler.RunVisibility(); C_CullingManager.C_CameraUpdate(); C_CullingManager.SortAndUpdateLights();
@@ -223,6 +230,7 @@ namespace PreLuna.HeadCamera
                 try { FogCompatibility.Restore(lighting); } catch (Exception e) { restorationFailure ??= e; }
                 try { if (transparencyActive) { lighting.OnPostRender(); transparencyActive = false; } } catch (Exception e) { restorationFailure = e; }
                 try { viewLight?.Dispose(); } catch (Exception e) { restorationFailure ??= e; }
+                try { firstPerson?.Dispose(); } catch (Exception e) { restorationFailure ??= e; }
                 globals.Restore();
                 try
                 {
@@ -245,6 +253,7 @@ namespace PreLuna.HeadCamera
             }
             if (logFrame) Plugin.Instance.Log.LogInfo("[摄像头阶段] 拍摄 END " + captureState + "；输出已提交，像素照明仍需实测");
             diagnostics.Observe(texture, presentation.Texture, camera, target, main, controlled: controlView.HasValue, captureState: captureState);
+            frameVisible = true;
         }
 
         internal void Callback(int phase)
@@ -308,6 +317,7 @@ namespace PreLuna.HeadCamera
         public void Dispose()
         {
             if (disposed) return;
+            var releaseWatch = System.Diagnostics.Stopwatch.StartNew();
             disposed = true; initialized = false;
             foreach (var identity in hudCameraIdentities) HeadCameraApi.UnregisterHudCamera(identity.handle, identity.instance);
             hudCameraIdentities.Clear();
@@ -351,6 +361,7 @@ namespace PreLuna.HeadCamera
             callbacks = null;
             texture = null; beforeGBuffer = beforeLighting = null;
             if (first != null) Plugin.Instance?.Log.LogWarning("[头戴摄像头] 资源释放异常（其余释放阶段已执行）：" + first);
+            Plugin.Instance?.Log.LogInfo("[摄像头清理耗时] CPU释放=" + releaseWatch.Elapsed.TotalMilliseconds.ToString("F2") + "ms；仅本MOD资源收尾，不代表整个游戏退出耗时");
         }
 
         static void ReleaseGpu(object owner, HashSet<long> freed, Action<Action> clean)

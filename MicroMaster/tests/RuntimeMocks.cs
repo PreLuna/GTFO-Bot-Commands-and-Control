@@ -22,13 +22,15 @@ namespace UnityEngine {
         public static Vector3 zero=>default;
         public Vector3 normalized => sqrMagnitude>0?new(x/MathF.Sqrt(sqrMagnitude),y/MathF.Sqrt(sqrMagnitude),z/MathF.Sqrt(sqrMagnitude)):default;
         public static Vector3 operator -(Vector3 a,Vector3 b)=>new(a.x-b.x,a.y-b.y,a.z-b.z);
+        public static Vector3 Lerp(Vector3 a,Vector3 b,float t)=>new(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,a.z+(b.z-a.z)*t);
     }
     public class Component : NativeObject { public Transform transform = new(); public T GetComponentInParent<T>() where T:class => transform.Item as T; }
     public class Behaviour : Component { public bool enabled; }
     public class Texture : NativeObject {}
     public struct Color {public float r,g,b,a;public Color(float r,float g,float b,float a){this.r=r;this.g=g;this.b=b;this.a=a;}}
     public struct Quaternion {}
-    public class Transform : NativeObject { public ItemEquippable Item;public Light Light;public Transform parent;public Vector3 localPosition,localScale;public Quaternion localRotation;public void SetParent(Transform p,bool world){parent=p;}public T GetComponent<T>() where T:class=>Light as T; public GameObject gameObject; public Dictionary<string,Transform> Children=new(); public Transform(){gameObject=new(this);} public Transform Find(string n)=>Children.GetValueOrDefault(n); }
+    public class Camera {public float fieldOfView=67;}
+    public class Transform : NativeObject { public Vector3 position; public Vector3 TransformPoint(Vector3 p)=>new(position.x+p.x,position.y+p.y,position.z+p.z); public ItemEquippable Item;public Light Light;public Transform parent;public Vector3 localPosition,localScale;public Quaternion localRotation;public void SetParent(Transform p,bool world){parent=p;}public T GetComponent<T>() where T:class=>Light as T; public GameObject gameObject; public Dictionary<string,Transform> Children=new(); public Transform(){gameObject=new(this);} public Transform Find(string n)=>Children.GetValueOrDefault(n); }
     public class GameObject : NativeObject { public Transform transform;public bool activeSelf=true;public GameObject(Transform t){transform=t;}public void SetActive(bool v){activeSelf=v;} }
     public class Light : Behaviour {
         float lampIntensity=1,lampRange=20,lampAngle=50;
@@ -52,11 +54,12 @@ public enum eGameStateName { InLevel,Lobby }
 public enum eFocusState { FPS,Menu }
 public enum InputAction { LookHorizontal=1,LookVertical=2,Weapon=23,Communication=15,Flashlight=32 }
 public static class GameStateManager { public static eGameStateName CurrentStateName=eGameStateName.InLevel; }
+namespace Globals {public class Global {public void OnApplicationQuit(){Player.NativeSwitchHooks.Call("ApplicationQuitting");Player.FlashlightInventory.AssetsAvailable=false;}}}
 public static class FocusStateManager { public static eFocusState CurrentState=eFocusState.FPS; }
 public static class InputMapper { public static bool PlayerHasFocus=true,FlashlightDown;public static bool GetButtonDownKeyMouse(InputAction a,eFocusState f)=>a==InputAction.Flashlight&&FlashlightDown;public static float GetAxisKeyMouse(InputAction action,eFocusState focus)=>3; }
 public static class PlayerChatManager { public static bool InChatMode; }
 public class PUI_CommunicationMenu { public bool m_active; }
-public class FPSCamera:NativeObject {}
+public class FPSCamera:NativeObject { public UnityEngine.Camera m_camera=new(); }
 public class PlayerInventoryLocal {}
 public class ItemEquippable:NativeObject { public bool m_isWielded=true,HasFlashlight=true; public Player.PlayerAgent Owner;public Gear.GearPartFlashlight AttachedFlashlight=new(); public Light m_lt; }
 namespace Gear {public class GearPartFlashlight {public uint m_settingsID=2;}public class GearManager {public void LoadOfflineGearDatas(){}}}
@@ -82,6 +85,7 @@ public class PlayerInventoryBase {
  public virtual void SetFlashlightEnabled(bool value,bool helmet,bool sound){}public virtual void ReceiveSetFlashlightStatus(bool value,bool sound){}public virtual void UnWieldFlashlight(){}
 }
 namespace GameData {
+ public class PlayerDataBlock {public UnityEngine.Vector3 camPosDefault=new(0,1.8f,0),camPosCrouch=new(0,1,0);}
  public class FlashlightSettingsDataBlock:NativeObject {public uint persistentID;public float range,angle,intensity;public UnityEngine.Color color=new(1,1,1,1);}
  public class GameDataBlockBase<T> {public static WrapperData Wrapper=new();public class WrapperData{public System.Collections.Generic.List<T> Blocks=new();}}
 }
@@ -124,7 +128,7 @@ namespace Enemies {
     public class EnemyAgent:Agents.Agent { public EnemyAI AI=new(); }
 }
 namespace Player {
-    public class PlayerAgent:Agents.Agent {
+    public class PlayerAgent:Agents.Agent { public GameData.PlayerDataBlock PlayerData=new(); public Transform transform=new();
         public SNetwork.Owner Owner=new();
         public int PlayerSlotIndex;
         public bool IsBeingDestroyed,IsBeingDespawned;
@@ -137,7 +141,7 @@ namespace Player {
         public PlayerInventoryBase Inventory=>Bot?.Inventory;
         public T GetComponent<T>() where T:class=>Bot as T;
     }
-    public class PlayerLocomotion { public int m_currentStateEnum;public PlayerAgent m_owner; }
+    public class PlayerLocomotion {public float Crouch; public float GetCrouch()=>Crouch; public int m_currentStateEnum;public PlayerAgent m_owner; }
     public class PlayerAIBot:NativeObject { public PlayerAgent Agent; public FlashlightInventory Inventory=new(); public Sync SyncValues=new();public class Sync { public Vector3 LookDirection; } }
     public static class NativeSwitchHooks {
         internal static object Call(string name,params object[] args)=>typeof(ControlHooks).GetMethod(name,BindingFlags.NonPublic|BindingFlags.Static).Invoke(null,args);
@@ -146,12 +150,13 @@ namespace Player {
     public class PlayerSync {public PlayerAgent Agent;public PlayerAgent m_agent=>Agent;public int Requests;public bool ThrowRequest,BroadcastOnly,LastValue;public void WantsToSetFlashlightEnabled(bool value,bool broadcastOnly){if(!NativeSwitchHooks.Allows("FlashlightRequest",this,value))return;Requests++;LastValue=value;BroadcastOnly=broadcastOnly;if(ThrowRequest)throw new Exception("sync failed");if(!broadcastOnly)Agent.Bot?.Inventory.ReceiveSetFlashlightStatus(value,false);}}
     public class FlashlightInventory:PlayerInventoryBase {
         public FlashlightInventory(){m_flashlightCLight.m_unityLight=m_flashlight;m_flashlightCLight.m_clusterLight.UnityLight=m_flashlight;}
-        public static Action OnReceive;public bool RequestOnly,IgnoreReceive,ThrowSet,FailShadow,ThrowDetach;public int Calls,Receives;
+        public static Action OnReceive;public static bool AssetsAvailable=true;public static int MissingAssetAttempts;public bool RequestOnly,IgnoreReceive,ThrowSet,FailShadow,ThrowDetach;public int Calls,Receives;
         public int WeaponSetups,HelmetSetups;
         public override void OnItemEquippableFlashlightWielded(ItemEquippable item,Gear.GearPartFlashlight part){
-            ControlRuntime.Current?.BeforeNativeLightSetup(Owner,part.m_settingsID,item);WeaponSetups++;ApplyBlock(part.m_settingsID);m_flashlightCLight.UpdateTransformData();ControlRuntime.Current?.AfterNativeLightSetup(Owner);
+            if(!(bool)NativeSwitchHooks.Call("BeforeWieldLight",this,item,part))return;WeaponSetups++;RequireAssets();ApplyBlock(part.m_settingsID);m_flashlightCLight.UpdateTransformData();ControlRuntime.Current?.AfterNativeLightSetup(Owner);
         }
-        public override void PrepareHelmetFlashlight(){ControlRuntime.Current?.BeforeNativeLightSetup(Owner,1,null);HelmetSetups++;ApplyBlock(1);m_flashlightCLight.UpdateTransformData();ControlRuntime.Current?.AfterNativeLightSetup(Owner);}
+        public override void PrepareHelmetFlashlight(){if(!(bool)NativeSwitchHooks.Call("BeforeHelmetLight",this))return;HelmetSetups++;RequireAssets();ApplyBlock(1);m_flashlightCLight.UpdateTransformData();ControlRuntime.Current?.AfterNativeLightSetup(Owner);}
+        static void RequireAssets(){if(!AssetsAvailable){MissingAssetAttempts++;throw new KeyNotFoundException("AssetShardManager helmet resource missing");}}
         void ApplyBlock(uint id){var block=GameData.GameDataBlockBase<GameData.FlashlightSettingsDataBlock>.Wrapper.Blocks.Find(b=>b.persistentID==id);m_flashlight.intensity=block?.intensity??0;m_flashlight.range=block?.range??0;m_flashlight.spotAngle=Math.Max(1,block?.angle??0);}
         public override void SetFlashlightEnabled(bool value,bool helmet,bool sound){if(!NativeSwitchHooks.Allows("FlashlightSet",this,value))return;Calls++;if(ThrowSet)throw new Exception("native flashlight failed");FlashlightEnabled=value;if((WieldedItem==null||!WieldedItem.HasFlashlight)&&helmet)PrepareHelmetFlashlight();m_flashlightCLight.SetOn(value);}
         public override void ReceiveSetFlashlightStatus(bool value,bool sound){if(!NativeSwitchHooks.Allows("FlashlightReceive",this,value))return;OnReceive?.Invoke();Receives++;if(!IgnoreReceive){WantsFlashlightEnabled=value;SetFlashlightEnabled(value,true,sound);}}

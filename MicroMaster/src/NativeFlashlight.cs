@@ -22,6 +22,7 @@ namespace PreLuna.MicroMaster
         float nextOffNotice;
         bool reapply, maintaining;
         internal bool Active { get; private set; }
+        internal (long Agent, int Instance) Identity => (agentId, instanceId);
         internal bool ParametersReady { get; private set; }
         internal bool Exclusive => Active && (ParametersReady || preparing || restoring);
         internal bool RenderReady { get; private set; }
@@ -42,7 +43,7 @@ namespace PreLuna.MicroMaster
         }
         internal void Begin(PlayerAIBot value)
         {
-            End(); bot = value;
+            End(restoreSwitch: false); bot = value;
             agentId = value.Agent.Pointer.ToInt64(); ownerId = value.Agent.Owner.Pointer.ToInt64(); instanceId = value.Agent.GetInstanceID();
             originalWants = value.Inventory?.WantsFlashlightEnabled == true;
             Active = true; ParametersReady = configured = preparing = restoring = false; itemId = lampId = 0; retryAt = 0; failure = lastState = lastRenderReason = lastTempReason = null; nextRenderNotice = nextTempNotice = 0; tempDisableCount = 0;
@@ -180,13 +181,13 @@ namespace PreLuna.MicroMaster
                 try { entry.Layer.gameObject.SetActive(entry.Active); } catch (Exception e) { Plugin.Instance?.Log.LogWarning("[原生接管手电] RF显隐归还失败：" + e.GetBaseException().Message); }
             } } finally { restoring = previous; }
         }
-        internal void End()
+        internal void End(bool restoreSwitch = true)
         {
             if (!Active) return;
             restoring = true; preparing = false;
             try {
                 try {
-                    if (Owns(bot?.Agent) && bot.Inventory != null && (bot.Inventory.FlashlightEnabled != originalWants || bot.Inventory.WantsFlashlightEnabled != originalWants)) {
+                    if (restoreSwitch && Owns(bot?.Agent) && bot.Inventory != null && (bot.Inventory.FlashlightEnabled != originalWants || bot.Inventory.WantsFlashlightEnabled != originalWants)) {
                         if (ControlRuntime.Current?.MaySyncNativeLight(bot.Agent) == true) bot.Agent.Sync.WantsToSetFlashlightEnabled(originalWants, false);
                         else bot.Inventory.ReceiveSetFlashlightStatus(originalWants, false);
                     }

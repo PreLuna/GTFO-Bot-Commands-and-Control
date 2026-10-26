@@ -18,7 +18,7 @@ namespace PreLuna.MicroMaster
         IntPtr floor, master;
         CameraTarget target;
         BotControlState state = BotControlState.Released;
-        bool registered, stopped, suspended, deferredStop;
+        bool registered, stopped, suspended, deferredStop, quitting;
         readonly BotFlashlights lights = new();
         internal bool NativeLightControls(PlayerAgent agent)
         { try { return lights.Controls(agent); } catch { return false; } }
@@ -36,12 +36,10 @@ namespace PreLuna.MicroMaster
         float previousHealth, nextRegister, nextRegistrationNotice;
         string status, lastWait;
         readonly ManualLook look = new();
-        readonly StableEye eye = new();
         NativeManualWalk walk;
         ManualMotionRunner motion;
 
         PUI_CommunicationMenu menu;
-        float eyeHeight, viewFov;
         bool enlarged;
         int qPauseFrame = -10;
         internal bool CommandBusy => ticket != 0 && BotControlApi.CommandBusy(ticket, out _);
@@ -95,10 +93,10 @@ namespace PreLuna.MicroMaster
         }
         internal bool OwnsBot(PlayerAgent agent) => Controls(agent) || agent?.Owner != null
             && BotControlApi.CommandOwns(agent.Pointer.ToInt64(), agent.Owner.Pointer.ToInt64());
-        public void Awake() { mainThread = Environment.CurrentManagedThreadId; Current = this; }
+        public void Awake() { mainThread = Environment.CurrentManagedThreadId; NativeLightLifetime.Reset(); Current = this; }
         public void Update()
         {
-            if (stopped || suspended) return;
+            if (stopped || suspended || quitting) return;
             try {
                 if (!registered && Time.unscaledTime >= nextRegister) {
                     nextRegister = Time.unscaledTime + 1;
@@ -156,12 +154,12 @@ namespace PreLuna.MicroMaster
         void StartMotion(PlayerAgent agent)
         {
             var bot = agent.GetComponent<PlayerAIBot>();
-            if (bot == null || !float.IsFinite(agent.EyePosition.y - agent.Position.y)) throw new InvalidOperationException("机器人运动／视点尚未准备好");
+            if (bot == null) throw new InvalidOperationException("机器人运动尚未准备好");
+            NativeControlView.Eye(agent); NativeControlView.FieldOfView();
             walk = new NativeManualWalk(bot); motion = new ManualMotionRunner(walk);
 
             menu = UnityEngine.Object.FindObjectOfType<PUI_CommunicationMenu>();
-            eyeHeight = Math.Clamp(agent.EyePosition.y - agent.Position.y, 1, 1.9f);
-            eye.Reset(); viewFov = HeadCameraApi.DefaultFieldOfView; enlarged = true; qPauseFrame = -10;
+            enlarged = true; qPauseFrame = -10;
             deferredStop = false;
             lights.Select(bot);
             var direction = agent.TargetLookDir.sqrMagnitude > .001f ? agent.TargetLookDir : agent.Forward;
@@ -181,7 +179,7 @@ namespace PreLuna.MicroMaster
                 if (Input.GetKeyDown(Plugin.ToggleViewKey.Value)) enlarged = !enlarged;
                 if (Input.GetKeyDown(Plugin.ResetViewKey.Value)) {
                     var forward = agent.Forward; look.Reset(new(forward.x, 0, forward.z));
-                    enlarged = true; viewFov = HeadCameraApi.DefaultFieldOfView; eye.Reset();
+                    enlarged = true;
                 } else if (!markClick) {
                     ControlHooks.ReadMouse(out float x, out float y);
                     look.Apply(x, y, Plugin.MouseSensitivity.Value, Plugin.InvertMouse.Value);
@@ -216,16 +214,15 @@ namespace PreLuna.MicroMaster
             if (state != BotControlState.Active || !BlocksBody || selected.AgentIdentity != target.AgentIdentity || selected.OwnerIdentity != target.OwnerIdentity) return null;
             var agent = PlayerManager.Current?.GetPlayerAgentInSlot(target.Slot);
             if (agent?.Pointer.ToInt64() != target.AgentIdentity) return null;
-            Vector3 position = agent.Position;
-            position.y = eye.Sample(position.y, eyeHeight, Time.unscaledTime);
+            Vector3 position = NativeControlView.Eye(agent);
             var direction = look.Direction;
-            return new ControlView(target, position, new Vector3(direction.X, direction.Y, direction.Z), viewFov, enlarged, UiBlocked);
+            return new ControlView(target, position, new Vector3(direction.X, direction.Y, direction.Z), NativeControlView.FieldOfView(), enlarged, UiBlocked);
         }
         [HideFromIl2Cpp]
         bool Request(CameraTarget selected)
         {
             if (Environment.CurrentManagedThreadId != mainThread) { Plugin.Instance?.Log.LogWarning("[微操大师] 拒绝非游戏主线程接管请求"); return false; }
-            if (stopped) { Notice("接管运行器已停止，请重新加载微操大师"); return false; }
+            if (stopped || quitting) { Notice("接管运行器已停止或游戏正在退出"); return false; }
             if (suspended) { Notice("接管组件已停用，暂不能接管"); return false; }
             if (Busy) { Notice("已有接管会话，请先退出当前接管"); return false; }
             if (!Plugin.Enabled.Value) { Notice("微操大师已关闭"); return false; }
@@ -276,7 +273,7 @@ namespace PreLuna.MicroMaster
                 }
             }
             catch (Exception error) { Plugin.Instance?.Log.LogWarning("[微操大师] 退出清理异常；本体输入已归还：" + error); }
-            if (old != 0) Notice("已退出：" + reason + "；本体操作已恢复，旧任务按原规则保留暂停");
+            if (old != 0 && !quitting) Notice("已退出：" + reason + "；本体操作已恢复，旧任务按原规则保留暂停");
         }
         static void Notice(string message)
         {
@@ -300,20 +297,35 @@ namespace PreLuna.MicroMaster
         public void OnApplicationPause(bool paused) { if (paused && Busy) Exit("游戏暂停／切入后台", true); }
         public void OnDisable() { suspended = true; if (Busy) Exit("接管组件停用", true); lights.Stop(); }
         public void OnEnable() => suspended = false;
-        internal void StateChanging(eGameStateName next) { if (next != eGameStateName.InLevel) { if (Busy) Exit("关卡状态切换", false); lights.Stop(); } }
-        internal void LevelCleanup() { Exit("关卡清理", false); lights.Stop(); }
+        public void OnApplicationQuit()
+        {
+            if (quitting) return;
+            quitting = true;
+            lights.BeginTeardown(applicationQuit: true);
+            Exit("应用退出", false);
+            Plugin.Instance?.Log.LogInfo("[灯光生命周期] 应用退出：撤销托管，不恢复原生开关；迟到的受管人机灯初始化已阻止");
+        }
+        internal void StateChanging(eGameStateName next)
+        {
+            if (next == eGameStateName.InLevel) { lights.EnterLevel(); return; }
+            lights.BeginTeardown(applicationQuit: false);
+            if (Busy) Exit("关卡状态切换", false);
+        }
+        internal void LevelCleanup() { lights.BeginTeardown(applicationQuit: false); Exit("关卡清理", false); }
         internal void Departing(PlayerAgent agent)
         {
-            lights.Remove(agent);
+            if (agent?.Pointer == PlayerManager.GetLocalPlayerAgent()?.Pointer) lights.BeginTeardown(applicationQuit: false);
+            else lights.Remove(agent);
             if (Busy && agent != null && (agent.Pointer.ToInt64() == body || agent.Pointer.ToInt64() == target.AgentIdentity))
                 Exit("本体／机器人离队或销毁", false);
         }
-        internal void Shutdown()
+        internal void Shutdown(bool discardLights = false)
         {
             if (stopped) return;
-            Exit("卸载／生命周期结束", true); lights.Stop(); HeadCameraApi.UnregisterControlInput(this);
+            if (discardLights) lights.BeginTeardown(applicationQuit: false);
+            Exit("卸载／生命周期结束", !discardLights && !quitting); lights.Stop(); HeadCameraApi.UnregisterControlInput(this);
             registered = false; stopped = true; if (Current == this) Current = null;
         }
-        public void OnDestroy() => Shutdown();
+        public void OnDestroy() => Shutdown(discardLights: true);
     }
 }

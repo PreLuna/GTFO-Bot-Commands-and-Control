@@ -187,7 +187,7 @@
       "Id": "HeadCamera",
       "Assembly": "PreLuna.HeadCamera",
       "Guid": "PreLuna.HeadCamera",
-      "Version": "0.3.13",
+      "Version": "0.3.15",
       "DependencyGuids": [
         "PreLuna.FlashlightCustom"
       ],
@@ -211,7 +211,7 @@
       "Id": "MicroMaster",
       "Assembly": "PreLuna.MicroMaster",
       "Guid": "PreLuna.MicroMaster",
-      "Version": "0.5.14",
+      "Version": "0.5.16",
       "DependencyGuids": [
         "PreLuna.HeadCamera",
         "PreLuna.Captain",
@@ -234,7 +234,7 @@
           "Guid": "PreLuna.HeadCamera",
           "DependencyFlags": 1,
           "Kind": "Hard",
-          "DeclaredVersion": ">=0.3.13 <0.4.0"
+          "DeclaredVersion": ">=0.3.14 <0.4.0"
         },
         {
           "Guid": "PreLuna.Captain",

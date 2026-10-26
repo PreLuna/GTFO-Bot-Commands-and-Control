@@ -10,7 +10,7 @@ static class RuntimeViewTests
     {
         runtime?.Shutdown();HeadCameraApi.Busy=HeadCameraApi.Suspended=false;HeadCameraApi.Exits=0;HeadCameraApi.Aim=null;
         Time.unscaledTime=0;Application.isFocused=true;InputMapper.PlayerHasFocus=true;FocusStateManager.CurrentState=eFocusState.FPS;
-        GameStateManager.CurrentStateName=eGameStateName.InLevel;PlayerManager.Current=new();NativeCapture.Captures=0;NativeCapture.ThrowCapture=false;HeadCameraApi.LastExit=null;
+        GameStateManager.CurrentStateName=eGameStateName.InLevel;PlayerManager.Current=new();NativeCapture.Captures=0;NativeCapture.ThrowCapture=NativeCapture.Occluded=false;HeadCameraApi.LastExit=null;
         PlayerManager.Current.Slots[0]=new(){PlayerSlotIndex=0};PlayerManager.Current.Slots[1]=new(){PlayerSlotIndex=1,Owner=new(){IsBot=true}};
         runtime=new((IntPtr)100);runtime.Awake();Check(runtime.SetVisible(true),"测试窗口可打开");HeadCameraApi.Busy=control;
         runtime.Update();runtime.LateUpdate();
@@ -18,6 +18,12 @@ static class RuntimeViewTests
     static void Main()
     {
         Reset();Check(CameraHud.Last.IsVisible&&NativeCapture.Captures==1,"实际LateUpdate正常显示并拍摄");
+        var mainCamera=PlayerManager.Current.Slots[0].FPSCamera.m_camera;
+        mainCamera.aspect=21f/9;int priorDisposals=NativeCapture.Disposals;Time.unscaledTime=.04f;runtime.LateUpdate();
+        Check(Math.Abs(NativeCapture.Aspect-21f/9)<.00001f&&NativeCapture.Disposals==priorDisposals+1,"接管分辨率变化重建独立渲染器并跟随原生宽高比");
+        HeadCameraApi.Busy=false;Time.unscaledTime=.08f;runtime.LateUpdate();
+        Check(Math.Abs(NativeCapture.Aspect-16f/9)<.00001f,"同一窗口退出接管后恢复原观察比例");
+        Reset();
         runtime.ShowControlFeedback("已标记墙面");runtime.LateUpdate();Check(CameraHud.Last.Status=="已标记墙面","指令成功反馈优先于常规接管状态栏");
         HeadCameraApi.Suspended=true;Time.unscaledTime=.1f;runtime.Update();runtime.LateUpdate();
         Check(CameraHud.Last.IsVisible&&NativeCapture.Captures==2&&HeadCameraApi.Aim==null,"暂停微调的Q首帧仍拍摄显示，但不发布可执行标记射线");
@@ -38,6 +44,10 @@ static class RuntimeViewTests
         Check(!CameraHud.Last.IsVisible&&runtime.Opened,"普通观看仍可随菜单暂时隐藏，不误关闭会话");
         Reset();Application.isFocused=false;Time.unscaledTime=.1f;runtime.Update();runtime.LateUpdate();
         Check(!CameraHud.Last.IsVisible,"失焦仍隐藏画面");
+        Reset();NativeCapture.Occluded=true;Time.unscaledTime=.1f;runtime.LateUpdate();
+        Check(HeadCameraApi.Aim==null&&CameraHud.Last.Status.Contains("遮挡")&&HeadCameraApi.Busy,"遮挡时清标记射线、保留接管并提示");
+        NativeCapture.Occluded=false;Time.unscaledTime=.14f;runtime.LateUpdate();
+        Check(HeadCameraApi.Aim.HasValue,"遮挡解除下一拍恢复，不等故障冷却");
         runtime.Shutdown();Console.WriteLine("PASS: "+checks+" actual CameraRuntime Update/LateUpdate view and Q transition checks; native rendering mocked.");
     }
 }

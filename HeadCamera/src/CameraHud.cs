@@ -24,6 +24,7 @@ namespace PreLuna.HeadCamera
         WindowCorner previousCorner;
         float previousX, previousY;
         bool previousEnlarged;
+        float previousAspect;
         internal bool IsVisible => root != null && root.activeInHierarchy;
         static GameObject Rect(string name, Transform parent, Vector2 anchors, Vector2 pivot, Vector2 size, Vector2 pos)
         {
@@ -81,14 +82,15 @@ namespace PreLuna.HeadCamera
         void ApplyLayout()
         {
             bool enlarged = HeadCameraApi.Enlarged;
-            int width = (int)(enlarged ? WindowLayoutPolicy.SpectatorWidth(Screen.width, Screen.height)
-                : WindowLayoutPolicy.Width(Math.Clamp(Plugin.WindowWidth.Value, 200, 960), Screen.width, Screen.height));
+            float aspect = image.texture != null ? image.texture.width / (float)Math.Max(1, image.texture.height) : 16f / 9;
+            int width = (int)WindowLayoutPolicy.Width(enlarged ? float.MaxValue : Math.Clamp(Plugin.WindowWidth.Value, 200, 960), Screen.width, Screen.height, aspect);
             var corner = Plugin.Corner.Value; float x = Plugin.MarginX.Value, y = Plugin.MarginY.Value;
             if (enlarged == previousEnlarged && width == previousWidth && corner == previousCorner && x == previousX && y == previousY
-                && Screen.width == previousScreenWidth && Screen.height == previousScreenHeight) return;
+                && Screen.width == previousScreenWidth && Screen.height == previousScreenHeight && aspect == previousAspect) return;
+            previousAspect = aspect;
             previousEnlarged = enlarged; previousWidth = width; previousCorner = corner; previousX = x; previousY = y;
             previousScreenWidth = Screen.width; previousScreenHeight = Screen.height;
-            float height = (width - 12) * 9f / 16;
+            float height = (width - 12) / aspect;
             bool right = corner == WindowCorner.TopRight || corner == WindowCorner.BottomRight;
             bool top = corner == WindowCorner.TopRight || corner == WindowCorner.TopLeft;
             var anchor = new Vector2(right ? 1 : 0, top ? 1 : 0);
@@ -115,6 +117,7 @@ namespace PreLuna.HeadCamera
         {
             if (texture == null) HeadCameraApi.RecordControlAim(null);
             if (!Ensure()) return;
+            image.texture = texture;
             ApplyLayout(); root.SetActive(true);
             commands.Tick(HeadCameraApi.Busy, title.font);
             events.Tick(HeadCameraApi.Busy, title.font);

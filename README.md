@@ -14,8 +14,8 @@
 | 队长指令与任务仲裁 `Captain.Commands` | 0.5.43 | [Captain.Commands/src](Captain.Commands/src) | 源码＋身份迁移 | [Captain.Commands/tests](Captain.Commands/tests) |
 | 人机强化剂 `Captain.Boosters` | 0.5.2 | [Captain.Boosters/src](Captain.Boosters/src) | 源码＋身份迁移 | [Captain.Boosters/tests](Captain.Boosters/tests) |
 | 队长兼容修复 `Captain.Fixes` | 0.5.1 | [Captain.Fixes/src](Captain.Fixes/src) | 源码＋身份迁移 | [Captain.Fixes/tests](Captain.Fixes/tests) |
-| 头戴摄像头 `HeadCamera` | 0.3.13 | [HeadCamera/src](HeadCamera/src) | 源码＋身份迁移 | [HeadCamera/tests](HeadCamera/tests) |
-| 微操大师／直接接管 `MicroMaster` | 0.5.14 | [MicroMaster/src](MicroMaster/src) | 源码＋身份迁移 | [MicroMaster/tests](MicroMaster/tests) |
+| 头戴摄像头 `HeadCamera` | 0.3.15 | [HeadCamera/src](HeadCamera/src) | 源码＋身份迁移 | [HeadCamera/tests](HeadCamera/tests) |
+| 微操大师／直接接管 `MicroMaster` | 0.5.16 | [MicroMaster/src](MicroMaster/src) | 源码＋身份迁移 | [MicroMaster/tests](MicroMaster/tests) |
 
 具体路径、版本、GUID、资源和依赖的机器登记见[repo.json](repo.json)。src是实现，tests是测试；IntegrationTests用于跨MOD场景或调度配方，Shared仅保存真正共享的接口。
 
@@ -36,7 +36,7 @@ Captain提供队长公共接口；Commands、Boosters、Fixes扩展指令、强�
 | Captain.Boosters | Captain `>=0.5.1 <0.6.0` | TheArchive |
 | Captain.Fixes | Captain `>=0.5.1 <0.6.0` | SmartPing |
 | HeadCamera | 无插件硬前置声明 | FlashlightCustom（登记副相机的本地减雾，无编译引用） |
-| MicroMaster | HeadCamera `>=0.3.13 <0.4.0`；Captain `0.5.4`；Captain.Commands `>=0.5.42 <0.6.0`；CoopBotsCustom `1.0.12` | FlashlightCustom（全关卡人机原生灯豁免，无编译引用） |
+| MicroMaster | HeadCamera `>=0.3.14 <0.4.0`；Captain `0.5.4`；Captain.Commands `>=0.5.42 <0.6.0`；CoopBotsCustom `1.0.12` | FlashlightCustom（全关卡人机原生灯豁免，无编译引用） |
 
 所有插件仍需GTFO及相应BepInEx IL2CPP环境。版本保留加载器原始声明表达式；编译引用、运行硬前置和可选桥分别判断。
 
@@ -65,7 +65,51 @@ Captain提供队长公共接口；Commands、Boosters、Fixes扩展指令、强�
 ./Test.ps1 -RuntimeRoot 'C:/Program Files/dotnet/shared/Microsoft.NETCore.App/6.0.16'
 ```
 
-根Test.ps1调度32组源码／替身回归；存在本仓构建清单时，额外调用[实际加载依赖检查](IntegrationTests/Loader/Verify-Dependencies.ps1)，用本机 BepInEx.BepInDependency 与 VersionRange.IsSatisfied 核对生成 DLL 的硬依赖，复现旧版精确版本拒绝并检查兼容范围边界。没有构建清单时会明确跳过这一项；版本范围检查不执行插件 Load、原生补丁或真实游戏。Captain翻译／类型、部分Commands、Boosters与Fixes仍有未接入该入口的测试；文件存在不代表已运行。
+根Test.ps1调度34组源码／替身回归；存在本仓构建清单时，额外调用[实际加载依赖检查](IntegrationTests/Loader/Verify-Dependencies.ps1)，用本机 BepInEx.BepInDependency 与 VersionRange.IsSatisfied 核对生成 DLL 的硬依赖，复现旧版精确版本拒绝并检查兼容范围边界。没有构建清单时会明确跳过这一项；版本范围检查不执行插件 Load、原生补丁或真实游戏。Captain翻译／类型、部分Commands、Boosters与Fixes仍有未接入该入口的测试；文件存在不代表已运行。
+
+### 头戴摄像头与接管调整验收（HeadCamera 0.3.15／MicroMaster 0.5.16）
+
+最终组合为HeadCamera **0.3.15**／MicroMaster **0.5.16**。2026-10-26用户复测反馈“几乎没有卡顿”；此前穿模已反馈基本解决。本次调整包括原生第一人称眼点／视野与自身遮挡、应用退出／离关灯光收尾、遗留同步采样卡顿三部分，下面分别记录实现和验证边界。
+
+本次安装两DLL已核对与保留交付SHA256一致，HeadCamera内部配置版本为2、保存画面样本=false。最新日志无自动采样输出、头盔灯KeyNotFound或native→managed trampoline错误；两次相机CPU准备16.69／5.32毫秒，首次观察提交41.83毫秒，接管提交12.58／6.37毫秒，恢复观察6.41／7.01毫秒，释放9.78／1.36毫秒。它们是当前场景的阶段CPU墙钟样本，不是纯GPU帧时、全程性能或所有地图验收。装备切换、任意MOD组合等未独立确认项继续保留。
+
+定位卡顿时的旧日志加载HeadCamera0.3.14／MicroMaster0.5.16；功能已基本正常，但创建副相机、接管、退出接管和退出游戏附近出现约1～3秒停顿。
+
+当时CFG为[诊断]保存画面样本=true、记录渲染耗时=false。日志记录进入／退出接管后的4次采样，每组1280×720的EXR、4张PNG和说明约17 MB。按样本目录起始时间和capture.txt中的UTC计算，主线程同步采样约1443.56、1189.26、1160.38、1139.44毫秒，包含GPU读回、CPU图像处理／编码和存盘。前两次几乎连续，可解释接管附近的秒级停顿；这些是采样路径的实际墙钟耗时，不能当作纯GPU耗时或整个游戏退出时间。
+
+0.3.15首次加载把内部配置版本升到2，并仅一次性关闭遗留保存画面样本；已有版本1的自定义分辨率、帧率、小窗宽度、FOV与按键保持，深度／投影修复开关不变。迁移完成后主动重新启用诊断仍有效；同步采样继续保留给画面排查，正常游玩保持关闭。本轮只替换HeadCamera DLL，MicroMaster继续使用已安装0.5.16，CFG不随交付分发，也不由维护脚本写游戏目录。
+
+状态栏改用ASCII LeftArrow／RightArrow按键名，避免当前原生字体缺少←／→导致的重复警告。相机独立渲染器创建、观察／接管状态首次提交、资源释放和主动采样的既有阶段日志新增CPU耗时，只在阶段发生时记录；没有新增逐帧GPU读回或默认逐帧日志。
+
+独立副渲染器仍在首次开窗时创建，关闭／离关时按原有安全作用域释放。退出游戏还包含原版和TheArchive存盘，旧日志没有这些阶段的耗时，不能认定全部卡顿都来自相机，也不能把DestroyImmediate改成异步销毁而丢掉先前的雾／全局状态恢复。新版消除已经证实的遗留自动采样触发，用户本轮复测已反馈几乎无卡顿；阶段计时保留用于后续定位，不扩展为全场景性能保证。
+
+测试入口新增[实际Plugin.Load配置迁移回归](HeadCamera/tests/ConfigUpgradeTests.cs)，覆盖v0/v1/v2／未来版本、关闭采样、主动重开和用户画面参数保留。入口仍为[Plugin.UpgradeDefaults](HeadCamera/src/Plugin.cs)、[诊断导出](HeadCamera/src/CaptureDiagnostics.cs)、[NativeCapture](HeadCamera/src/NativeCapture.cs)和[CameraRuntime](HeadCamera/src/CameraRuntime.cs)。字体、物体负缩放／导航、EnemyAnimationFix等其他日志分别归属，不把加载阶段警告认作接管瞬时卡顿的证据。
+
+### 应用退出／离关时的灯光收尾（0.5.16，本轮退出异常未复现）
+
+当前MicroMaster 0.5.16只修灯光生命周期；HeadCamera继续使用已实测基本通过、穿模基本解决的0.3.14。本轮仅替换MicroMaster DLL，无新增依赖／资源，不重置个人CFG或修改第一人称镜头。
+
+先在Globals.Global.OnApplicationQuit原生入口的前缀撤销灯托管，运行器OnApplicationQuit为幂等兜底。离开InLevel、关卡清理、本体或机器人销毁时，在普通接管Exit之前登记对应受管身份并以End(restoreSwitch:false)结束灯服务；不调用Sync／Receive恢复原开关，避免资源卸载期间进入PrepareHelmetFlashlight。只归还已有本地RF显隐并清理管理状态，不新建灯、补光或写GPU参数。
+
+已退出的受管身份按原生地址和Unity实例ID登记到独立于运行器生命周期的守卫，阻止迟到的Sync／Receive／Set及头盔灯／装备灯初始化；运行器先被销毁也有效。真人与未受管身份保留原逻辑，同地址不同实例不继承旧守卫。新关卡InLevel或有效房主／楼层重新建立后重置旧身份；应用退出本身不可被迟到InLevel或Enable撤销。
+
+正常游戏内T／Q退出仍按AllBots／ControlledOnly策略处理；配置关闭、AI模式、组件停用或插件正常卸载，在同一有效世界中保留原开关归还。失去房主／楼层或对象身份无效时不再回退到本地Receive初始化。既有接管输入、驻守交接、原生常亮写入保护和摄像头渲染恢复保持。
+
+入口：[灯服务与身份守卫](MicroMaster/src/BotFlashlights.cs)、[灯结束路径](MicroMaster/src/NativeFlashlight.cs)、[运行器生命周期](MicroMaster/src/ControlRuntime.cs)、[原生边界补丁](MicroMaster/src/ControlHooks.cs)。RuntimeSafetyTests模拟资源字典卸载，覆盖三人机、迟到原生调用、运行器先销毁、重复回调、关卡重入、同地址新实例、房主失效与恢复，以及正常游戏内归还。生成DLL另核对实际Global退出签名和布尔初始化前缀；本轮用户反馈功能正常、最新退出日志未复现该异常，未独立覆盖的生命周期与联机场景仍不能由离线替身代替。
+
+来源日志确认3次KeyNotFound发生在OnApplicationQuit后，原生栈为AssetShardManager.GetLoadedAsset → PrepareHelmetFlashlight；外层触发者并未唯一定位。本次修正封闭本MOD的卸载期回写与受管对象迟到初始化边界，不宣称已修复EnemyAnimationFix、EWC或其他地图日志。本轮测试未再报告此异常；正常T／Q退出、返回大厅／重新进关、直接退出桌面仍作为后续版本固定回归场景保留。
+
+### 接管使用原生第一人称眼点（0.3.14／0.5.15，用户反馈基本通过）
+
+本轮HeadCamera 0.3.14、MicroMaster 0.5.15只改接管拍摄，普通T观察沿用既有头戴位置／前移／80°配置。接管按机器人实时PlayerData.camPosDefault／camPosCrouch和GetCrouch计算眼点，替换接管开始时固定眼高和额外纵向平滑，不再叠加“视点前移”。不移动机器人、借用本体世界位置或复制FPSCamera控制器。FOV跟随本体正常第一人称相机；接管纹理和窗口按原生宽高比生成，切回观察恢复16:9。
+
+仅在副相机同步拍摄作用域内，对目标模型m_gfxHead／Torso／Arms的网格设置forceRenderingOff，原值逐项归还，保留腿和其他对象；不SetActive、不改碰撞体。接管画面继续使用现有装备世界模型，不新增第一人称武器／手臂动画。原生灯参数有效且开灯时，以副相机姿态加m_flashlightCameraOffset对齐既有灯，只刷新原生变换缓存，拍摄finally恢复原局部位置、旋转和缓存。常亮开关、光强／范围／雾设置及原渲染状态恢复保留；此对齐不冒充完整的原生武器动画灯光混合。
+
+近裁剪从主相机当前值开始，检测包围整个近裁剪面角点的空间，贴近几何时缩短近裁剪距离；最低仍遮挡则暂停该帧、清除标记射线并提示，移开后下一拍恢复，不触发五秒故障冷却。不通过前移相机或平移玩家穿墙。模型／灯恢复失败仍熔断拍摄，防止污染本体。
+
+修改入口：[NativeControlView](MicroMaster/src/NativeControlView.cs)、[接管运行器](MicroMaster/src/ControlRuntime.cs)、[拍摄参数／近裁剪](HeadCamera/src/FirstPersonCapture.cs)、[模型与灯作用域](HeadCamera/src/FirstPersonRenderScope.cs)、[NativeCapture](HeadCamera/src/NativeCapture.cs)。根Test入口增加FirstPersonCaptureTests，运行器增加眼点／实时蹲伏／FOV断言，画面运行器增加宽高比切换和遮挡恢复断言；替身不能代替Unity、GPU和游戏实测。
+
+该第一人称版本原需同时替换HeadCamera与MicroMaster两DLL，MicroMaster要求HeadCamera >=0.3.14 <0.4.0；Captain.Commands继续使用已安装0.5.43，无新增插件或资源。退出游戏后从工作区根本地交付/当前取文件，按清单原位置替换；个人CFG无需修改，原视点前移配置只影响观察。该版已获用户“测试基本通过、穿模基本解决”反馈；专项边界仍包括：贴墙／门框、上下俯仰、坡面移动／姿态变化、不同宽高比、近战或工具的头盔灯、T／Q退出及再次接管、本体曝光与雾。以下旧版通过反馈只属于旧版，不等于本轮候选已游戏验收。
 
 ### 微操大师接管兼容与拒绝提示
 
@@ -109,7 +153,7 @@ MicroMaster 0.5.3 保留原生步行和碰撞：先把短段目标投影到导�
 
 中键仍沿已提交的机器人相机射线记录物品、门、箱柜、敌人或原始场景命中点，并只调用一次原版机器人TriggerMarkerPing。新增只读展示接口使用同一记录与票据，视频按拍摄相机投影，复用原版通用Ping图标模板，模板未就绪时用菱形文字显示。敌人图标跟随原敌人位置；墙面没有可站立点也保留原命中和“此处不可驻守”提示。标记过期、目标死亡、票据或机器人身份失效、退出后清除；画面外不伪造中心标记。没有增加第二次网络Ping或改用本体标点。
 
-HeadCamera保持随屏幕适配、16:9的近全屏接管布局，F7切小窗，Home复位。视频Canvas为45，左下原生事件／聊天镜像为60，原生Q菜单镜像为65。事件栏显示最近4条约7秒，并在原生聊天模式显示现有输入文本；显示层均不接收输入。镜像准备好才隐藏原文字渲染器，关闭／退出／失败／销毁按原值恢复forceRenderingOff。指令成功与拒绝提示进入摄像头状态栏，优先于常规控制提示，不再只靠被视频遮住的原生事件栏。
+此前HeadCamera采用随屏幕适配、16:9的近全屏接管布局；0.3.14起接管按原生宽高比适配，F7切小窗，Home复位。视频Canvas为45，左下原生事件／聊天镜像为60，原生Q菜单镜像为65。事件栏显示最近4条约7秒，并在原生聊天模式显示现有输入文本；显示层均不接收输入。镜像准备好才隐藏原文字渲染器，关闭／退出／失败／销毁按原值恢复forceRenderingOff。指令成功与拒绝提示进入摄像头状态栏，优先于常规控制提示，不再只靠被视频遮住的原生事件栏。
 
 Q分为“结束接管并原地驻守”和“结束接管并前往标记点驻守”；后者必须有有效地面标记，墙面或过期点明确禁用。提交时核对开菜单后机器人是否移动，不再把距目标0.75米以上误当成快照变化；仍保留同层、相邻区域、导航与碰撞、任务权限等驻守预检。接单成功后才释放接管，MicroMaster识别Released，关闭视频回到本体；失败继续接管并显示原因。普通T退出行为保持原样。
 

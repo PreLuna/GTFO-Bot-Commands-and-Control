@@ -8,7 +8,7 @@ public class NativeObject {
 namespace UnityEngine {
     public class MonoBehaviour:NativeObject {public MonoBehaviour(IntPtr p){Pointer=p;}}
     public struct Vector3 {public float x,y,z;public Vector3(float x,float y,float z){this.x=x;this.y=y;this.z=z;}public float sqrMagnitude=>x*x+y*y+z*z;}
-    public class Camera{}
+    public class Camera{public float aspect=16f/9;}
     public class RenderTexture {public int width=1280,height=720;}
     public enum KeyCode {T,LeftArrow,RightArrow}
     public static class Time {public static float unscaledTime;}
@@ -55,10 +55,10 @@ namespace PreLuna.HeadCamera {
         internal void Hide(){IsVisible=false;}internal void Dispose()=>Hide();internal void ShowTestPattern(string message=null){IsVisible=true;}
     }
     internal sealed class NativeCapture {
-        internal static bool ThrowCapture;internal static int Captures;internal RenderTexture Texture=new();
-        internal void Initialize(Camera camera,int width){}
+        internal static bool ThrowCapture,Occluded;internal static int Captures;internal RenderTexture Feed=new();internal RenderTexture Texture=>Occluded?null:Feed;
+        internal static float Aspect; internal static int Disposals; internal void Initialize(Camera camera,int width,float aspect=16f/9){Aspect=aspect;}
         internal void Capture(PlayerAgent bot,Camera main,ControlView? view){Captures++;if(ThrowCapture)throw new Exception("render failed");}
-        internal ControlView CapturedView(ControlView view)=>view;internal void Dispose(){}
+        internal ControlView CapturedView(ControlView view)=>view;internal void Dispose(){Disposals++;}
     }
     internal class CaptureRestoreException:Exception{}
     public static class HeadCameraApi {
@@ -72,3 +72,5 @@ namespace PreLuna.HeadCamera {
         internal static bool TryView(CameraTarget selected,out ControlView view){view=new(selected,default,new(0,0,1),80,true,Suspended);return Busy&&HasViewProvider;}
     }
 }
+ public static class LayerManager {public const int MASK_WORLD=1,MASK_PLAYER_INTERACT_BLOCKERS=2,LAYER_DYNAMIC=3;}
+namespace UnityEngine {public enum QueryTriggerInteraction{Ignore}public static class Physics {public static bool CheckSphere(Vector3 p,float r,int m,QueryTriggerInteraction q)=>false;}}

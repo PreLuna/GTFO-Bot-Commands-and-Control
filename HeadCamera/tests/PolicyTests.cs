@@ -55,6 +55,11 @@ static class PolicyTests
         Check(DefaultUpgrade.Replace(0, 480, 480), "旧版默认分辨率自动升级");
         Check(!DefaultUpgrade.Replace(0, 800, 480), "保留旧版自定义分辨率");
         Check(!DefaultUpgrade.Replace(1, 480, 480), "迁移完成后主动设回旧值不再次被覆盖");
+        Check(DefaultUpgrade.CurrentVersion==2,"本轮只推进诊断迁移版本");
+        Check(DefaultUpgrade.DisableLegacyCapture(0,true)&&DefaultUpgrade.DisableLegacyCapture(1,true),"升级时一次性关闭遗留同步采样");
+        Check(!DefaultUpgrade.DisableLegacyCapture(1,false),"原本关闭的采样不产生额外变化");
+        Check(!DefaultUpgrade.DisableLegacyCapture(2,true)&&!DefaultUpgrade.DisableLegacyCapture(3,true),"迁移后主动重开诊断不被每次启动覆盖");
+        Check(!DefaultUpgrade.Replace(1,12,12)&&!DefaultUpgrade.Replace(1,360,360),"诊断迁移不重复修改用户主动设定的刷新率和小窗尺寸");
 
         var session = new ViewSession();
         session.SetVisible(true);

@@ -47,8 +47,8 @@ foreach($entry in $dependencies){
 }
 $range=($dependencies | Where-Object {$_.Plugin -eq 'PreLuna.MicroMaster' -and $_.Dependency.DependencyGUID -eq 'PreLuna.HeadCamera'}).Dependency.VersionRange
 if(!$range){throw 'Missing MicroMaster camera range'}
-foreach($version in @('0.3.13','0.3.14','0.3.99')){if(!$range.IsSatisfied([SemanticVersioning.Version]::Parse($version))){throw ('Compatible patch rejected: '+$version)};$checks++}
-foreach($version in @('0.3.0','0.3.1','0.3.2','0.3.3','0.3.4','0.3.5','0.3.6','0.3.7','0.3.8','0.3.9','0.3.10','0.3.11','0.3.12','0.4.0','1.0.0')){if($range.IsSatisfied([SemanticVersioning.Version]::Parse($version))){throw ('Unsupported camera accepted: '+$version)};$checks++}
+foreach($version in @('0.3.14','0.3.15','0.3.99')){if(!$range.IsSatisfied([SemanticVersioning.Version]::Parse($version))){throw ('Compatible patch rejected: '+$version)};$checks++}
+foreach($version in @('0.3.0','0.3.1','0.3.2','0.3.3','0.3.4','0.3.5','0.3.6','0.3.7','0.3.8','0.3.9','0.3.10','0.3.11','0.3.12','0.3.13','0.4.0','1.0.0')){if($range.IsSatisfied([SemanticVersioning.Version]::Parse($version))){throw ('Unsupported camera accepted: '+$version)};$checks++}
 $commands=($dependencies | Where-Object {$_.Plugin -eq 'PreLuna.MicroMaster' -and $_.Dependency.DependencyGUID -eq 'PreLuna.Captain.Commands'}).Dependency.VersionRange
 if(!$commands){throw 'Missing MicroMaster command range'}
 foreach($version in @('0.5.42','0.5.43','0.5.99')){if(!$commands.IsSatisfied([SemanticVersioning.Version]::Parse($version))){throw ('Compatible commands rejected: '+$version)};$checks++}
@@ -185,10 +185,21 @@ try {
    if($method.Count -ne 1){throw ('Native switch signature changed: '+$entry[0]+'::'+$entry[1])}
   }
   if(!($interop.GetType('Player.PlayerSync').Methods | Where-Object {$_.Name -eq 'get_m_agent' -and $_.ReturnType.FullName -eq 'Player.PlayerAgent'})){throw 'Missing real sync owner accessor.'}
+  if(@($interop.GetType('Globals.Global').Methods | Where-Object {$_.Name -eq 'OnApplicationQuit' -and $_.Parameters.Count -eq 0 -and $_.ReturnType.FullName -eq 'System.Void'}).Count -ne 1){throw 'Native application quit signature changed.'}
  } finally {$interop.Dispose()}
  $finish=$hooks.Methods | Where-Object {$_.Name -eq 'FinishLightHandoff'}
  if(!($finish.Body.Instructions | Where-Object {$_.Operand -is [Mono.Cecil.MethodReference] -and $_.Operand.Name -eq 'Dispose'})){throw 'Missing exception-safe equipment handoff release.'}
  Write-Output 'PASS: three installed native switch guards, real interop signatures and equipment finalizer verified.'
+ foreach($name in @('ApplicationQuitting','OnApplicationQuit')){if($name -notin $hookNames){throw ('Missing early quit hook: '+$name)}}
+ foreach($name in @('BeforeHelmetLight','BeforeWieldLight','FlashlightRequest','FlashlightReceive','FlashlightSet')){
+  $method=$hooks.Methods | Where-Object Name -eq $name
+  if($method.ReturnType.FullName -ne 'System.Boolean' -or !($method.Body.Instructions | Where-Object {$_.Operand -is [Mono.Cecil.MethodReference] -and $_.Operand.DeclaringType.Name -eq 'NativeLightLifetime' -and $_.Operand.Name -eq 'Allows'})){throw ('Missing teardown identity guard: '+$name)}
+ }
+ $lifetime=$module.GetTypes() | Where-Object Name -eq 'NativeLightLifetime'
+ if(!$lifetime -or !($lifetime.Fields | Where-Object {$_.IsStatic -and $_.Name -eq 'retiring'})){throw 'Teardown guard must survive runner destruction.'}
+ $nativeEnd=($module.GetTypes() | Where-Object Name -eq 'NativeFlashlight').Methods | Where-Object Name -eq 'End'
+ if($nativeEnd.Parameters.Count -ne 1 -or $nativeEnd.Parameters[0].ParameterType.FullName -ne 'System.Boolean'){throw 'Missing discard-without-switch-restore path.'}
+ Write-Output 'PASS: early native quit hook, teardown switch/setup guards, runner-independent identity lifetime and discard path are wired into the built plugin.'
  foreach($name in @('BeforeWieldLight','BeforeHelmetLight','AfterLightSetup','LightData','LightOn','LightRange','LightAngle','LightIntensity')){if(!($hooks.Methods | Where-Object {$_.Name -eq $name})){throw ('Missing native lamp boundary hook: '+$name)}}
  $settings=$module.GetTypes() | Where-Object {$_.Name -eq 'NativeLightSettings'}
  if(!$settings){throw 'Missing pre-RF settings snapshots.'}

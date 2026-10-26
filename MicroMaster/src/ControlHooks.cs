@@ -82,6 +82,8 @@ namespace PreLuna.MicroMaster
                 Patch(harmony, method, nameof(BeforeDamage), nameof(AfterDamage));
             Patch(harmony, AccessTools.Method(typeof(PlayerManager), "OnLevelCleanup"), nameof(LevelCleanup));
             Patch(harmony, AccessTools.Method(typeof(GameStateManager), "ChangeState", new[] { typeof(eGameStateName) }), nameof(StateChanging));
+            // Run before the game's own asset/session teardown, independent of MonoBehaviour callback order.
+            Patch(harmony, AccessTools.Method(typeof(Globals.Global), "OnApplicationQuit", Type.EmptyTypes), nameof(ApplicationQuitting));
             foreach (var name in new[] { "OnDespawn", "OnDestroy" })
                 Patch(harmony, AccessTools.Method(typeof(PlayerAgent), name), nameof(PlayerDeparting));
             var ai = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "PreLuna.CoopBotsCustom");
@@ -100,14 +102,21 @@ namespace PreLuna.MicroMaster
             if (!Blocked || !ControlSafety.BlockAction((int)__0)) return true; __result = 0; return false;
         }
         static bool Inventory() => !Blocked;
-        static bool FlashlightRequest(PlayerSync __instance, bool __0) => ControlRuntime.Current?.AllowNativeLightSwitch(__instance?.m_agent, __0, 0) != false;
-        static bool FlashlightReceive(PlayerInventoryBase __instance, bool __0) => ControlRuntime.Current?.AllowNativeLightSwitch(__instance?.Owner, __0, 1) != false;
-        static bool FlashlightSet(PlayerInventoryBase __instance, bool __0) => ControlRuntime.Current?.AllowNativeLightSwitch(__instance?.Owner, __0, 2) != false;
+        static bool FlashlightRequest(PlayerSync __instance, bool __0) => NativeLightLifetime.Allows(__instance?.m_agent) && ControlRuntime.Current?.AllowNativeLightSwitch(__instance?.m_agent, __0, 0) != false;
+        static bool FlashlightReceive(PlayerInventoryBase __instance, bool __0) => NativeLightLifetime.Allows(__instance?.Owner) && ControlRuntime.Current?.AllowNativeLightSwitch(__instance?.Owner, __0, 1) != false;
+        static bool FlashlightSet(PlayerInventoryBase __instance, bool __0) => NativeLightLifetime.Allows(__instance?.Owner) && ControlRuntime.Current?.AllowNativeLightSwitch(__instance?.Owner, __0, 2) != false;
         static void BeforeLightHandoff(PlayerInventoryBase __instance, out IDisposable __state) => __state = ControlRuntime.Current?.BeginNativeLightHandoff(__instance?.Owner);
         static Exception FinishLightHandoff(Exception __exception, IDisposable __state) { __state?.Dispose(); return __exception; }
-        static void BeforeWieldLight(PlayerInventoryBase __instance, ItemEquippable __0, Gear.GearPartFlashlight __1)
-            => ControlRuntime.Current?.BeforeNativeLightSetup(__instance.Owner, __1?.m_settingsID ?? 1, __0);
-        static void BeforeHelmetLight(PlayerInventoryBase __instance) => ControlRuntime.Current?.BeforeNativeLightSetup(__instance.Owner, 1, null);
+        static bool BeforeWieldLight(PlayerInventoryBase __instance, ItemEquippable __0, Gear.GearPartFlashlight __1)
+        {
+            if (!NativeLightLifetime.Allows(__instance?.Owner)) return false;
+            ControlRuntime.Current?.BeforeNativeLightSetup(__instance.Owner, __1?.m_settingsID ?? 1, __0); return true;
+        }
+        static bool BeforeHelmetLight(PlayerInventoryBase __instance)
+        {
+            if (!NativeLightLifetime.Allows(__instance?.Owner)) return false;
+            ControlRuntime.Current?.BeforeNativeLightSetup(__instance.Owner, 1, null); return true;
+        }
         static void AfterLightSetup(PlayerInventoryBase __instance) => ControlRuntime.Current?.AfterNativeLightSetup(__instance.Owner);
         static void AfterLightDisabled(CL_Light __0) => ControlRuntime.Current?.NativeLightRenderDisabled(__0);
         static bool LightData(CL_SpotLight __instance) => ControlRuntime.Current?.AllowNativeLightData(__instance?.UnityLight) != false;
@@ -141,6 +150,7 @@ namespace PreLuna.MicroMaster
         static void BeforeDamage(Dam_PlayerDamageLocal __instance, out float __state) => __state = __instance.Health;
         static void AfterDamage(Dam_PlayerDamageLocal __instance, float __state) => ControlRuntime.Current?.Damage(__instance, __state);
         static void LevelCleanup() => ControlRuntime.Current?.LevelCleanup();
+        static void ApplicationQuitting() => ControlRuntime.Current?.OnApplicationQuit();
         static void StateChanging(eGameStateName __0) => ControlRuntime.Current?.StateChanging(__0);
         static void PlayerDeparting(PlayerAgent __instance) => ControlRuntime.Current?.Departing(__instance);
     }
