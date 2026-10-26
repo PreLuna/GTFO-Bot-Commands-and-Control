@@ -76,6 +76,17 @@ namespace PreLuna.Captain.Tasks
             }
             else if (bot != null && returning.TryGetValue(bot.Pointer, out var back)) back.Runner.Abort(true, "玩家取消返程，保留实际位置并交还原任务");
         }
+        // A released strike must finish. Once it has yielded, cancel its return and
+        // restore the old holds before the manual session takes its own pause snapshot.
+        internal static bool YieldForControl(PlayerAIBot bot)
+        {
+            if (bot == null) return false;
+            Cancel(bot);
+            if (active.ContainsKey(bot.Pointer)) return false;
+            if (returning.TryGetValue(bot.Pointer, out var back))
+                back.Runner.Abort(true, "手动接管取消击杀返程，原任务交由接管会话暂停");
+            return !returning.ContainsKey(bot.Pointer);
+        }
         internal static string Diagnose(PlayerAIBot bot, EnemyAgent enemy, out string note)
         {
             note = null;

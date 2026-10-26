@@ -48,7 +48,7 @@ static class StationHandoffTests
 
   Reset();service.Active=true;Physics.Capsule=true;Check(!MovementOrders.AcceptControlStation(bot,here,out _)&&!MovementOrders.HasDuty(bot)&&service.Active,"驻守站位被堵时拒绝接单，继续接管");
   Physics.Capsule=false;ItemTaskAdapter.Blocked.Add(bot.Pointer);Check(!MovementOrders.AcceptControlStation(bot,here,out _),"未完全暂停的前台任务阻止驻守交接");
-  ItemTaskAdapter.Blocked.Clear();bot.Agent.Position=new(2,0,0);Check(!MovementOrders.AcceptControlStation(bot,here,out _),"机器人移离Q菜单快照时要求重开确认此地");
+  ItemTaskAdapter.Blocked.Clear();bot.Agent.Position=new(2,0,0);Check(MovementOrders.AcceptControlStation(bot,here,out _),"有效驻守目标允许距机器人超过0.75米，菜单位移校验在提交入口进行");
   Reset();service.Active=true;Check(MovementOrders.AcceptControlStation(bot,here,out _),"第二次交接接单");service.Active=false;
   bot.Agent.Owner=new();Tick(.1f);Check(!MovementOrders.HasDuty(bot)&&!BotControlApi.RecallProtected(bot.Agent.Pointer.ToInt64(),bot.Agent.Owner.Pointer.ToInt64()),"身份失效清理旧驻守及交接保护");
   MovementOrders.Reset();BotControlApi.Unregister(service);

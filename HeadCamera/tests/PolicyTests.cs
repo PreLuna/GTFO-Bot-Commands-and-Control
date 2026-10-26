@@ -9,6 +9,11 @@ static class PolicyTests
     { if (!condition) throw new Exception("FAIL: " + name); checks++; }
     static void Main()
     {
+        Check(ViewPolicy.Display(true,true,false,true,false), "Q菜单拥有输入时保持接管画面");
+        Check(!ViewPolicy.Display(true,true,false,false,false), "普通观看仍遵守界面输入限制");
+        Check(!ViewPolicy.Display(true,false,false,true,false), "失焦不显示接管画面");
+        Check(!ViewPolicy.Display(false,true,false,true,false), "离开关卡不保留接管画面");
+        Check(!ViewPolicy.Display(true,true,false,true,true), "终端仍关闭摄像头");
         var a = new CameraTarget(1, 100, 11, "A", true);
         var b = new CameraTarget(2, 200, 22, "B", false);
         var c = new CameraTarget(3, 300, 33, "C", true);

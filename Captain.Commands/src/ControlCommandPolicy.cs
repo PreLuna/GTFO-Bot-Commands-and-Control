@@ -10,7 +10,7 @@ namespace PreLuna.Captain.Tasks
     }
     internal static class ControlCommandPolicy
     {
-        public static bool Supported(int handler) => handler is 1 or 10 or 9 or 43 or 55;
+        public static bool Supported(int handler) => handler is 1 or 10 or 9 or 43 or 55 or 56;
         public static string Reject(bool active, bool busy, bool sameTicket, bool sameBot, int handler)
             => !active || !sameTicket ? "接管菜单会话已失效，请重新打开Q"
             : busy ? "接管指令正在执行／核验，不能覆盖或重新标记"

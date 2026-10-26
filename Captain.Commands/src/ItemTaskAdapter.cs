@@ -81,18 +81,18 @@ namespace PreLuna.Captain.Tasks
                 var share = AccessTools.Method(typeof(RootPlayerBotAction), "UpdateActionShareResoursePack");
                 if (press == null || update == null || reset == null || collect == null || share == null) throw new MissingMethodException("缺少原版菜单或库存调度接口");
                 patches = new Harmony(Plugin.Guid + ".items");
-                ItemWorldIndex.Install(patches);
-                KnownSupplyIndex.Install(patches);
-                ItemActionAuthorization.Install(patches);
-                NativePickupAdapter.Install(patches);
-                SingleKillAdapter.Install(patches);
-                OpenTaskAdapter.Install(patches);
-                ControlCommandAdapter.Install(patches);
-                ResourceUseAdapter.Install(patches);
-                MovementOrders.Install(patches);
-                RescueOrders.Install(patches);
-                ToolSupplyAdapter.Install(patches); SharedMeleeBridge.Install(patches); FocusOrders.Install(patches); GuardCombat.Install(patches);
-                CaptainMenuInput.Install();
+                ModuleEntry.StartupStep("ItemWorldIndex", () => ItemWorldIndex.Install(patches));
+                ModuleEntry.StartupStep("KnownSupplyIndex", () => KnownSupplyIndex.Install(patches));
+                ModuleEntry.StartupStep("ItemActionAuthorization", () => ItemActionAuthorization.Install(patches));
+                ModuleEntry.StartupStep("NativePickupAdapter", () => NativePickupAdapter.Install(patches));
+                ModuleEntry.StartupStep("SingleKillAdapter", () => SingleKillAdapter.Install(patches));
+                ModuleEntry.StartupStep("OpenTaskAdapter", () => OpenTaskAdapter.Install(patches));
+                ModuleEntry.StartupStep("ControlCommandAdapter", () => ControlCommandAdapter.Install(patches));
+                ModuleEntry.StartupStep("ResourceUseAdapter", () => ResourceUseAdapter.Install(patches));
+                ModuleEntry.StartupStep("MovementOrders", () => MovementOrders.Install(patches));
+                ModuleEntry.StartupStep("RescueOrders", () => RescueOrders.Install(patches));
+                ModuleEntry.StartupStep("ToolSupplyAdapter", () => ToolSupplyAdapter.Install(patches)); ModuleEntry.StartupStep("SharedMeleeBridge", () => SharedMeleeBridge.Install(patches)); ModuleEntry.StartupStep("FocusOrders", () => FocusOrders.Install(patches)); ModuleEntry.StartupStep("GuardCombat", () => GuardCombat.Install(patches));
+                ModuleEntry.StartupStep("CaptainMenuInput", CaptainMenuInput.Install);
                 patches.Patch(press, prefix: new HarmonyMethod(typeof(ItemTaskAdapter), nameof(Press)));
                 patches.Patch(update, postfix: new HarmonyMethod(typeof(ItemTaskAdapter), nameof(Update)));
                 patches.Patch(reset, prefix: new HarmonyMethod(typeof(ItemTaskAdapter), nameof(BeforeState)));
@@ -109,6 +109,7 @@ namespace PreLuna.Captain.Tasks
         public static void Feedback(string message)
         {
             Plugin.Logger.LogInfo("[队长任务] " + message);
+            ControlPresentation.Notify(message);
             // Local event log only. Do not broadcast new commands or task reports to unmodified peers.
             GuiManager.PlayerLayer?.m_gameEventLog?.AddLogItem("[队长] " + message, eGameEventChatLogType.GameEvent);
         }
@@ -240,20 +241,24 @@ namespace PreLuna.Captain.Tasks
             string enemyReason = ControlCommandAdapter.EnemyReason(context), killNote = null;
             string killReason = enemyReason ?? SingleKillAdapter.ControlReason(bot, context.Enemy, out killNote);
             string focusReason = enemyReason ?? FocusOrders.ControlReason(bot, context.Enemy);
-            string stationReason = context.Station == null ? "机器人当前位置没有可用驻守站位，请先微调后重开Q" : PositionMarks.Reason(context.Station, bot.Agent);
+            string stationReason = context.Station == null ? context.HasPosition ? "标记位置没有有效站位或已过期，请对准地面重新中键标记" : "请先中键标记可站立的地面位置" : PositionMarks.Reason(context.Station, bot.Agent);
             var choices = new List<CaptainMenuBot> { new(bot.Agent.PlayerSlotIndex, bot.Agent.Owner.Pointer.ToInt64(),
                 "当前接管：" + bot.Agent.PlayerName, bot.Agent.Alive, OpenTaskAdapter.HasMelee(bot), OpenTaskAdapter.Melters(bot), KillBlocked: killReason, KillNote: killNote) };
             var plan = CaptainMenuPlan.Build(choices, name, "", "", fresh == null && context.Item != null, false, false,
                 enemy: context.Enemy == null ? "未标记敌人" : "敌人 #" + context.Enemy.EnemyDataID, enemyValid: SingleKillAdapter.Sleeping(context.Enemy),
                 openTarget: new(context.Open?.Label ?? "未标记", openReason, openReason == null && context.Open.NeedsMelee,
-                    openReason == null ? context.Open.NeededMelters : 0), position: new("当前机器人所在位置", stationReason),
+                    openReason == null ? context.Open.NeededMelters : 0), position: new(context.HasPosition ? context.Station?.Label ?? "无有效站位的位置标记" : "请先中键标记地面位置", stationReason),
                 combat: new("机器人镜头标记的敌人", focusReason, "接管协同近战尚未接入"), controlMode: true);
             string busy = ControlCommandAdapter.Busy(ticket, out var running) ? "正在执行／核验：" + running : null;
             var nodes = new Dictionary<uint, CommunicationNode>(); var links = new List<CaptainMenuPlanNode>();
             CommunicationNode Materialize(CaptainMenuPlanNode value)
             {
                 var node = Node(value.Id, value.Label, value.Leaf != null); nodes.Add(value.Id, node);
-                if (value.Leaf != null) menuCommands.Add(value.Id, busy == null ? value.Leaf : value.Leaf with { Blocked = busy });
+                if (value.Leaf != null) {
+                    var leaf = value.Leaf;
+                    string blocked = busy ?? (leaf.Handler == 56 ? PositionMarks.Reason(context.Here, bot.Agent) : leaf.Blocked);
+                    menuCommands.Add(value.Id, blocked == null ? leaf : leaf with { Blocked = blocked });
+                }
                 if (value.BackTo != 0) links.Add(value);
                 foreach (var child in value.Children) node.m_ChildNodes.Add(Materialize(child));
                 return node;

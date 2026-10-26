@@ -19,6 +19,7 @@ namespace PreLuna.HeadCamera
         readonly ViewSession session = new();
         readonly FrameRateMeter frameRate = new();
         readonly ToggleGesture gesture = new();
+        readonly ControlFeedback feedback = new();
         NativeCapture capture;
         int mainThread;
         float nextTargets, nextDiagnostics;
@@ -27,6 +28,7 @@ namespace PreLuna.HeadCamera
         double elapsedTotal, elapsedMax;
         int captureCount;
         long lastLoggedAgent;
+        bool? lastLoggedControlled;
         internal bool Opened => session.Opened;
         [HideFromIl2Cpp]
         internal CameraTarget? Selected { get; private set; }
@@ -39,7 +41,7 @@ namespace PreLuna.HeadCamera
             if (!OnMainThread || stopped) return false;
             bool controls = HeadCameraApi.Busy;
             long agent = 0, owner = 0; int instance = 0, slot = -1;
-            if (Playing && Selected.HasValue)
+            if (Playing && Selected.HasValue && Plugin.OutputMode.Value != FeedOutput.TestPattern)
             {
                 var selected = Selected.Value;
                 var target = PlayerManager.Current?.GetPlayerAgentInSlot(selected.Slot);
@@ -54,6 +56,8 @@ namespace PreLuna.HeadCamera
         static bool Playing => GameStateManager.CurrentStateName == eGameStateName.InLevel;
         static bool InputAllowed => Playing && Application.isFocused && InputMapper.PlayerHasFocus
             && FocusStateManager.CurrentState == eFocusState.FPS && !PlayerChatManager.InChatMode;
+        static bool DisplayAllowed => ViewPolicy.Display(Playing, Application.isFocused, InputAllowed, HeadCameraApi.Busy,
+            FocusStateManager.CurrentState == eFocusState.ComputerTerminal);
         public void Update()
         {
             if (stopped) return;
@@ -62,22 +66,28 @@ namespace PreLuna.HeadCamera
                 bool playing = Playing;
                 if (!playing || !Plugin.Enabled.Value)
                 {
-                    if (previouslyInLevel || Opened || capture != null) ResetLevel();
+                    if (previouslyInLevel || Opened || capture != null) ResetLevel(playing ? "摄像头配置关闭" : "离开关卡");
                     previouslyInLevel = false; allowed = false; return;
                 }
                 ObserveFocus();
-                previouslyInLevel = true; allowed = InputAllowed;
+                previouslyInLevel = true; allowed = DisplayAllowed;
                 if (!allowed) { gesture.Reset(); hud.Hide(); frameRate.Reset(); return; }
+                // Q owns input while its menu is open; keep rendering the controlled view.
+                if (!InputAllowed) { gesture.Reset(); return; }
                 bool pressed = Input.GetKeyDown(Plugin.ToggleKey.Value);
-                if (HeadCameraApi.RequestControl != null) {
+                {
                     var intent = gesture.Step(Time.unscaledTime, pressed, Opened, HeadCameraApi.Busy, Selected, HeadCameraApi.DoubleClickWindow);
                     if (intent == ToggleIntent.Open) { SetVisible(true); gesture.CaptureOpenedTarget(Selected); return; }
-                    if (intent == ToggleIntent.Close) { SetVisible(false); return; }
-                    if (intent == ToggleIntent.ExitControl) { HeadCameraApi.ExitControl(); return; }
+                    if (intent == ToggleIntent.Close) { SetVisible(false, "T单击关闭观察窗口"); return; }
+                    if (intent == ToggleIntent.ExitControl) { HeadCameraApi.ExitControlFor("T键退出接管"); return; }
+                    if (intent == ToggleIntent.RejectControl) { ShowControlNotice(gesture.RejectionReason); return; }
                     if (intent == ToggleIntent.RequestControl && gesture.RequestTarget.HasValue) {
-                        HeadCameraApi.RequestControl(gesture.RequestTarget.Value); return;
+                        feedback.Request(gesture.RequestTarget.Value, HeadCameraApi.RequestControl,
+                            Plugin.OutputMode.Value == FeedOutput.TestPattern, ShowControlNotice,
+                            error => Plugin.Instance.Log.LogWarning("[头戴摄像头] 接管回调异常：" + error));
+                        return;
                     }
-                } else if (pressed) { SetVisible(!Opened); return; }
+                }
                 if (!Opened) return;
                 if (HeadCameraApi.Busy) return;
                 int step = Input.GetKeyDown(Plugin.NextKey.Value) ? 1 : Input.GetKeyDown(Plugin.PreviousKey.Value) ? -1 : 0;
@@ -104,11 +114,12 @@ namespace PreLuna.HeadCamera
             if (Selected.HasValue != next.HasValue || next.HasValue && !next.Value.Same(Selected.Value))
             { Selected = next; clock.Reset(); frameRate.Reset(); message = null; }
         }
-        internal bool SetVisible(bool value)
+        internal bool SetVisible(bool value, string reason = "外部接口关闭摄像头")
         {
             if (!OnMainThread || stopped || value && (!Plugin.Enabled.Value || !InputAllowed)) return false;
-            if (!value && HeadCameraApi.Busy) HeadCameraApi.ExitControl?.Invoke();
+            if (!value && HeadCameraApi.Busy) HeadCameraApi.ExitControlFor(reason);
             session.SetVisible(value);
+            feedback.Clear();
             frameRate.Reset();
             if (value)
             {
@@ -122,12 +133,24 @@ namespace PreLuna.HeadCamera
             }
             HeadCameraApi.NotifyHudViewIdentityChanged(); return true;
         }
+        internal void ShowControlFeedback(string text)
+        {
+            if (!OnMainThread || stopped) return;
+            feedback.Store(text, Time.unscaledTime);
+        }
+        internal void ShowControlNotice(string text)
+        {
+            if (!OnMainThread || stopped || !feedback.Store(text, Time.unscaledTime)) return;
+            Plugin.Instance.Log.LogInfo("[接管提示] " + text);
+            try { GuiManager.PlayerLayer?.m_gameEventLog?.AddLogItem("[接管] " + text, eGameEventChatLogType.GameEvent); }
+            catch (Exception error) { Plugin.Instance.Log.LogWarning("[接管提示] 事件栏不可用，窗口与日志已记录：" + error.Message); }
+        }
         internal void ObserveFocus()
         {
             if (stopped || !OnMainThread) return;
             if (!session.ObserveTerminal(FocusStateManager.CurrentState == eFocusState.ComputerTerminal)) return;
             allowed = false;
-            SetVisible(false);
+            SetVisible(false, "进入终端关闭摄像头");
             Plugin.Instance.Log.LogInfo("[头戴摄像头] 进入终端，摄像头已关闭；离开后按 " + Plugin.KeyLabel(Plugin.ToggleKey.Value) + " 重新打开。");
         }
         internal bool SelectSlot(int slot)
@@ -144,9 +167,14 @@ namespace PreLuna.HeadCamera
             {
                 // Focus may change after Update, e.g. the native terminal interaction this frame.
                 ObserveFocus();
-                if (!Opened || !allowed || !InputAllowed || !Plugin.Enabled.Value) { hud.Hide(); return; }
+                if (!Opened || !allowed || !DisplayAllowed || !Plugin.Enabled.Value) { hud.Hide(); return; }
                 if (!hud.Ensure()) return;
-                if (!Selected.HasValue) { hud.Show(null, "头戴摄像头", "没有存活队友 · " + Plugin.KeyLabel(Plugin.ToggleKey.Value) + " 关闭"); return; }
+                if (Plugin.OutputMode.Value == FeedOutput.TestPattern)
+                {
+                    if (HeadCameraApi.Busy) HeadCameraApi.ExitControlFor("切换诊断彩条模式");
+                    HeadCameraApi.RecordControlAim(null); frameRate.Reset(); DisposeCapture(); hud.ShowTestPattern(feedback.Read(Time.unscaledTime)); return;
+                }
+                if (!Selected.HasValue) { hud.Show(null, "头戴摄像头", feedback.Read(Time.unscaledTime) ?? ("没有存活队友 · " + Plugin.KeyLabel(Plugin.ToggleKey.Value) + " 关闭")); return; }
                 var selected = Selected.Value;
                 var target = PlayerManager.Current?.GetPlayerAgentInSlot(selected.Slot);
                 var local = PlayerManager.GetLocalPlayerAgent();
@@ -155,7 +183,9 @@ namespace PreLuna.HeadCamera
                 { RefreshTargets(0); hud.Show(null, "头戴摄像头", "观看对象已离队／失效，重新选择中"); return; }
                 string title = (selected.IsBot ? "人机 · " : "队友 · ") + selected.Name;
                 ControlView? controlView = HeadCameraApi.TryView(selected, out var view) ? view : null;
-                if (controlView?.Suspended == true) { HeadCameraApi.RecordControlAim(null); hud.Hide(); frameRate.Reset(); return; }
+                // Suspended means the control menu owns input, not that the video is hidden.
+                bool publishAim = controlView.HasValue && !controlView.Value.Suspended;
+                if (!publishAim) HeadCameraApi.RecordControlAim(null);
                 if (HeadCameraApi.Busy && HeadCameraApi.HasViewProvider && !controlView.HasValue) {
                     hud.Show(null, title, HeadCameraApi.ControlStatus?.Invoke() ?? "等待接管视角"); return;
                 }
@@ -172,21 +202,21 @@ namespace PreLuna.HeadCamera
                     capture ??= new NativeCapture();
                     capture.Initialize(main, Plugin.Width.Value);
                     capture.Capture(target, main, controlView);
-                    HeadCameraApi.RecordControlAim(controlView.HasValue ? capture.CapturedView(controlView.Value) : null);
+                    HeadCameraApi.RecordControlAim(publishAim ? capture.CapturedView(controlView.Value) : null);
                     watch.Stop(); elapsedTotal += watch.Elapsed.TotalMilliseconds; elapsedMax = Math.Max(elapsedMax, watch.Elapsed.TotalMilliseconds); captureCount++;
                     failures.Success(); frameRate.Sample(Time.unscaledTime);
                     message = Plugin.KeyLabel(Plugin.ToggleKey.Value) + " 关闭 · " + Plugin.SwitchHint + " · "
                         + (frameRate.Actual > 0 ? frameRate.Actual.ToString("F0") + "/" : "目标 ") + Plugin.FramesPerSecond.Value + " FPS";
-                    if (lastLoggedAgent != selected.AgentIdentity)
+                    if (lastLoggedAgent != selected.AgentIdentity || lastLoggedControlled != controlView.HasValue)
                     {
-                        lastLoggedAgent = selected.AgentIdentity;
+                        lastLoggedAgent = selected.AgentIdentity; lastLoggedControlled = controlView.HasValue;
                         Plugin.Instance.Log.LogInfo("[头戴摄像头] 画面提交：slot=" + selected.Slot + " name=" + selected.Name + " bot=" + selected.IsBot
-                            + " dimension=" + target.DimensionIndex + " texture=" + capture.Texture.width + "×" + capture.Texture.height
+                            + " controlled=" + controlView.HasValue + " suspended=" + (controlView?.Suspended == true) + " dimension=" + target.DimensionIndex + " texture=" + capture.Texture.width + "×" + capture.Texture.height
                             + " targetPos=" + target.Position + "；画面内容仍需游戏内确认");
                     }
                 }
                 hud.Show(failures.Ready(Time.unscaledTime) ? capture?.Texture : null, title,
-                    HeadCameraApi.ControlStatus?.Invoke() ?? message ?? "等待队友画面");
+                    feedback.Read(Time.unscaledTime) ?? HeadCameraApi.ControlStatus?.Invoke() ?? message ?? "等待队友画面");
                 if (Plugin.Diagnostics.Value && Time.unscaledTime >= nextDiagnostics && captureCount > 0)
                 {
                     nextDiagnostics = Time.unscaledTime + 10;
@@ -204,19 +234,20 @@ namespace PreLuna.HeadCamera
             failures.Fail(Time.unscaledTime); frameRate.Reset(); DisposeCapture();
             if (error is CaptureRestoreException) failures.Trip();
             message = failures.Tripped ? "连续失败，渲染已停止；查看日志" : "画面暂不可用，5 秒后重试";
-            Plugin.Instance?.Log.LogWarning("[头戴摄像头] " + phase + "失败；" + message + "\n" + error);
+            Plugin.Instance?.Log.LogWarning("[头戴摄像头] opened=" + Opened + " controlling=" + HeadCameraApi.Busy + " tripped=" + failures.Tripped + "；" + phase + "失败；" + message + "\n" + error);
         }
         void DisposeCapture() { var old = capture; capture = null; old?.Dispose(); }
-        internal void ResetLevel()
+        internal void ResetLevel(string reason = "关卡清理")
         {
             gesture.Reset();
-            if (HeadCameraApi.Busy) HeadCameraApi.ExitControl?.Invoke();
+            feedback.Clear();
+            if (HeadCameraApi.Busy) HeadCameraApi.ExitControlFor(reason);
             session.SetVisible(false); frameRate.Reset(); allowed = false; Selected = null; targets.Clear(); hud.Hide(); DisposeCapture(); hud.Dispose();
             failures.Reset(); clock.Reset(); message = null; nextTargets = 0; elapsedMax = elapsedTotal = 0; captureCount = 0;
-            lastLoggedAgent = 0;
+            lastLoggedAgent = 0; lastLoggedControlled = null;
             HeadCameraApi.NotifyHudViewIdentityChanged();
         }
-        internal void Shutdown() { if (stopped) return; ResetLevel(); stopped = true; if (Current == this) Current = null; }
+        internal void Shutdown() { if (stopped) return; ResetLevel("摄像头卸载／销毁"); stopped = true; if (Current == this) Current = null; }
         public void OnDestroy() => Shutdown();
     }
 }

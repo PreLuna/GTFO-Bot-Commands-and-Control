@@ -109,18 +109,23 @@
     },
     {
       "Path": "Captain.Commands/src/BotControlService.cs",
-      "SHA256": "3F1C7786547CDEF1910A984F5A4D1C28CC614D1DB854DA9CA8685DA98C399AA0",
-      "Bytes": 20048
+      "SHA256": "5B13CCE01CAE22A4D8268C8C915DBFC3EF928768B1C629AD9867734B1B87667D",
+      "Bytes": 22063
     },
     {
       "Path": "Captain.Commands/src/BotTaskBridge.cs",
-      "SHA256": "76CAAA7BBF99B8E4AA2BF0D46E6FF337A21EEF39A9171A1B20C24EC7260BC874",
-      "Bytes": 4246
+      "SHA256": "65FFBC3B588CF23DAECBAEEE075F854DD4A6001CD6C477D4C810BB5DEC287830",
+      "Bytes": 4426
+    },
+    {
+      "Path": "Captain.Commands/src/BrokerHeartbeatPatch.cs",
+      "SHA256": "5073A1D71FDD04F0CF32BDD89B6203CAB798C951073B1FA3193BEC1A0926AC02",
+      "Bytes": 1788
     },
     {
       "Path": "Captain.Commands/src/CaptainCommandCatalog.cs",
-      "SHA256": "B2B552E77B81299F93F3803348D5982A7C6BCDFAD43342FE3F9D5D56CB38CB0C",
-      "Bytes": 44495
+      "SHA256": "ECF9B2D840E94DE3BC91AEB346D768E759477FBC3EB3462B6BAA65325794A551",
+      "Bytes": 44746
     },
     {
       "Path": "Captain.Commands/src/CaptainMenuInput.cs",
@@ -159,13 +164,13 @@
     },
     {
       "Path": "Captain.Commands/src/ControlCommandAdapter.cs",
-      "SHA256": "BBD22229E014820235B65EE5364A0CF0576F6646B9B73E7A74A30902CF71A1A1",
-      "Bytes": 18669
+      "SHA256": "15F0D0794EFC6F63368E359ACFAE0EB57FD13EDE7DD3AB15D8F84F21FD1C13B4",
+      "Bytes": 21852
     },
     {
       "Path": "Captain.Commands/src/ControlCommandPolicy.cs",
-      "SHA256": "B8FB0D71CF8477F17CC5A2C01C797E1779D036CCC55D53648FD2286CE69E44F2",
-      "Bytes": 838
+      "SHA256": "CD21AAF67326056D7CB93C458AAD8AC704C7C26E8E5CEFA0838AB24BB8B584F7",
+      "Bytes": 844
     },
     {
       "Path": "Captain.Commands/src/FocusControlTask.cs",
@@ -219,8 +224,8 @@
     },
     {
       "Path": "Captain.Commands/src/ItemTaskAdapter.cs",
-      "SHA256": "0A36A63D2173F38E74D7CBC35792F7ECF10D8103DA6B32D92B44651FF3135DC9",
-      "Bytes": 76408
+      "SHA256": "57D23E6CA7D87365336C7B0428CEA6CA8554C5D4AFC83B90A6C00D1EAB3E1362",
+      "Bytes": 77605
     },
     {
       "Path": "Captain.Commands/src/ItemTaskPolicy.cs",
@@ -288,19 +293,24 @@
       "Bytes": 7416
     },
     {
+      "Path": "Captain.Commands/src/LeaseClockPolicy.cs",
+      "SHA256": "F9AACD047FD5DB967373074E2CEE5354C425A74CE4289CB61A872661679627D2",
+      "Bytes": 403
+    },
+    {
       "Path": "Captain.Commands/src/MarkedOpenTarget.cs",
       "SHA256": "2026141F99EC961E9C5327B5FBEADF1D6F334FD16AEED3682B01E8D2DFAD2242",
       "Bytes": 12663
     },
     {
       "Path": "Captain.Commands/src/ModuleEntry.cs",
-      "SHA256": "6C590FF82933339D48DAECB265EB58C6960A8728BE7702437F0359B6EFDA0875",
-      "Bytes": 1234
+      "SHA256": "659EE21911BCC1E78209710EA4268516E58B98443CA80687AF8395EDA8C5FF41",
+      "Bytes": 2093
     },
     {
       "Path": "Captain.Commands/src/MovementOrders.cs",
-      "SHA256": "4E86BC8BC34149ECAC3E11FDB7102F21CB21C9D4BC5E13C790DF3EF4E55CEE2E",
-      "Bytes": 49178
+      "SHA256": "03FA52675D3CCEB327FF7FF038A13D25A93301D8B7534326426BD62E82077830",
+      "Bytes": 49120
     },
     {
       "Path": "Captain.Commands/src/NativePickupAdapter.cs",
@@ -339,8 +349,8 @@
     },
     {
       "Path": "Captain.Commands/src/PositionMarks.cs",
-      "SHA256": "6EBA8B6321BDA1B5A9CE02BE99D47DC3F9818AC57EE37AC394DD1EDDF1736EE9",
-      "Bytes": 5999
+      "SHA256": "ABAF9BC187713A8247DB07BDDFBF555E3625FF1ACE79047535004D9A7ACFE61E",
+      "Bytes": 6283
     },
     {
       "Path": "Captain.Commands/src/PositionTaskPolicy.cs",
@@ -414,8 +424,8 @@
     },
     {
       "Path": "Captain.Commands/src/SingleKillAdapter.cs",
-      "SHA256": "2E191C6E0AA652B258BC4924FC1A4BF626CAB1B55D31CD1984CF04A72FA2B449",
-      "Bytes": 49465
+      "SHA256": "9EE0430F1F3F28786F9781133518D0AACA8D147B6492024D658886728312FE25",
+      "Bytes": 50085
     },
     {
       "Path": "Captain.Commands/src/SingleKillPolicy.cs",
@@ -529,8 +539,8 @@
     },
     {
       "Path": "Captain.Commands/tests/ItemTaskMocks.cs",
-      "SHA256": "C6A432C5EA5CE6E624C4A49E5BCF0197997C780F46E5CDC4285812A04B2F8118",
-      "Bytes": 20167
+      "SHA256": "B8F3FCDEF8179A66188B8A91932F8DFFECE778B94E9AB4216A0622B652F4FD65",
+      "Bytes": 20332
     },
     {
       "Path": "Captain.Commands/tests/ItemTaskTests.cs",
@@ -583,9 +593,14 @@
       "Bytes": 13503
     },
     {
+      "Path": "Captain.Commands/tests/LeaseClockTests.cs",
+      "SHA256": "438CBB7B774D2641E11021918CF672484C358E30367064D72AD1BA6E1F64F296",
+      "Bytes": 2845
+    },
+    {
       "Path": "Captain.Commands/tests/MenuInputTests.cs",
-      "SHA256": "18FC634C779AC380B4E6B88833D778AAE04AEE3B5B8BF651A2BAD4E8C3040D37",
-      "Bytes": 56762
+      "SHA256": "6646A6E167A9E3B5113BC2A45B27BFF57195D61DAB790D3402847C7E970D5DC4",
+      "Bytes": 56822
     },
     {
       "Path": "Captain.Commands/tests/MovementOrderTests.cs",
@@ -594,13 +609,13 @@
     },
     {
       "Path": "Captain.Commands/tests/NativeCombatMocks.cs",
-      "SHA256": "EC8AEACBCEF1E4C5F5F3DA2ED641EEF7CD23408D60E1E1B26D38F691600DF091",
-      "Bytes": 15376
+      "SHA256": "EB7227D7E2D5EE1FB4FDBCE2CEEAE309384CDF61225ABB2F6D90BC520335CF3F",
+      "Bytes": 15598
     },
     {
       "Path": "Captain.Commands/tests/NativeCombatTests.cs",
-      "SHA256": "66BE7065DBA3D09E24097BCD5D24FCD95129C269513B13D11BB8FD31DE68FC66",
-      "Bytes": 11064
+      "SHA256": "8339B661A9695D0559C55ABB272C4FB9E1F6547B48B9A685A56F32D01ACDB8BA",
+      "Bytes": 12285
     },
     {
       "Path": "Captain.Commands/tests/NativePickupTests.cs",
@@ -664,13 +679,13 @@
     },
     {
       "Path": "Captain.Commands/tests/ServiceMocks.cs",
-      "SHA256": "F525A7FB86EEE4BE9D7F61593C5E647077AAB153ACFBA766BEEBB9F062BFC371",
-      "Bytes": 8533
+      "SHA256": "99A360A7986637C953BAC5CBEBAA2DCE3584EAA9A7315DD5E941BCD3F4B18AA9",
+      "Bytes": 9625
     },
     {
       "Path": "Captain.Commands/tests/ServiceTests.cs",
-      "SHA256": "5C59A646DEB6793F21C8BDDCC7608555D0293A60BE833D06B9117597CBC6E100",
-      "Bytes": 9454
+      "SHA256": "2DCC646C9DDCA45E3CC23E2B21D8F61D812836E9746AC352113E1685151A9AEA",
+      "Bytes": 13669
     },
     {
       "Path": "Captain.Commands/tests/SingleKillTests.cs",
@@ -679,8 +694,8 @@
     },
     {
       "Path": "Captain.Commands/tests/StationHandoffTests.cs",
-      "SHA256": "ADB236E5E582A885AFE3ABFC7A526B854D0BCE7CEE6DA958E77F4D6FF5299126",
-      "Bytes": 6351
+      "SHA256": "B01DCE78DBCB26E2885AB5B06DADC9305E8616DED0FBA7ABE0AA0A030A9EDCA5",
+      "Bytes": 6387
     },
     {
       "Path": "Captain.Commands/tests/StationTests.cs",
@@ -778,24 +793,79 @@
       "Bytes": 183808
     },
     {
+      "Path": "docs/人机接管与照明维护.md",
+      "SHA256": "94E0C4CA283E3435E59379A585211812DAA62A1533C636B0B6959A8A8A477CAC",
+      "Bytes": 15022
+    },
+    {
+      "Path": "HeadCamera/src/BotLightViewScope.cs",
+      "SHA256": "31F7F5472334F386CA145C375DDC5255A76020750364F61A3D52681322904DCA",
+      "Bytes": 4365
+    },
+    {
       "Path": "HeadCamera/src/CameraHud.cs",
-      "SHA256": "86BD18F74D5143ADF4C283EC7B493B9336943C57F3734767268AEDB185FDFA1E",
-      "Bytes": 6928
+      "SHA256": "CA0C111FB73949AE345727604639FA45AC5D074F2525EC4D83FED78F56E49AEC",
+      "Bytes": 9565
     },
     {
       "Path": "HeadCamera/src/CameraRuntime.cs",
-      "SHA256": "DD0825ACD0933BEF94433D8BBDD4C9F5FE2D60025B4FFDB0C5C52E2101E8DEB9",
-      "Bytes": 13741
+      "SHA256": "F4C7B1E2BE8AF0BB8D95AAB304B3AE3A6346B7B15791308F12EAD5BA3F85D08E",
+      "Bytes": 16374
+    },
+    {
+      "Path": "HeadCamera/src/CaptureAnalysis.cs",
+      "SHA256": "ECA3BC8F3E727954C47EF6B4DD5C8C8AA1796F998B136D04826DCA8ECC549007",
+      "Bytes": 3008
+    },
+    {
+      "Path": "HeadCamera/src/CaptureDiagnostics.cs",
+      "SHA256": "E726AC4CB3B3452454466D6E6698A80576B4F8FA8ECC991F7CFC38D4F1E95F83",
+      "Bytes": 6343
+    },
+    {
+      "Path": "HeadCamera/src/CapturePresentation.cs",
+      "SHA256": "2EB56F11CD170E8DB7DF45757647090D52BCD0C2C980AA3D797D111ACF788282",
+      "Bytes": 3654
+    },
+    {
+      "Path": "HeadCamera/src/CompatibleReadback.cs",
+      "SHA256": "DF958F7D629418CD0ECD2593DD12D5061A9C75D0E285DB8AC00991A2679CA4EE",
+      "Bytes": 1746
+    },
+    {
+      "Path": "HeadCamera/src/ControlEventOverlay.cs",
+      "SHA256": "6D880F1F5D9B40150C77F3556255A91E12D2960CFCCF17EEC750E00435E6243B",
+      "Bytes": 5225
+    },
+    {
+      "Path": "HeadCamera/src/ControlFeedback.cs",
+      "SHA256": "1A18B5A7C817047C591A8D89D52A01A793A3D1587CA793D9B4A730ABB6AE4B03",
+      "Bytes": 1683
+    },
+    {
+      "Path": "HeadCamera/src/ControlMenuOverlay.cs",
+      "SHA256": "5FB1677635D6B2BD78CCBD12DBE4B98FE8604996B6C01539B5ECFB54BBEA97DD",
+      "Bytes": 5629
+    },
+    {
+      "Path": "HeadCamera/src/ControlPresentation.cs",
+      "SHA256": "BD5E8D05869D1AC208B8826D9E930480FB955DB79E5EEC7BB99C398BF4BF05E9",
+      "Bytes": 1919
     },
     {
       "Path": "HeadCamera/src/ControlView.cs",
-      "SHA256": "ACE6F43D96CEB67478098AA81114C27A6D2DEB837787C1FAD31F1657D95A7403",
-      "Bytes": 657
+      "SHA256": "3D2879A9F7F50F9B22224A38B9577DFAD09A2252C3E5C5AE2F9AB9CAC52BBD9B",
+      "Bytes": 1102
+    },
+    {
+      "Path": "HeadCamera/src/FogCompatibility.cs",
+      "SHA256": "C993E01747F0F5599C8378533A8219252C52B285CD2FCA5C9BD43944335B9FE0",
+      "Bytes": 5052
     },
     {
       "Path": "HeadCamera/src/HeadCameraApi.cs",
-      "SHA256": "049D261ACDA4A078C2CB12D7DAF9C00FE2ECCD9C8545A157B7E18A7D90F956AD",
-      "Bytes": 4737
+      "SHA256": "ADCEA33576D5E94B72E9553137A3456328249773CEDB6CBBA0FB869796504722",
+      "Bytes": 5853
     },
     {
       "Path": "HeadCamera/src/HudCameraRegistry.cs",
@@ -808,84 +878,164 @@
       "Bytes": 3376
     },
     {
+      "Path": "HeadCamera/src/LightBufferBindings.cs",
+      "SHA256": "07FD81E2BE2EA86F4D75867053EA1D71D823036AFA7ADFAF7D84C10B00CE2913",
+      "Bytes": 1232
+    },
+    {
+      "Path": "HeadCamera/src/NativeBotLamp.cs",
+      "SHA256": "5B2BFAA8DC378B43738FA5EDA12E8BD2DF1CE503337385D9EC388C6C26C78B57",
+      "Bytes": 5397
+    },
+    {
       "Path": "HeadCamera/src/NativeCapture.cs",
-      "SHA256": "D7D1E673379C4AAA9B0C372784FBCB5EDCF7DBF6A58243E00ED905DC372E84C1",
-      "Bytes": 22171
+      "SHA256": "9BF96D4627DB96AA8A7DDF469267B83DF460B8B31844C36D2E6E1161D48B2715",
+      "Bytes": 27972
+    },
+    {
+      "Path": "HeadCamera/src/OwnedFogLifetime.cs",
+      "SHA256": "2F04E4228348DBF31F7B89F1FD64D39359DCFB87E460031F61309945D086F8BC",
+      "Bytes": 758
     },
     {
       "Path": "HeadCamera/src/Plugin.cs",
-      "SHA256": "63E14FE742098AEEEF9DFF8D3BF0071180314BC4A1B51876FC41BCD1BDDD1FE9",
-      "Bytes": 7065
+      "SHA256": "709069543047E3869525678CC04727D871958B82587DAA624104E88695F3229B",
+      "Bytes": 9717
     },
     {
       "Path": "HeadCamera/src/ToggleGesture.cs",
-      "SHA256": "533CD6D1CD2B8B02509C89FCDC559467B9ED2F44B9D7F48610F127D6A1860A41",
-      "Bytes": 1692
+      "SHA256": "F77941194E0406C58D3AA2BB3065530DDEAEA88266A4092DBD86A6686326E9D8",
+      "Bytes": 2050
     },
     {
       "Path": "HeadCamera/src/ViewPolicy.cs",
-      "SHA256": "C70B4D1DA7807DDEF221EFE7E500EFA8CEFD3FC61314CABEE4C02ADE63EFD843",
-      "Bytes": 3878
+      "SHA256": "738A7B056B218A064D3AD51FEEE4BB9D39EDDAD8AD8CAF6A55A5515450223EE8",
+      "Bytes": 4056
+    },
+    {
+      "Path": "HeadCamera/tests/BotLightViewScopeTests.cs",
+      "SHA256": "264FBFCCE9337DBD49D199F6D020FA3A78694196771ED55756C06617B67EC572",
+      "Bytes": 9294
+    },
+    {
+      "Path": "HeadCamera/tests/CaptureAnalysisTests.cs",
+      "SHA256": "21E1D26D4AD9350ABF5AFA780AE65BB051C7EC5657647A4CB819358A34ACF660",
+      "Bytes": 3846
+    },
+    {
+      "Path": "HeadCamera/tests/CompatibleReadbackTests.cs",
+      "SHA256": "C6E2B4D7C95803167E6E6180FD23137672C1713A9687810E6FBEDFB9FE679BCE",
+      "Bytes": 3710
+    },
+    {
+      "Path": "HeadCamera/tests/ControlFeedbackTests.cs",
+      "SHA256": "5D00FE67093F035DCC468F1F8D2D851D651CA268CAFDF59F49BE6EFCD8775225",
+      "Bytes": 2439
+    },
+    {
+      "Path": "HeadCamera/tests/ControlMenuOverlayTests.cs",
+      "SHA256": "DAA7F8602D4EF2BDFD77C521CE8F34A9B9E36EF2009CBBAF686C7D53201DF9B7",
+      "Bytes": 9389
+    },
+    {
+      "Path": "HeadCamera/tests/FogCompatibilityTests.cs",
+      "SHA256": "3CABD4F92C38CCF39D6082C67F5EB7C412C37E62A6914156483651628A960ED9",
+      "Bytes": 6917
     },
     {
       "Path": "HeadCamera/tests/HeadAimMocks.cs",
-      "SHA256": "C566BE88BB41235203E83172BB589BCC6C5B1F1E530D41373C23AF2DAB0A4CB4",
-      "Bytes": 1230
+      "SHA256": "3D616B829BCF70DF8495DAA75420097D607FD0FEF61CBBAF7C10A16BD57AEDE1",
+      "Bytes": 1573
     },
     {
       "Path": "HeadCamera/tests/HeadAimTests.cs",
-      "SHA256": "80580CE6E3B5B442BA5A9DF075A8540E4963263086D57E837592E1690328C510",
-      "Bytes": 2612
+      "SHA256": "9634DD10EAD7ED1443C06C5421BC64DEA7C1826F3EBB4D1E527F49060579B056",
+      "Bytes": 4829
+    },
+    {
+      "Path": "HeadCamera/tests/LightBufferBindingsTests.cs",
+      "SHA256": "4F8B19C743EFE27E2F85DC48476A5BAEB7CFE5194867F23A2B15854D8DE4AF3F",
+      "Bytes": 3493
+    },
+    {
+      "Path": "HeadCamera/tests/OwnedFogLifetimeTests.cs",
+      "SHA256": "760F515E708F31771552FB72E5BBD073141F27D70DDEB41F884F8E3C0D28E1FD",
+      "Bytes": 1973
     },
     {
       "Path": "HeadCamera/tests/PolicyTests.cs",
-      "SHA256": "61CAEDA5F5FE3D4569D1468BD6EA87D7121E243D624EBEE9AF67E2D17DC83379",
-      "Bytes": 4925
+      "SHA256": "13045AA199E0B3E79BD117079D3E9DBF2F48A9C380D9D67E926BB80E9E508E75",
+      "Bytes": 5429
+    },
+    {
+      "Path": "HeadCamera/tests/PresentationMocks.cs",
+      "SHA256": "AA050C8672D2526E86883ED7ADDF41E55A92D16ED6E9E7FE1F82E12C9F8955CF",
+      "Bytes": 3481
+    },
+    {
+      "Path": "HeadCamera/tests/PresentationTests.cs",
+      "SHA256": "AA1A70DEB3B7995A69C37784FA0CAAB2E5B91985DB020D322E7CB82D2F290F00",
+      "Bytes": 4168
+    },
+    {
+      "Path": "HeadCamera/tests/RuntimeViewMocks.cs",
+      "SHA256": "87F4BD6FD644BEDC29AFB619A4D41CC7157DC39BA9E3143C97335FE6457CD483",
+      "Bytes": 5381
+    },
+    {
+      "Path": "HeadCamera/tests/RuntimeViewTests.cs",
+      "SHA256": "7E3D069B887F568C83330D70966374D259B32368AC2044B268D85CEED398D145",
+      "Bytes": 4142
     },
     {
       "Path": "IntegrationTests/CameraAndControl/MotionMocks.cs",
-      "SHA256": "56AF8A8A863826A1D830D70EB63EF671E2E6FD01829E21FF8ECF7EDED11D9D0B",
-      "Bytes": 4402
+      "SHA256": "EAD5A9E70405011A3B582D2AF2A6C68411797DCEA4F4A855FFC19486EE3FE0CD",
+      "Bytes": 4561
     },
     {
       "Path": "IntegrationTests/CameraAndControl/MotionTests.cs",
-      "SHA256": "8B9AEE523E620D61B24F5978536D5CE85DA072537D8EF8E991C168762D8B8901",
-      "Bytes": 8153
+      "SHA256": "7CC2C651B1E461BC6B821BC3D5F376A0AD2404C503FDA09E4CFE4129EF14C12C",
+      "Bytes": 9166
     },
     {
       "Path": "IntegrationTests/CommandsAndControl/CommandMocks.cs",
-      "SHA256": "CAB665141AB8A897C51D1CE8595B3CE73EC9589F9D2B25BDA3AA22EF96A6CE54",
-      "Bytes": 19302
+      "SHA256": "350A7697C12EEEC5C775592C9C7919583478D3920580D3DFEAFAF60119A3EDAA",
+      "Bytes": 20508
     },
     {
       "Path": "IntegrationTests/CommandsAndControl/CommandTests.cs",
-      "SHA256": "8AB6E5D53081A12ACB238FB402F1EF7E074349CFE8D2148149A537D1F11C0A81",
-      "Bytes": 17249
+      "SHA256": "B6AA121DD91083E7CC986D508CA7F77D8DBF3A7681C57FF3A9AE7FCE0E97E75A",
+      "Bytes": 19544
     },
     {
       "Path": "IntegrationTests/Control/ControlTests.cs",
-      "SHA256": "8B8DFFCFDA163BBA9547B8697F195272D3CA50AA31F87EE5D2F83D528285F303",
-      "Bytes": 9588
+      "SHA256": "2ED0BB5942A812EDAD8581EE06F80BF9749BD889B8AB01B7787ACCF8F701C011",
+      "Bytes": 9881
     },
     {
-      "Path": "MicroMaster/src/BodyThreatWatch.cs",
-      "SHA256": "AA6B6EC1059FD611E8DFA2693968D02909B12FC467EDD1203AFD347EE099D6AA",
-      "Bytes": 2861
+      "Path": "IntegrationTests/Loader/Verify-Dependencies.ps1",
+      "SHA256": "3A5EB6BCEC610B7CF49948D377FF093ED0593EAF85B3CE0E3C7A97BCE2A4423B",
+      "Bytes": 24435
+    },
+    {
+      "Path": "MicroMaster/src/BotFlashlights.cs",
+      "SHA256": "BB5A206D2FAB139C988E905CD42F75A969D7B39B4C062B5EAEB67D36EB29D677",
+      "Bytes": 5296
     },
     {
       "Path": "MicroMaster/src/ControlHooks.cs",
-      "SHA256": "8F37C54DBD45325E9173E129AB1D289082022F621561861EF5D5DE058F94C43A",
-      "Bytes": 10035
+      "SHA256": "9A3D36A488D8D6CDBA2E702AA0F53AC763F7395BBDCCB688E22A401F55FD22AC",
+      "Bytes": 14859
     },
     {
       "Path": "MicroMaster/src/ControlRuntime.cs",
-      "SHA256": "4E9D278B59A391E61D88E5A36583D4345D1C93E2A2B07380392BBE8AF73941CE",
-      "Bytes": 18075
+      "SHA256": "57180884DB5F7B3BBD2518BA88C6FFFBE1FB471D0CB0B5E6C601EA19E53481E1",
+      "Bytes": 24150
     },
     {
       "Path": "MicroMaster/src/ControlSafety.cs",
-      "SHA256": "3EF7551BC24AAD9F1E1D525249B8D8B2B0587BEE1CFE000114BDCD08688129DB",
-      "Bytes": 902
+      "SHA256": "7E22434F82A3BE2BB042389820026A75930466AE3396673B34BF7FE4A101B3C9",
+      "Bytes": 1073
     },
     {
       "Path": "MicroMaster/src/ManualMotionPolicy.cs",
@@ -893,39 +1043,54 @@
       "Bytes": 3823
     },
     {
+      "Path": "MicroMaster/src/NativeFlashlight.cs",
+      "SHA256": "4CE17D15D55E07CC97504C911C40626700E7F3DFE9F8D0802A3EDFFE57DEEF74",
+      "Bytes": 13164
+    },
+    {
+      "Path": "MicroMaster/src/NativeFlashlightCompatibility.cs",
+      "SHA256": "C25032F060C509D0234C3818384CAA0AABD58E1E5340D2FDADCAF3483798E168",
+      "Bytes": 4576
+    },
+    {
+      "Path": "MicroMaster/src/NativeLightSettings.cs",
+      "SHA256": "6953980225B5EA8649D95786D96F8D87B18496AC854558D37B0088B1929E3AD4",
+      "Bytes": 3889
+    },
+    {
       "Path": "MicroMaster/src/NativeManualWalk.cs",
-      "SHA256": "F4505C112B36A96BCB637FD8D40FF22DF5C4FD6B1A810FA462882159E1DDF016",
-      "Bytes": 4707
+      "SHA256": "3AD2EDE72453F4E3F48CC0D36813ABE7B4BBFC83DD09C64EFBCC0FA5AF8428A0",
+      "Bytes": 5311
     },
     {
       "Path": "MicroMaster/src/Plugin.cs",
-      "SHA256": "C733121B68FF9016366BBA1D9DC4FF7EF1A5866CFC7E3A560F2BC63D8B663D64",
-      "Bytes": 5142
+      "SHA256": "493BF54EA4B985A8B140968346CE26C1567FB88E91BCA4FF14EFD7FF59A012EE",
+      "Bytes": 6426
     },
     {
       "Path": "MicroMaster/tests/RuntimeMocks.cs",
-      "SHA256": "51C3049F23AC04724F0A213ADF95AB4DA75A8A0A7B992027F325B14B8BB56422",
-      "Bytes": 8820
+      "SHA256": "F607E258A1554DD185F41FA59A5694CC3264FC638C6ECABD5D798513027D819D",
+      "Bytes": 19561
     },
     {
       "Path": "MicroMaster/tests/RuntimeSafetyTests.cs",
-      "SHA256": "224BC9FFC0E633495A193A30C80F6DC11565A52FFBE5733642615C60CE03E53B",
-      "Bytes": 13756
+      "SHA256": "AA7A4770798AF592D7091AD2A16F9A3A7EC13F89B57807509BF2D097E809FD29",
+      "Bytes": 36216
     },
     {
       "Path": "README.md",
-      "SHA256": "BEFBA64E3DA66E3D36DDD17841DAFD7C5825615FCBF0A408C0C543919689F585",
-      "Bytes": 7802
+      "SHA256": "87612E1F617B1ADD5D52988939EA4F76A475CE7DF404F364540DF997FA2D35F5",
+      "Bytes": 23649
     },
     {
       "Path": "repo.json",
-      "SHA256": "8B70649294D0736E06358A4ABA85C10E84B500F524EF9C51E295A35919B7D990",
-      "Bytes": 6993
+      "SHA256": "FDEE7DB0E55BDFF7288711F543E7DE9429E73CDF2EAC682EC7CF4505207D2163",
+      "Bytes": 7721
     },
     {
       "Path": "Test.ps1",
-      "SHA256": "92C2DF97AEF96E14EBB36EC87C6E11784FAFFD32CC82903A9ED765770E315D99",
-      "Bytes": 8151
+      "SHA256": "2E63359A4C5F4949EFC35859A628703FE0B5FEB2AC1E522EA5DC66C3BD53444D",
+      "Bytes": 11174
     }
   ]
 }

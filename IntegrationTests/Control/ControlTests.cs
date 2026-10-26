@@ -79,7 +79,9 @@ static class ControlTests
         g.Reset(); g.Step(2, true, true, false, a, .3f);
         Check(g.Step(2.4f, false, true, false, a, .3f) == ToggleIntent.Close, "已打开时单击延迟关闭");
         g.Reset(); g.Step(3, true, true, false, a, .3f);
-        Check(g.Step(3.1f, true, true, false, b, .3f) == ToggleIntent.None, "同槽身份替换不接管新对象");
+        Check(g.Step(3.1f, true, true, false, b, .3f) == ToggleIntent.RejectControl && g.RejectionReason.Contains("已改变"), "同槽身份替换不接管新对象且提供原因");
+        g.Reset(); g.Step(3.2f, true, true, false, null, .3f);
+        Check(g.Step(3.3f, true, true, false, null, .3f) == ToggleIntent.RejectControl && g.RejectionReason.Contains("没有"), "双击无目标有明确拒绝");
         g.Reset(); g.Step(4, true, true, false, a, .3f); g.Reset();
         Check(g.Step(4.2f, true, true, false, a, .3f) == ToggleIntent.None, "焦点变化重置双击序列");
         Check(g.Step(5, true, true, true, a, .3f) == ToggleIntent.ExitControl, "已接管或正在申请时T直接退出");

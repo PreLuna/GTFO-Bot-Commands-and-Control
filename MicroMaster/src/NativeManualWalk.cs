@@ -7,11 +7,13 @@ namespace PreLuna.MicroMaster
 {
     internal sealed class NativeManualWalk : IManualWalk
     {
+        static readonly float[] StepLengths = { 1.2f, .6f, .3f, .15f, .08f };
         readonly PlayerAIBot bot;
         readonly long agent, owner;
         PlayerBotActionWalk.Descriptor walk;
         Il2CppSystem.Collections.Generic.LinkedList<Vector3> path;
         internal PlayerAIBot Bot => bot;
+        internal void ClearPath() => path?.Clear();
         internal NativeManualWalk(PlayerAIBot bot)
         { this.bot = bot; agent = bot.Agent.Pointer.ToInt64(); owner = bot.Agent.Owner.Pointer.ToInt64(); }
         public bool Valid => bot?.Agent?.Pointer.ToInt64() == agent && bot.Agent.Owner?.Pointer.ToInt64() == owner
@@ -47,23 +49,32 @@ namespace PreLuna.MicroMaster
             point = default;
             if (!Finite(position) || !Finite(direction) || direction.sqrMagnitude < .001f || bot.Agent.CourseNode?.m_zone?.Layer == null) return false;
             direction.Normalize();
-            // One straight local segment, without autonomous pathfinding or position writes.
-            float length = 1.2f;
+            // Project short segments onto the navmesh first, then cast along the slope.
+            // Retry a shorter step before declaring a nearby ramp or stair impassable.
+            foreach (float length in StepLengths)
+                if (TrySegment(position, direction, length, out point)) return true;
+            return false;
+        }
+        bool TrySegment(Vector3 position, Vector3 direction, float length, out Vector3 point)
+        {
+            point = default;
             int mask = LayerManager.MASK_WORLD | LayerManager.MASK_PLAYER_INTERACT_BLOCKERS;
-            if (Physics.CapsuleCast(position + Vector3.up * .4f, position + Vector3.up * 1.4f, .25f, direction,
-                out RaycastHit hit, length + .04f, mask, QueryTriggerInteraction.Ignore)) length = Math.Min(length, Math.Max(0, hit.distance - .04f));
-            if (length < .08f) return false;
             Vector3 desired = position + direction * length;
             const int allAreas = -1; // Same mask used by the existing Captain route adapter.
-            if (!NavMesh.SamplePosition(position, out var origin, .3f, allAreas)
-                || !NavMesh.SamplePosition(desired, out var destination, .3f, allAreas)) return false;
+            if (!NavMesh.SamplePosition(position, out var origin, .5f, allAreas)
+                || !NavMesh.SamplePosition(desired, out var destination, .65f, allAreas)) return false;
             var shift = destination.position - desired;
             if (new Vector2(shift.x, shift.z).sqrMagnitude > .15f * .15f || Math.Abs(destination.position.y - position.y) > .45f
                 || NavMesh.Raycast(origin.position, destination.position, out _, allAreas)) return false;
             point = destination.position;
             if (!AIG_CourseNode.TryGetCourseNode(bot.Agent.DimensionIndex, point, 1, out var node)
                 || node?.m_zone?.Layer?.Pointer != bot.Agent.CourseNode.m_zone.Layer.Pointer || node.m_zone.DimensionIndex != bot.Agent.DimensionIndex) return false;
-            return !Physics.CheckCapsule(point + Vector3.up * .4f, point + Vector3.up * 1.4f, .25f, mask, QueryTriggerInteraction.Ignore);
+            var segment = point - origin.position;
+            float distance = MathF.Sqrt(segment.sqrMagnitude);
+            if (distance < .04f || Physics.CapsuleCast(origin.position + Vector3.up * .55f, origin.position + Vector3.up * 1.45f,
+                .25f, segment * (1 / distance), out var hit, distance + .04f, mask, QueryTriggerInteraction.Ignore)
+                && hit.distance < distance + .04f) return false;
+            return !Physics.CheckCapsule(point + Vector3.up * .55f, point + Vector3.up * 1.45f, .25f, mask, QueryTriggerInteraction.Ignore);
         }
         public void Stop()
         {

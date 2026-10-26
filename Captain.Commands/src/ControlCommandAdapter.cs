@@ -11,8 +11,15 @@ using Enemies;
 using SNetwork;
 namespace PreLuna.Captain.Tasks
 {
+    public readonly record struct ControlMarkView(float X, float Y, float Z, string Label, bool CanStation);
+    public static class ControlPresentation
+    {
+        public static event Action<string> Feedback;
+        internal static void Notify(string text) { try { Feedback?.Invoke(text); } catch (Exception e) { Plugin.Logger.LogWarning("接管反馈显示失败：" + e.Message); } }
+        public static bool TryGetMark(long ticket, out ControlMarkView view) => ControlCommandAdapter.Visual(ticket, out view);
+    }
     internal sealed record ControlMenuSnapshot(long Ticket, BotControlTarget Bot, ItemInLevel Item, MarkedOpenTarget Open, float At,
-        EnemyAgent Enemy = null, int EnemyIdentity = 0, MarkedPosition Station = null);
+        EnemyAgent Enemy = null, int EnemyIdentity = 0, MarkedPosition Station = null, bool HasPosition = false, Vector3? Hit = null, Vector3? BotAtMenu = null, MarkedPosition Here = null);
     // Separate child records preserve the original paused item/open/collection/movement task dictionaries.
     internal static class ControlCommandAdapter
     {
@@ -49,6 +56,17 @@ namespace PreLuna.Captain.Tasks
         }
         static readonly Dictionary<IntPtr, Job> jobs = new();
         static ControlMenuSnapshot mark;
+        internal static bool Visual(long ticket, out ControlMarkView view)
+        {
+            view = default;
+            if (mark?.Ticket != ticket || !BotControlService.Instance.TryActive(ticket, out var bot) || MarkReason(mark) != null || !mark.Hit.HasValue
+                || bot.Agent.Pointer.ToInt64() != mark.Bot.Agent || bot.Agent.Owner.Pointer.ToInt64() != mark.Bot.Owner) return false;
+            if (mark.Enemy != null && (!mark.Enemy.Alive || mark.Enemy.GetInstanceID() != mark.EnemyIdentity)) return false;
+            var point = mark.Enemy != null ? mark.Enemy.Position : mark.Hit.Value;
+            string label = mark.Enemy != null ? "敌人 #" + mark.Enemy.EnemyDataID : mark.Item != null ? mark.Item.PublicName
+                : mark.Open != null ? mark.Open.Label : mark.Station == null ? "位置 · 此处不可驻守" : "驻守标记点";
+            view = new(point.x, point.y, point.z, label, mark.Station != null); return true;
+        }
         static IntPtr teleportBot;
         internal static void Install(Harmony harmony)
         {
@@ -108,12 +126,27 @@ namespace PreLuna.Captain.Tasks
             var enemy = SingleKillAdapter.Resolve(bot.Agent, hit);
             var target = new BotControlTarget(bot.Agent.PlayerSlotIndex, bot.Agent.Pointer.ToInt64(), bot.Agent.Owner.Pointer.ToInt64());
             mark = new(ticket, target, item, open, Time.time, enemy, enemy?.GetInstanceID() ?? 0);
+            mark = mark with { Hit = hit.point };
+            if (item == null && open == null && enemy == null) {
+                var station = PositionMarks.ControlAt(bot.Agent, hit.point, direction);
+                mark = mark with { Station = station, HasPosition = true };
+                Ping(bot.Agent, hit);
+                reason = "已标记机器人镜头位置（" + hit.point.x.ToString("0.0") + ", " + hit.point.y.ToString("0.0") + ", " + hit.point.z.ToString("0.0")
+                    + "）" + (station == null ? "；该点没有可站立落点，请对准地面后重新标记" : "；Q可退出并驻守标记位置");
+                ItemTaskAdapter.Feedback(reason); return true;
+            }
+            Ping(bot.Agent, hit);
             if (item != null) KnownSupplyIndex.Observe(item, SupplySource.Aimed);
             reason = item != null ? "已标记机器人镜头物品：" + (Plugin.Catalog?.TranslateItems(item.PublicName) ?? item.PublicName)
                 : open != null ? "已标记机器人镜头目标：" + open.Label + "（" + open.LockText + "）"
                 : enemy != null ? "已标记机器人镜头敌人 #" + enemy.EnemyDataID + "；Q选择指定击杀／集火"
                 : "该对象不支持当前接管标记指令";
             ItemTaskAdapter.Feedback(reason); return item != null || open != null || enemy != null;
+        }
+        static void Ping(PlayerAgent source, RaycastHit hit)
+        {
+            try { source.TriggerMarkerPing(null, hit.collider.gameObject, hit.point); }
+            catch (Exception error) { Plugin.Logger.LogWarning("[接管标记] 原版Ping显示失败，目标记录仍保留：" + error.GetBaseException().Message); }
         }
         internal static ControlMenuSnapshot Snapshot(long ticket, PlayerAIBot bot)
         {
@@ -124,7 +157,10 @@ namespace PreLuna.Captain.Tasks
             => snapshot == null || !OpenTaskPolicy.Fresh(Time.time, snapshot.At, OpenTargetMarks.MarkLifetime)
                 ? "机器人视角标记已过期，请重新中键标记" : null;
         internal static ControlMenuSnapshot MenuSnapshot(long ticket, PlayerAIBot bot)
-            => Snapshot(ticket, bot) with { Station = PositionMarks.ControlHere(bot.Agent) };
+        {
+            var snapshot = Snapshot(ticket, bot);
+            return snapshot with { Station = snapshot.HasPosition && MarkReason(snapshot) == null ? snapshot.Station : null, Here = PositionMarks.ControlHere(bot.Agent), BotAtMenu = bot.Agent.Position };
+        }
         internal static string EnemyReason(ControlMenuSnapshot snapshot)
             => MarkReason(snapshot) ?? (snapshot?.Enemy?.Alive != true || snapshot.Enemy.GetInstanceID() != snapshot.EnemyIdentity ? "机器人镜头标记的敌人已死亡／身份失效，请重新中键标记" : null);
         internal static void Issue(ControlMenuSnapshot context, CaptainMenuLeaf entry)
@@ -134,11 +170,12 @@ namespace PreLuna.Captain.Tasks
             bool same = bot?.Agent?.Pointer.ToInt64() == context?.Bot.Agent && bot?.Agent?.Owner?.Pointer.ToInt64() == context?.Bot.Owner
                 && entry.Slot == context?.Bot.Slot && entry.Owner == context?.Bot.Owner;
             string reason = ControlCommandPolicy.Reject(active, context != null && Busy(context.Ticket, out _), active, same, entry.Handler)
-                ?? entry.Blocked ?? (entry.Handler == 55 ? null : MarkReason(context));
+                ?? entry.Blocked ?? (entry.Handler == 56 ? null : MarkReason(context));
             if (reason != null) { ItemTaskAdapter.Feedback(reason); return; }
-            if (entry.Handler == 55) {
-                if (!BotControlService.Instance.ExitStation(context.Ticket, context.Station, out reason)) ItemTaskAdapter.Feedback(reason);
-                else ItemTaskAdapter.Feedback("已退出并驻守此地；驻守由原指令系统管理，不召回本体");
+            if (entry.Handler is 55 or 56) {
+                if (context.BotAtMenu.HasValue && Vector3.Distance(bot.Agent.Position, context.BotAtMenu.Value) > .75f) { ItemTaskAdapter.Feedback("机器人已离开打开菜单时的位置，请重开Q确认"); return; }
+                if (!BotControlService.Instance.ExitStation(context.Ticket, entry.Handler == 56 ? context.Here : context.Station, out reason)) ItemTaskAdapter.Feedback(reason);
+                else ItemTaskAdapter.Feedback(entry.Handler == 56 ? "已结束接管并原地驻守" : "已结束接管，机器人前往标记点驻守");
                 return;
             }
             var permit = BotControlService.Instance.CommandPermit(context.Ticket, entry.Handler == 43);

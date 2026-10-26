@@ -34,6 +34,16 @@ namespace Player {
     public class PlayerBotActionTurn : PlayerBotActionBase { }
     public class PlayerBotActionCollectItem : PlayerBotActionBase { }
     public class PlayerBotActionUnlock : PlayerBotActionBase { }
+    public class PlayerBotActionAttack : PlayerBotActionBase { }
+    public class PlayerBotActionUseFirearm : PlayerBotActionBase { }
+    public class PlayerBotActionReloadWeapon : PlayerBotActionBase { }
+    public class PlayerBotActionEquipItem : PlayerBotActionBase { }
+    public class PlayerBotActionEvadeProjectile : PlayerBotActionBase { }
+    public class PlayerBotActionUseBioscan : PlayerBotActionBase { }
+    public class PlayerBotActionBioscanProximity : PlayerBotActionBase { }
+    public class PlayerBotActionUseEnemyScanner : PlayerBotActionBase { }
+    public class PlayerBotActionMelee : PlayerBotActionBase { public new class Descriptor : PlayerBotActionBase.Descriptor { public bool Strike; } }
+
     public class PlayerAIBot : NativeObject {
         public PlayerAgent Agent; public List<PlayerBotActionBase> Actions = new(); public List<PlayerBotActionBase.Descriptor> m_queuedActions = new();
         public Sync SyncValues = new(); public class Sync { public PlayerAgent Leader; } public int Stops;
@@ -92,14 +102,14 @@ namespace PreLuna.Captain.Tasks {
         internal static void SuspendFollowForControl(Player.PlayerAIBot bot, List<BorrowHold> holds) { bool previous = FollowPaused; FollowPaused = true; holds.Add(new(() => true, () => FollowPaused = previous)); }
         internal static void KeepFollowPausedAfterControl(Player.PlayerAIBot bot) => FollowPaused = true;
     }
-    static class RescueOrders { internal static bool Owns(Player.PlayerAIBot bot) => false; }
-    static class ToolSupplyAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
-    static class ResourceUseAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
+    static class RescueOrders { internal static bool Active; internal static bool Owns(Player.PlayerAIBot bot) => Active; }
+    static class ToolSupplyAdapter { internal static bool Active; internal static bool Owns(Player.PlayerAIBot bot) => Active; }
+    static class ResourceUseAdapter { internal static bool Active; internal static bool Owns(Player.PlayerAIBot bot) => Active; }
     static class NativePickupAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
     static class SearchTaskAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
-    static class SingleKillAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
-    static class FocusOrders { internal static bool Owns(Player.PlayerAIBot bot) => false; }
-    static class SharedMeleeBridge { internal static bool Owns(Player.PlayerAIBot bot) => false; }
+    static class SingleKillAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; internal static bool Atomic; internal static int Cancels; internal static bool YieldForControl(Player.PlayerAIBot bot) { Cancels++; return !Atomic; } }
+    static class FocusOrders { internal static bool Owns(Player.PlayerAIBot bot) => false; internal static bool Active; internal static void RestoreQuiet(Player.PlayerAIBot bot) { Active = false; } }
+    static class SharedMeleeBridge { internal static bool Active; internal static bool Owns(Player.PlayerAIBot bot) => Active; }
     static class OpenTaskAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
     static class CollectTaskAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
     static class CaptainMenuInput { internal static bool OwnsInput => false; }

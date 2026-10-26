@@ -21,8 +21,11 @@ namespace PreLuna.Captain.Tasks
             autoAvailable = api.GetMethod("CanAutoCollect");
             if (acquire == null || report == null || execute == null || release == null || teleport == null || resume == null || unsafeState == null || autoAvailable == null) return false;
             kind = acquire.GetParameters()[2].ParameterType; stage = report.GetParameters()[3].ParameterType; outcome = release.GetParameters()[3].ParameterType;
-            return bound = kind.IsEnum && stage.IsEnum && outcome.IsEnum;
+            if (!kind.IsEnum || !stage.IsEnum || !outcome.IsEnum) return false;
+            BrokerHeartbeatPatch.Install(api);
+            return bound = true;
         }
+        internal static void Uninstall() { bound = false; BrokerHeartbeatPatch.Uninstall(); }
         public static bool Acquire(PlayerAIBot bot, out long token, bool explicitCommand = true)
         { object[] args = { bot, Plugin.Guid, Enum.ToObject(kind, explicitCommand ? 40 : 30), 0L }; bool ok = (bool)acquire.Invoke(null, args); token = (long)args[3]; return ok; }
         public static bool Report(PlayerAIBot bot, long token, ItemTaskStage value)

@@ -23,7 +23,7 @@ namespace PreLuna.HeadCamera
         static Func<CameraTarget, ControlView?> viewProvider;
         internal static bool Enlarged { get; private set; }
         internal static bool HasViewProvider => viewProvider != null;
-        public static void ClearControlView(object owner) { if (ReferenceEquals(owner, inputOwner)) { Enlarged = false; renderedControl = null; NotifyHudViewIdentityChanged(); } }
+        public static void ClearControlView(object owner) { if (ReferenceEquals(owner, inputOwner)) { Enlarged = false; renderedControl = null; ClearPresentation(); NotifyHudViewIdentityChanged(); } }
         public static float DefaultFieldOfView => Plugin.FieldOfView?.Value ?? 80;
         public static bool RegisterControlView(object owner, Func<CameraTarget, ControlView?> provider)
         {
@@ -45,8 +45,26 @@ namespace PreLuna.HeadCamera
         internal static Func<CameraTarget, bool> RequestControl;
         internal static Func<bool> ControlBusy;
         internal static Action ExitControl;
+        static Action<string> reasonedExit;
+        public static bool RegisterControlExitReason(object owner, Action<string> exit)
+        {
+            if (owner == null || !ReferenceEquals(owner, inputOwner) || exit == null || CameraRuntime.Current?.OnMainThread != true) return false;
+            reasonedExit = exit; return true;
+        }
+        internal static void ExitControlFor(string reason)
+        {
+            Plugin.Instance?.Log.LogInfo("[接管退出请求] 来源=" + reason);
+            if (reasonedExit != null) reasonedExit(reason); else ExitControl?.Invoke();
+        }
         internal static Func<string> ControlStatus;
         internal static float DoubleClickWindow = .3f;
+        // Optional feedback extension to API v1; only the registered control owner can publish.
+        public static bool ReportControlNotice(object owner, string message)
+        {
+            if (owner == null || !ReferenceEquals(owner, inputOwner) || CameraRuntime.Current?.OnMainThread != true
+                || string.IsNullOrWhiteSpace(message)) return false;
+            CameraRuntime.Current.ShowControlNotice(message); return true;
+        }
         public static bool RegisterControlInput(object owner, Func<CameraTarget, bool> request, Func<bool> busy,
             Action exit, Func<string> status, float doubleClickWindow)
         {
@@ -59,7 +77,7 @@ namespace PreLuna.HeadCamera
         {
             if (!ReferenceEquals(owner, inputOwner)) return;
             inputOwner = null; RequestControl = null; ControlBusy = null; ExitControl = null; ControlStatus = null;
-            viewProvider = null; Enlarged = false;
+            reasonedExit = null; viewProvider = null; Enlarged = false; ClearPresentation(true);
             renderedControl = null;
             NotifyHudViewIdentityChanged();
         }

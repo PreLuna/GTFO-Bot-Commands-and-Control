@@ -10,8 +10,13 @@ namespace PreLuna.HeadCamera
         GameObject root;
         RectTransform card;
         RawImage image;
+        Texture2D testPattern;
         TextMeshProUGUI title, status;
         TextMeshProUGUI aim;
+        readonly ControlMenuOverlay commands = new();
+        readonly ControlEventOverlay events = new();
+        Image marker;
+        TextMeshProUGUI markerLabel;
         string lastTitle, lastStatus;
         float retryAt;
         int previousWidth;
@@ -50,6 +55,14 @@ namespace PreLuna.HeadCamera
                 var reticle = Rect("ControlAim", image.rectTransform, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(24, 24), Vector2.zero);
                 aim = reticle.AddComponent<TextMeshProUGUI>(); aim.font = template.font; aim.fontSize = 22;
                 aim.text = "+"; aim.alignment = TextAlignmentOptions.Center; aim.color = Color.white; aim.raycastTarget = false;
+                var markerRoot = Rect("NativePing", image.rectTransform, Vector2.zero, new Vector2(.5f, .5f), new Vector2(28, 28), Vector2.zero);
+                marker = markerRoot.AddComponent<Image>(); marker.raycastTarget = false; marker.color = Color.cyan;
+                var nativePing = GuiManager.NavMarkerLayer?.m_markerPrefabGeneric;
+                var nativeIcon = nativePing?.GetComponentInChildren<SpriteRenderer>(true);
+                marker.sprite = nativeIcon?.sprite; marker.preserveAspect = true;
+                markerLabel = Label("PingTarget", markerRoot.transform, template.font, 17, new Vector2(20, 4));
+                markerLabel.rectTransform.sizeDelta = new Vector2(330, 28); markerLabel.color = Color.cyan;
+                markerRoot.SetActive(false);
                 title = Label("Title", card, template.font, 19, new Vector2(8, -3));
                 status = Label("Status", card, template.font, 16, new Vector2(8, -229));
                 previousWidth = -1; ApplyLayout(); root.SetActive(false);
@@ -68,7 +81,8 @@ namespace PreLuna.HeadCamera
         void ApplyLayout()
         {
             bool enlarged = HeadCameraApi.Enlarged;
-            int width = (int)WindowLayoutPolicy.Width(enlarged ? 960 : Math.Clamp(Plugin.WindowWidth.Value, 200, 960), Screen.width, Screen.height);
+            int width = (int)(enlarged ? WindowLayoutPolicy.SpectatorWidth(Screen.width, Screen.height)
+                : WindowLayoutPolicy.Width(Math.Clamp(Plugin.WindowWidth.Value, 200, 960), Screen.width, Screen.height));
             var corner = Plugin.Corner.Value; float x = Plugin.MarginX.Value, y = Plugin.MarginY.Value;
             if (enlarged == previousEnlarged && width == previousWidth && corner == previousCorner && x == previousX && y == previousY
                 && Screen.width == previousScreenWidth && Screen.height == previousScreenHeight) return;
@@ -91,21 +105,46 @@ namespace PreLuna.HeadCamera
             title.rectTransform.sizeDelta = new Vector2(width - 16, 26);
             status.rectTransform.sizeDelta = new Vector2(width - 16, 24); status.rectTransform.anchoredPosition = new Vector2(8, -height - 32);
         }
-        public void Show(RenderTexture texture, string name, string message)
+        public void ShowTestPattern(string message = null)
+        {
+            testPattern ??= CapturePresentation.CreatePattern();
+            Show(testPattern, "头戴摄像头 · 显示测试", message ?? "彩条仅验证窗口显示，不代表队友画面正常");
+            aim.enabled = false;
+        }
+        public void Show(Texture texture, string name, string message)
         {
             if (texture == null) HeadCameraApi.RecordControlAim(null);
             if (!Ensure()) return;
             ApplyLayout(); root.SetActive(true);
+            commands.Tick(HeadCameraApi.Busy, title.font);
+            events.Tick(HeadCameraApi.Busy, title.font);
+            ShowMarker(texture != null);
             image.texture = texture; image.enabled = texture != null;
             aim.enabled = texture != null && HeadCameraApi.Busy;
             if (name != lastTitle) { title.text = name; lastTitle = name; }
             if (message != lastStatus) { status.text = message; lastStatus = message; }
         }
-        public void Hide() { HeadCameraApi.RecordControlAim(null); if (root != null) root.SetActive(false); }
+        void ShowMarker(bool hasPicture)
+        {
+            ControlMarker target = default;
+            bool visible = hasPicture && HeadCameraApi.MarkerProjected && HeadCameraApi.TryMarker(out target);
+            var point = HeadCameraApi.MarkerViewport;
+            visible = visible && point.z > 0 && point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1;
+            marker.gameObject.SetActive(visible); if (!visible) return;
+            HeadCameraApi.TryMarker(out target);
+            marker.rectTransform.anchorMin = marker.rectTransform.anchorMax = new Vector2(point.x, point.y);
+            markerLabel.text = (marker.sprite == null ? "◇ " : "") + target.Label;
+            // Use the native Ping sprite when ready; the glyph remains visible if the template has not loaded.
+            marker.enabled = marker.sprite != null;
+        }
+        public void Hide() { HeadCameraApi.RecordControlAim(null); commands.Hide(); events.Hide(); if (root != null) root.SetActive(false); }
         public void Dispose()
         {
+            commands.Dispose(); events.Dispose(); marker = null; markerLabel = null;
             if (image != null) image.texture = null;
             if (root != null) UnityEngine.Object.Destroy(root);
+            if (testPattern != null) UnityEngine.Object.Destroy(testPattern);
+            testPattern = null;
             root = null; card = null; image = null; title = status = null; lastTitle = lastStatus = null; retryAt = 0;
             aim = null;
         }

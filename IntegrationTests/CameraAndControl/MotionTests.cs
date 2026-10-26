@@ -14,7 +14,7 @@ static class MotionTests
     static NativeManualWalk adapter;
     static ManualMotionRunner runner;
     static void Reset(){
-        Physics.Wall=Physics.Occupied=false;Physics.WallDistance=0;Physics.Casts=0;
+        Physics.Wall=Physics.Occupied=Physics.FloorOnHorizontal=false;NavMesh.Slope=0;Physics.WallDistance=0;Physics.Casts=0;
         NavMesh.Missing=NavMesh.Blocked=false;NavMesh.Shift=default;AIG_CourseNode.Missing=false;
         bot=new();AIG_CourseNode.Next=bot.Agent.CourseNode;ControlRuntime.Current=new();
         adapter=new(bot);ControlRuntime.Current.Walk=adapter;runner=new(adapter);
@@ -48,6 +48,12 @@ static class MotionTests
         Check(!ManualMotionPolicy.InputAllowed(true,false,true,false,false,false),"非FPS界面禁用");
         Check(ManualMotionPolicy.InputAllowed(true,true,true,false,false,false),"空闲正常操作可微调");
         Check(Near(WindowLayoutPolicy.Width(960,1920,1080),960),"默认放大宽度");
+        float full=WindowLayoutPolicy.SpectatorWidth(1920,1080);
+        Check(full>1750&&full<1920,"接管默认观战画面接近全屏，超过旧960上限");
+        foreach(var screen in new[]{(1920f,1080f),(3840f,1080f),(360f,1920f),(1280f,720f)}) {
+            var size=WindowLayoutPolicy.ReferenceSize(screen.Item1,screen.Item2);float spectator=WindowLayoutPolicy.SpectatorWidth(screen.Item1,screen.Item2);
+            Check(spectator<=size.Width-31&&(spectator-12)*9/16+58<=size.Height-31,"观战布局保持16:9且完整留在屏幕内");
+        }
         float width=WindowLayoutPolicy.Width(960,360,1920);Check(width<624&&width>80,"竖屏限制画面宽度");
         width=WindowLayoutPolicy.Width(960,3840,720);float scale=MathF.Sqrt(3840f/1920*720/1080f);
         Check((width-12)*9/16+58<720/scale,"超宽屏限制画面高度");
@@ -68,7 +74,10 @@ static class MotionTests
         Reset();Physics.Wall=true;Physics.WallDistance=.02f;
         Check(!runner.Tick(true,new(0,1),0)&&bot.Requests==0,"贴墙时不提交移动");
         Reset();Physics.Wall=true;Physics.WallDistance=.5f;runner.Tick(true,new(0,1),0);
-        Check(Near(bot.Last.Path.First.z,.46f),"墙前保留安全间隙");
+        Check(bot.Last.Path.First.z>0&&bot.Last.Path.First.z<.46f,"墙前使用更短导航段并保留安全间隙");
+        Reset();NavMesh.Slope=.6f;Physics.FloorOnHorizontal=true;
+        Check(runner.Tick(true,new(0,1),0)&&bot.Last.Path.First.y>0&&bot.Last.Path.First.z<1.2f,"斜坡先投影并缩短步长，沿坡面碰撞检测不把地面当墙");
+        Reset();NavMesh.Slope=.4f;Check(runner.Tick(true,new(0,-1),0)&&bot.Last.Path.First.y<0,"下坡同样使用导航投影");
         Reset();NavMesh.Blocked=true;Check(!runner.Tick(true,new(0,1),0)&&bot.Requests==0,"导航边界不越过");
         Reset();NavMesh.Missing=true;Check(!runner.Tick(true,new(0,1),0)&&bot.Requests==0,"无导航不移动");
         Reset();Physics.Occupied=true;Check(!runner.Tick(true,new(0,1),0)&&bot.Requests==0,"终点占用不移动");

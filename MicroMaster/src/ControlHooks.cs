@@ -10,7 +10,13 @@ namespace PreLuna.MicroMaster
     internal static class ControlHooks
     {
         static FieldInfo workAgent;
-        static bool readingMouse;
+        static bool readingMouse, readingFlashlight;
+        internal static bool FlashlightPressed()
+        {
+            readingFlashlight = true;
+            try { return InputMapper.GetButtonDownKeyMouse(InputAction.Flashlight, eFocusState.FPS); }
+            finally { readingFlashlight = false; }
+        }
         internal static void ReadMouse(out float x, out float y)
         {
             readingMouse = true;
@@ -30,11 +36,12 @@ namespace PreLuna.MicroMaster
         static bool HandoffMovement(PlayerAIBot bot, PlayerBotActionBase.Descriptor desc) => Handoff(bot?.Agent)
             && (desc?.TryCast<PlayerBotActionTravel.Descriptor>() != null || desc?.TryCast<PlayerBotActionFollow.Descriptor>() != null
                 || desc?.TryCast<PlayerBotActionWalk.Descriptor>() != null);
-        static void Patch(Harmony harmony, MethodInfo target, string prefix = null, string postfix = null)
+        static void Patch(Harmony harmony, MethodInfo target, string prefix = null, string postfix = null, string finalizer = null)
         {
             if (target == null) throw new MissingMethodException("接管必要接口不存在：" + prefix + "/" + postfix);
-            harmony.Patch(target, prefix: prefix == null ? null : new HarmonyMethod(typeof(ControlHooks), prefix) { priority = Priority.First + 100 },
-                postfix: postfix == null ? null : new HarmonyMethod(typeof(ControlHooks), postfix) { priority = Priority.Last });
+            Plugin.LoadStep("补丁 " + target.DeclaringType?.Name + "." + target.Name, () => harmony.Patch(target, prefix: prefix == null ? null : new HarmonyMethod(typeof(ControlHooks), prefix) { priority = Priority.First + 100 },
+                postfix: postfix == null ? null : new HarmonyMethod(typeof(ControlHooks), postfix) { priority = Priority.Last },
+                finalizer: finalizer == null ? null : new HarmonyMethod(typeof(ControlHooks), finalizer) { priority = Priority.Last }));
         }
         internal static void Install(Harmony harmony)
         {
@@ -48,6 +55,19 @@ namespace PreLuna.MicroMaster
             Patch(harmony, AccessTools.Method(typeof(FPSCamera), "ManualMouseLookUpdate"), nameof(Look));
             Patch(harmony, AccessTools.Method(typeof(PlayerAIBot), "RequestAction"), nameof(Request));
             Patch(harmony, AccessTools.Method(typeof(PlayerAIBot), "StartAction"), nameof(Start));
+            Patch(harmony, AccessTools.Method(typeof(RootPlayerBotAction), "UpdateFlashlightState"), nameof(FlashlightState));
+            Patch(harmony, AccessTools.Method(typeof(PlayerSync), "WantsToSetFlashlightEnabled", new[] { typeof(bool), typeof(bool) }), nameof(FlashlightRequest));
+            Patch(harmony, AccessTools.Method(typeof(PlayerInventoryBase), "ReceiveSetFlashlightStatus", new[] { typeof(bool), typeof(bool) }), nameof(FlashlightReceive));
+            Patch(harmony, AccessTools.Method(typeof(PlayerInventoryBase), "SetFlashlightEnabled", new[] { typeof(bool), typeof(bool), typeof(bool) }), nameof(FlashlightSet));
+            Patch(harmony, AccessTools.Method(typeof(PlayerInventoryBase), "UnWieldFlashlight", Type.EmptyTypes), nameof(BeforeLightHandoff), finalizer: nameof(FinishLightHandoff));
+            Patch(harmony, AccessTools.Method(typeof(PlayerInventoryBase), "OnItemEquippableFlashlightWielded"), nameof(BeforeWieldLight), nameof(AfterLightSetup));
+            Patch(harmony, AccessTools.Method(typeof(PlayerInventoryBase), "PrepareHelmetFlashlight"), nameof(BeforeHelmetLight), nameof(AfterLightSetup));
+            Patch(harmony, AccessTools.Method(typeof(CL_SpotLight), "UpdateData"), nameof(LightData));
+            Patch(harmony, AccessTools.Method(typeof(CL_ShadowAtlas), "TempDisableLight"), postfix: nameof(AfterLightDisabled));
+            Patch(harmony, AccessTools.PropertySetter(typeof(Light), "range"), nameof(LightRange));
+            Patch(harmony, AccessTools.PropertySetter(typeof(Light), "spotAngle"), nameof(LightAngle));
+            Patch(harmony, AccessTools.PropertySetter(typeof(Light), "intensity"), nameof(LightIntensity));
+            Patch(harmony, AccessTools.Method(typeof(CullingSystem.C_Light), "SetOn"), nameof(LightOn));
             Patch(harmony, AccessTools.Method(typeof(PlayerBotActionWalk), "Update"), nameof(BeforeWalkUpdate));
             Patch(harmony, AccessTools.Method(typeof(PlayerBotActionWalk), "UpdateMovement"), nameof(WalkMovement));
             Patch(harmony, AccessTools.Method(typeof(PlayerBotActionWalk), "UpdateLookAction"), nameof(WalkLook));
@@ -72,13 +92,30 @@ namespace PreLuna.MicroMaster
             Patch(harmony, warp, nameof(AiWarp));
         }
         static bool Button(InputAction __0, ref bool __result)
-        { if (!Blocked || !ControlSafety.BlockAction((int)__0)) return true; __result = false; return false; }
+        { if (readingFlashlight && __0 == InputAction.Flashlight) return true;
+            if (!Blocked || !ControlSafety.BlockAction((int)__0)) return true; __result = false; return false; }
         static bool Axis(InputAction __0, ref float __result)
         {
             if (readingMouse && __0 is InputAction.LookHorizontal or InputAction.LookVertical) return true;
             if (!Blocked || !ControlSafety.BlockAction((int)__0)) return true; __result = 0; return false;
         }
         static bool Inventory() => !Blocked;
+        static bool FlashlightRequest(PlayerSync __instance, bool __0) => ControlRuntime.Current?.AllowNativeLightSwitch(__instance?.m_agent, __0, 0) != false;
+        static bool FlashlightReceive(PlayerInventoryBase __instance, bool __0) => ControlRuntime.Current?.AllowNativeLightSwitch(__instance?.Owner, __0, 1) != false;
+        static bool FlashlightSet(PlayerInventoryBase __instance, bool __0) => ControlRuntime.Current?.AllowNativeLightSwitch(__instance?.Owner, __0, 2) != false;
+        static void BeforeLightHandoff(PlayerInventoryBase __instance, out IDisposable __state) => __state = ControlRuntime.Current?.BeginNativeLightHandoff(__instance?.Owner);
+        static Exception FinishLightHandoff(Exception __exception, IDisposable __state) { __state?.Dispose(); return __exception; }
+        static void BeforeWieldLight(PlayerInventoryBase __instance, ItemEquippable __0, Gear.GearPartFlashlight __1)
+            => ControlRuntime.Current?.BeforeNativeLightSetup(__instance.Owner, __1?.m_settingsID ?? 1, __0);
+        static void BeforeHelmetLight(PlayerInventoryBase __instance) => ControlRuntime.Current?.BeforeNativeLightSetup(__instance.Owner, 1, null);
+        static void AfterLightSetup(PlayerInventoryBase __instance) => ControlRuntime.Current?.AfterNativeLightSetup(__instance.Owner);
+        static void AfterLightDisabled(CL_Light __0) => ControlRuntime.Current?.NativeLightRenderDisabled(__0);
+        static bool LightData(CL_SpotLight __instance) => ControlRuntime.Current?.AllowNativeLightData(__instance?.UnityLight) != false;
+        static void LightRange(Light __instance, ref float __0) => ControlRuntime.Current?.FilterNativeLightWrite(__instance, ref __0, 0);
+        static void LightAngle(Light __instance, ref float __0) => ControlRuntime.Current?.FilterNativeLightWrite(__instance, ref __0, 1);
+        static void LightIntensity(Light __instance, ref float __0) => ControlRuntime.Current?.FilterNativeLightWrite(__instance, ref __0, 2);
+        static bool LightOn(CullingSystem.C_Light __instance, bool __0) => !__0 || ControlRuntime.Current?.AllowNativeLightData(__instance?.m_unityLight) != false;
+        static bool FlashlightState(RootPlayerBotAction __instance) => ControlRuntime.Current?.NativeLightControls(__instance?.m_bot?.Agent) != true;
         static bool MoveInput(PlayerLocomotion __instance, ref Vector3 __result)
         { if (!Blocked || __instance.m_owner?.Pointer.ToInt64() != ControlRuntime.Current.Body) return true; __result = Vector3.zero; return false; }
         static bool Look(FPSCamera __instance)
@@ -103,7 +140,7 @@ namespace PreLuna.MicroMaster
         { var agent = workAgent.GetValue(__0) as PlayerAgent; if (!RecallBlocked(agent) || CommandTeleport(agent)) return true; __result = false; return false; }
         static void BeforeDamage(Dam_PlayerDamageLocal __instance, out float __state) => __state = __instance.Health;
         static void AfterDamage(Dam_PlayerDamageLocal __instance, float __state) => ControlRuntime.Current?.Damage(__instance, __state);
-        static void LevelCleanup() => ControlRuntime.Current?.Exit("关卡清理", false);
+        static void LevelCleanup() => ControlRuntime.Current?.LevelCleanup();
         static void StateChanging(eGameStateName __0) => ControlRuntime.Current?.StateChanging(__0);
         static void PlayerDeparting(PlayerAgent __instance) => ControlRuntime.Current?.Departing(__instance);
     }

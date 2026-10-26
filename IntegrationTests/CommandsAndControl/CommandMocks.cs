@@ -13,7 +13,7 @@ public class NativeObject
 public enum eGameStateName { InLevel, Lobby }
 public static class GameStateManager { public static eGameStateName CurrentStateName = eGameStateName.InLevel; }
 public static class LayerManager { public const int MASK_ENEMY_DAMAGABLE=2,MASK_ENEMY=4; }
-namespace Enemies { public class EnemyAgent : NativeObject { public bool Alive=true; public int EnemyDataID=17, Mode=4; public int GetInstanceID()=>Pointer.ToInt32(); } }
+namespace Enemies { public class EnemyAgent : NativeObject { public UnityEngine.Vector3 Position; public bool Alive=true; public int EnemyDataID=17, Mode=4; public int GetInstanceID()=>Pointer.ToInt32(); } }
 namespace HarmonyLib {
     public class Harmony { public void Patch(object method,HarmonyMethod prefix=null) { } }
     public class HarmonyMethod { public int priority; public HarmonyMethod(Type type,string name) { } }
@@ -28,7 +28,7 @@ namespace UnityEngine {
     }
     public class GameObject { public object Target; }
     public class Collider { public GameObject gameObject; }
-    public struct RaycastHit { public Collider collider; }
+    public struct RaycastHit { public Collider collider; public Vector3 point; }
     public static class Time { public static float unscaledTime,Scaled;public static bool Freeze; public static float time => Freeze?Scaled:unscaledTime; }
 }
 namespace SNetwork { public static class SNet { public static bool IsMaster = true; public static NativeObject Master=new(); } }
@@ -52,6 +52,7 @@ namespace Player {
         public int PlayerSlotIndex; public string PlayerName = "bot"; public Owner Owner = new() { IsBot = true };
         public object CourseNode = ItemRegion.Node; public Damage Damage = new(); public PlayerLocomotion Locomotion = new(); public PlayerAIBot Bot;
         public UnityEngine.Vector3 EyePosition = new(20,1.6f,20), Position = new(20,0,20);
+        public int Pings;public void TriggerMarkerPing(object target,UnityEngine.GameObject go,UnityEngine.Vector3 point){Pings++;}
         public T GetComponent<T>() where T : class => Bot as T;
     }
     public class PlayerManager {
@@ -77,6 +78,16 @@ namespace Player {
     public class PlayerBotActionTurn : PlayerBotActionBase { }
     public class PlayerBotActionCollectItem : PlayerBotActionBase { }
     public class PlayerBotActionUnlock : PlayerBotActionBase { }
+    public class PlayerBotActionAttack : PlayerBotActionBase { }
+    public class PlayerBotActionUseFirearm : PlayerBotActionBase { }
+    public class PlayerBotActionReloadWeapon : PlayerBotActionBase { }
+    public class PlayerBotActionEquipItem : PlayerBotActionBase { }
+    public class PlayerBotActionEvadeProjectile : PlayerBotActionBase { }
+    public class PlayerBotActionUseBioscan : PlayerBotActionBase { }
+    public class PlayerBotActionBioscanProximity : PlayerBotActionBase { }
+    public class PlayerBotActionUseEnemyScanner : PlayerBotActionBase { }
+    public class PlayerBotActionMelee : PlayerBotActionBase { public new class Descriptor : PlayerBotActionBase.Descriptor { public bool Strike; } }
+
     public class PlayerAIBot : NativeObject {
         public PlayerAgent Agent; public List<PlayerBotActionBase> Actions = new(); public List<PlayerBotActionBase.Descriptor> m_queuedActions = new();
         public Sync SyncValues = new(); public class Sync { public PlayerAgent Leader; } public int Stops;
@@ -139,11 +150,11 @@ namespace PreLuna.Captain.Tasks {
     static class ResourceUseAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
     static class NativePickupAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
     static class SearchTaskAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false; }
-    static class SingleKillAdapter { internal static bool Owns(Player.PlayerAIBot bot) => false;
+    static class SingleKillAdapter { internal static bool YieldForControl(Player.PlayerAIBot bot) => true; internal static bool Owns(Player.PlayerAIBot bot) => false;
         internal static Enemies.EnemyAgent Resolve(Player.PlayerAgent source,UnityEngine.RaycastHit hit)=>hit.collider?.gameObject.Target as Enemies.EnemyAgent;
         internal static IControlCombatTask CreateControlled(Player.PlayerAIBot b,Enemies.EnemyAgent e,IControlCommandPermit permit,out string reason){reason=e.Mode==4?null:"已醒";return reason==null?new MockCombat(permit,e):null;}
     }
-    static class FocusOrders { internal static bool Owns(Player.PlayerAIBot bot) => false;
+    static class FocusOrders { internal static void RestoreQuiet(Player.PlayerAIBot bot) { } internal static bool Owns(Player.PlayerAIBot bot) => false;
         internal static IControlCombatTask CreateControlled(Player.PlayerAIBot b,Enemies.EnemyAgent e,IControlCommandPermit permit,out string reason){reason=e.Mode==1?null:"沉睡";return reason==null?new MockCombat(permit,e):null;}
     }
     sealed class MockCombat:IControlCombatTask {
@@ -175,7 +186,7 @@ namespace PreLuna.Captain.Tasks {
         internal static MarkedOpenTarget Resolve(Player.PlayerAgent source,UnityEngine.GameObject target) { ResolvedBy=source;return target.Target as MarkedOpenTarget; }
     }
     sealed class MarkedPosition { }
-    static class PositionMarks { internal static MarkedPosition ControlHere(Player.PlayerAgent bot)=>new(); }
+    static class PositionMarks { internal static bool Standable=true;internal static MarkedPosition ControlAt(Player.PlayerAgent bot,UnityEngine.Vector3 p,UnityEngine.Vector3 d)=>Standable?new():null;internal static MarkedPosition ControlHere(Player.PlayerAgent bot)=>new(); }
     static class OpenTargetMarks {
         internal static float MarkLifetime=60;
         internal static string RejectReason(MarkedOpenTarget target,Player.PlayerAgent bot) => target==null?"没有机器人标记":!target.Valid?"目标失效":target.Restriction;

@@ -198,8 +198,8 @@ namespace PreLuna.Captain.Tasks
         {
             reason = PositionMarks.Reason(mark, bot?.Agent);
             if (!Live(bot) || reason != null) { reason ??= "机器人状态尚未就绪"; return false; }
-            if (Vector3.Distance(bot.Agent.Position, mark.Point) > .75f || !SearchTraversal.InScope(bot.Agent.CourseNode, mark.Origin, 1)) {
-                reason = "机器人已移离开菜单时的位置，请重开Q确认驻守此地"; return false;
+            if (!SearchTraversal.InScope(bot.Agent.CourseNode, mark.Origin, 1)) {
+                reason = "机器人与驻守目标不在允许的相邻区域，请重新标记"; return false;
             }
             if (ItemTaskAdapter.PausedWorkBlocks(bot)) { reason = "原任务还未完全暂停／已被继续，驻守交接暂不能接单"; return false; }
             var radius = float.IsFinite(stationRadius?.Value ?? 3) ? Math.Clamp(stationRadius?.Value ?? 3, 1.5f, 8) : 3;

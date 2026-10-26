@@ -44,13 +44,17 @@ namespace PreLuna.Captain.Tasks
         }
         internal static MarkedPosition ControlHere(PlayerAgent bot)
         {
+            var direction = bot?.GetComponent<PlayerAIBot>()?.SyncValues?.LookDirection ?? bot?.Forward ?? default;
+            return ControlAt(bot, bot?.Position ?? default, direction);
+        }
+        internal static MarkedPosition ControlAt(PlayerAgent bot, Vector3 desired, Vector3 direction)
+        {
             if (bot?.Owner?.IsBot != true || !bot.Alive || Builder.CurrentFloor == null || bot.CourseNode == null) return null;
-            var desired = bot.Position;
+            if (!float.IsFinite(desired.x) || !float.IsFinite(desired.y) || !float.IsFinite(desired.z)) return null;
             if (!PlayerAIBot.SnapPositionToNav(desired, out var point, 1.5f, 2) || Vector3.Distance(point, desired) > .75f
                 || !AIG_CourseNode.TryGetCourseNode(bot.DimensionIndex, point, 1, out var node) || !ItemRegion.SameSpace(bot, node)
                 || !SearchTraversal.InScope(node, bot.CourseNode, 1)
                 || Physics.CheckCapsule(point + Vector3.up * .35f, point + Vector3.up * 1.4f, .25f, LayerManager.MASK_DEFAULT, QueryTriggerInteraction.Ignore)) return null;
-            var direction = bot.GetComponent<PlayerAIBot>()?.SyncValues?.LookDirection ?? bot.Forward;
             direction.y = 0;
             return new(point, node, bot.CourseNode, Builder.CurrentFloor.Pointer, bot.Owner.Pointer, Time.time,
                 direction.sqrMagnitude > .01f ? direction.normalized : Vector3.forward);

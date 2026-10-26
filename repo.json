@@ -81,7 +81,7 @@
       "Id": "Captain.Commands",
       "Assembly": "PreLuna.Captain.Commands",
       "Guid": "PreLuna.Captain.Commands",
-      "Version": "0.5.39",
+      "Version": "0.5.43",
       "DependencyGuids": [
         "PreLuna.Captain",
         "CHTR",
@@ -187,31 +187,42 @@
       "Id": "HeadCamera",
       "Assembly": "PreLuna.HeadCamera",
       "Guid": "PreLuna.HeadCamera",
-      "Version": "0.3.0",
-      "DependencyGuids": [],
+      "Version": "0.3.13",
+      "DependencyGuids": [
+        "PreLuna.FlashlightCustom"
+      ],
       "CompileDependencies": [],
       "Kind": "managed-migrated",
       "LegacyGuid": "wanglocal.headcamera",
       "ModuleRoot": "HeadCamera",
       "SourceRoot": "HeadCamera/src",
       "Name": "头戴摄像头",
-      "DependencyDetails": [],
+      "DependencyDetails": [
+        {
+          "Guid": "PreLuna.FlashlightCustom",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
+        }
+      ],
       "TestsRoot": "HeadCamera/tests"
     },
     {
       "Id": "MicroMaster",
       "Assembly": "PreLuna.MicroMaster",
       "Guid": "PreLuna.MicroMaster",
-      "Version": "0.5.0",
+      "Version": "0.5.14",
       "DependencyGuids": [
         "PreLuna.HeadCamera",
         "PreLuna.Captain",
         "PreLuna.Captain.Commands",
-        "PreLuna.CoopBotsCustom"
+        "PreLuna.CoopBotsCustom",
+        "PreLuna.FlashlightCustom"
       ],
       "CompileDependencies": [
         "Captain",
-        "HeadCamera"
+        "HeadCamera",
+        "Captain.Commands"
       ],
       "Kind": "managed-migrated",
       "LegacyGuid": "wanglocal.micromaster",
@@ -223,7 +234,7 @@
           "Guid": "PreLuna.HeadCamera",
           "DependencyFlags": 1,
           "Kind": "Hard",
-          "DeclaredVersion": "0.3.0"
+          "DeclaredVersion": ">=0.3.13 <0.4.0"
         },
         {
           "Guid": "PreLuna.Captain",
@@ -235,13 +246,19 @@
           "Guid": "PreLuna.Captain.Commands",
           "DependencyFlags": 1,
           "Kind": "Hard",
-          "DeclaredVersion": "0.5.39"
+          "DeclaredVersion": ">=0.5.42 <0.6.0"
         },
         {
           "Guid": "PreLuna.CoopBotsCustom",
           "DependencyFlags": 1,
           "Kind": "Hard",
           "DeclaredVersion": "1.0.12"
+        },
+        {
+          "Guid": "PreLuna.FlashlightCustom",
+          "DependencyFlags": 2,
+          "Kind": "Soft",
+          "DeclaredVersion": null
         }
       ],
       "TestsRoot": "MicroMaster/tests"

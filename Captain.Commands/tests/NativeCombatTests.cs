@@ -15,7 +15,7 @@ static class NativeCombatTests
  static void Reset(int mode=4,float hp=30){
   CombatScene.Task=null;SingleKillAdapter.Reset();FocusOrders.Reset();Time.time=0;LevelGeneration.Builder.CurrentFloor=new();PlayerManager.Current=new();
   CombatScene.Geometry=CombatScene.Safe=CombatScene.Execute=true;CombatScene.Runnable=false;RouteTraversal.Opened=true;
-  ItemTaskAdapter.Suspends=0;BotTaskBridge.Acquires=BotTaskBridge.Releases=BotTaskBridge.Reports=0;KillCombatBridge.Evaluations=0;
+  ItemTaskAdapter.Suspends=ItemTaskAdapter.Restores=0;ItemTaskAdapter.RememberHold=false;BotTaskBridge.Acquires=BotTaskBridge.Releases=BotTaskBridge.Reports=0;KillCombatBridge.Evaluations=0;
   var host=new PlayerAgent{PlayerSlotIndex=0,Owner=new(){IsBot=false}};host.CourseNode.Zone=90;PlayerManager.Current.Slots[0]=host;
   bot=new();bot.Agent.Bot=bot;PlayerManager.Current.Slots[1]=bot.Agent;bot.Backpack.Melee=new(){Owner=bot.Agent};bot.Inventory.WieldedItem=bot.Backpack.Melee;
   root=new(){m_bot=bot};original=new(bot);root.m_attackAction=original;bot.m_rootAction=new(){ActionBase=root};root.DescBase=bot.m_rootAction;bot.Actions.Add(root);
@@ -78,6 +78,15 @@ static class NativeCombatTests
   Time.time=0;SingleKillAdapter.Tick();Time.time=.1f;SingleKillAdapter.Tick();Time.time=.2f;SingleKillAdapter.Tick();
   Check(ItemTaskAdapter.Suspends==1&&BotTaskBridge.Acquires==1&&bot.Issued.OfType<PlayerBotActionMelee.Descriptor>().Any(d=>d.Strike),"非接管指定击杀仍走原借调与原租约路径");
   enemy.Alive=false;Time.time=.3f;SingleKillAdapter.Tick();Check(SingleKillAdapter.Count==0&&BotTaskBridge.Releases==1,"普通击杀保留原释放与结果收尾");
+  Reset();PlayerManager.GetLocalPlayerAgent().CourseNode.Zone=1;SingleKillAdapter.Issue(bot,enemy);
+  Check(SingleKillAdapter.YieldForControl(bot)&&SingleKillAdapter.Count==0,"手动接管取消尚未执行的指定击杀，不留下返程");
+  Reset();PlayerManager.GetLocalPlayerAgent().CourseNode.Zone=1;ItemTaskAdapter.RememberHold=true;SingleKillAdapter.Issue(bot,enemy);
+  Time.time=0;SingleKillAdapter.Tick();Time.time=.1f;SingleKillAdapter.Tick();Time.time=.2f;SingleKillAdapter.Tick();
+  var pending=bot.Issued.OfType<PlayerBotActionMelee.Descriptor>().Last();
+  Check(!SingleKillAdapter.YieldForControl(bot)&&SingleKillAdapter.Count==1,"手动接管等待实际已释放挥击，不提前释放权限");
+  pending.Status=PlayerBotActionBase.Descriptor.StatusType.Successful;Time.time=.3f;SingleKillAdapter.Tick();
+  Check(SingleKillAdapter.Count==1&&ItemTaskAdapter.Restores==0,"已取消挥击先保留真实返程记录和原任务暂停快照");
+  Check(SingleKillAdapter.YieldForControl(bot)&&SingleKillAdapter.Count==0&&BotTaskBridge.Releases==1&&ItemTaskAdapter.Restores==1,"挥击结束后取消借调返程、恢复快照并释放原租约");
   Reset(1);PlayerManager.GetLocalPlayerAgent().CourseNode.Zone=1;FocusOrders.Issue(bot,enemy);
   typeof(FocusOrders).GetMethod("SelectTarget",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic).Invoke(null,new object[]{root});
   Check(root.m_attackAction.TargetAgent==enemy&&bot.Requests==0,"非接管集火仍仅选择目标，不自行创建高优先级攻击");

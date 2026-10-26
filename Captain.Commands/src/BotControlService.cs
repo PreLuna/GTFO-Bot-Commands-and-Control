@@ -41,7 +41,8 @@ namespace PreLuna.Captain.Tasks
             var local = PlayerManager.GetLocalPlayerAgent();
             var agent = target.Slot >= 0 && target.Slot < 4 ? PlayerManager.Current?.GetPlayerAgentInSlot(target.Slot) : null;
             var bot = agent?.GetComponent<PlayerAIBot>();
-            if (reason == null && (local?.Alive != true || local.Damage?.GrabbedAtAll == true || local.Locomotion == null || (int)local.Locomotion.m_currentStateEnum is < 0 or > 5)) reason = "本体状态不允许接管";
+            if (reason == null && (local?.Alive != true || local.Damage?.GrabbedAtAll == true || local.Locomotion == null
+                || (int)local.Locomotion.m_currentStateEnum is not (>= 0 and <= 5 or 17))) reason = "本体状态不允许接管";
             if (reason == null && (agent?.Alive != true || agent.Pointer.ToInt64() != target.Agent || agent.Owner?.Pointer.ToInt64() != target.Owner
                 || agent.Owner.IsBot != true || bot?.SyncValues == null || agent.Pointer == local.Pointer || agent.IsBeingDestroyed || agent.IsBeingDespawned)) reason = "目标不是当前存活机器人／身份已改变";
             if (reason == null && !ItemRegion.SameSpace(agent, local.CourseNode)) reason = "首版只接管同层同维度机器人";
@@ -50,15 +51,13 @@ namespace PreLuna.Captain.Tasks
             if (reason == null && recalling.Any(e => e.Session.Target == target)) reason = "该机器人退出召回尚未完成";
             if (reason == null && ControlCommandAdapter.Owns(target.Agent, target.Owner)) reason = "该机器人上一条接管指令仍在交互收尾";
             if (reason == null && !BotTaskBridge.Bind()) reason = "更好 AI 仲裁接口不可用";
-            if (reason == null) reason = Unsupported(bot);
+            if (reason == null && NativePickupAdapter.Owns(bot)) reason = "特殊搬运任务暂不支持保留接管";
             if (reason != null) return false;
             // Keep only recent terminal tickets; identities and monotonic tickets prevent slot reuse.
             foreach (var old in entries.Where(p => p.Value.Transaction.State is BotControlState.Released or BotControlState.Failed).Select(p => p.Key).ToArray()) entries.Remove(old);
             var session = new Session(bot, local, target);
             try {
-                AutoPickupAdapter.CancelPrompt(bot);
-                ItemTaskAdapter.SuspendForBorrow(bot, session.Holds);
-                MovementOrders.SuspendFollowForControl(bot, session.Holds);
+                session.Prepare();
                 var entry = new Entry { Session = session, Ticket = ++serial, Transaction = new ControlTransaction(session, Time.unscaledTime) };
                 entries.Add(entry.Ticket, entry); ticket = entry.Ticket;
                 Plugin.Logger.LogInfo("[接管服务] 申请 ticket=" + ticket + " bot=" + agent.PlayerName + " 暂停记录=" + session.Holds.Count);
@@ -68,17 +67,7 @@ namespace PreLuna.Captain.Tasks
                 Plugin.Logger.LogWarning("[接管服务] " + error); return false;
             }
         }
-        static string Unsupported(PlayerAIBot bot)
-        {
-            if (RescueOrders.Owns(bot)) return "正在救援，首版不支持此时接管";
-            if (ToolSupplyAdapter.Owns(bot) || ResourceUseAdapter.Owns(bot)) return "补给正在执行／核验，请收尾后接管";
-            if (NativePickupAdapter.Owns(bot)) return "特殊搬运任务暂不支持保留接管";
-            if (SearchTaskAdapter.Owns(bot)) return "搜寻查询尚未收尾";
-            if (SingleKillAdapter.Owns(bot) || FocusOrders.Owns(bot) || SharedMeleeBridge.Owns(bot)) return "已有击杀／集火／协同近战任务";
-            if (BotTaskBridge.Unsafe(bot)) return "机器人处于战斗、警报或紧急状态，首版暂不接管";
-            return NativeBlock(bot, true);
-        }
-        static string NativeBlock(PlayerAIBot bot, bool allowOwnedInteraction)
+        static string NativeBlock(PlayerAIBot bot, bool allowOwnedInteraction, bool manual = false)
         {
             if (bot.Actions == null || bot.Actions.Count > 64) return "机器人动作表不可安全核验";
             foreach (var action in bot.Actions) {
@@ -86,9 +75,17 @@ namespace PreLuna.Captain.Tasks
                 if (action.TryCast<RootPlayerBotAction>() != null || action.TryCast<PlayerBotActionTravel>() != null
                     || action.TryCast<PlayerBotActionWalk>() != null || action.TryCast<PlayerBotActionLook>() != null
                     || action.TryCast<PlayerBotActionFollow>() != null || action.TryCast<PlayerBotActionIdle>() != null || action.TryCast<PlayerBotActionTurn>() != null) continue;
+                if (manual && (action.TryCast<PlayerBotActionAttack>() != null || action.TryCast<PlayerBotActionUseFirearm>() != null
+                    || action.TryCast<PlayerBotActionReloadWeapon>() != null || action.TryCast<PlayerBotActionEquipItem>() != null
+                    || action.TryCast<PlayerBotActionEvadeProjectile>() != null || action.TryCast<PlayerBotActionUseBioscan>() != null
+                    || action.TryCast<PlayerBotActionBioscanProximity>() != null || action.TryCast<PlayerBotActionUseEnemyScanner>() != null)) continue;
+                if (manual && action.TryCast<PlayerBotActionMelee>() != null) {
+                    if (action.DescBase.TryCast<PlayerBotActionMelee.Descriptor>()?.Strike != false) return "等待已经释放的近战挥击收尾";
+                    continue;
+                }
                 if (allowOwnedInteraction && (OpenTaskAdapter.Owns(bot) || CollectTaskAdapter.Owns(bot) || ItemTaskAdapter.HasItemTask(bot))
                     && (action.TryCast<PlayerBotActionCollectItem>() != null || action.TryCast<PlayerBotActionUnlock>() != null)) continue;
-                return "当前原版动作暂不支持安全暂停，请完成后接管";
+                return manual ? "等待原版交互或特殊动作收尾，尚未强制中断" : "当前原版动作暂不支持安全暂停，请完成后接管";
             }
             return null;
         }
@@ -96,7 +93,12 @@ namespace PreLuna.Captain.Tasks
         {
             reason = "控制票据已失效";
             if (!entries.TryGetValue(ticket, out var e)) return BotControlState.Failed;
-            e.Transaction.Tick(Time.unscaledTime); reason = e.Outcome ?? e.Transaction.Reason; return e.Transaction.State;
+            e.Transaction.Tick(Time.unscaledTime);
+            reason = e.Outcome ?? e.Transaction.Reason;
+            if (e.Transaction.State == BotControlState.Waiting) reason = e.Session.WaitReason;
+            else if (e.Transaction.State == BotControlState.Failed && reason == "等待任务暂停／更好 AI 控制权限超时")
+                reason += "：" + e.Session.WaitReason;
+            return e.Transaction.State;
         }
         public bool Renew(long ticket) => entries.TryGetValue(ticket, out var e) && e.Transaction.Renew(Time.unscaledTime);
         public void Release(long ticket, bool recall)
@@ -195,6 +197,8 @@ namespace PreLuna.Captain.Tasks
             readonly IntPtr floor, controllerOwner, master;
             readonly int controllerSlot, controllerInstance, agentInstance, botInstance;
             long lease;
+            bool prepared;
+            internal string WaitReason { get; private set; } = "等待机器人任务交接";
             ItemTaskStage commandStage = ItemTaskStage.Moving;
             internal readonly List<BorrowHold> Holds = new();
             internal Session(PlayerAIBot bot, PlayerAgent local, BotControlTarget target)
@@ -210,7 +214,29 @@ namespace PreLuna.Captain.Tasks
                 && PlayerManager.Current.GetPlayerAgentInSlot(controllerSlot).GetInstanceID() == controllerInstance
                 && !Controller.IsBeingDestroyed && !Controller.IsBeingDespawned;
             } catch { return false; } } }
-            public bool Paused => Holds.All(h => h.Retained && h.Yielded) && NativeBlock(Bot, false) == null;
+            internal bool Prepare()
+            {
+                if (RescueOrders.Owns(Bot)) { WaitReason = "等待救援交互收尾"; return false; }
+                if (ToolSupplyAdapter.Owns(Bot) || ResourceUseAdapter.Owns(Bot)) { WaitReason = "等待补给应用／核验收尾"; return false; }
+                if (SharedMeleeBridge.Owns(Bot)) { WaitReason = "等待协同近战收尾，请先在协同菜单取消或等待完成"; return false; }
+                if (!SingleKillAdapter.YieldForControl(Bot)) { WaitReason = "已取消指定击杀，等待已释放的挥击核验"; return false; }
+                FocusOrders.RestoreQuiet(Bot);
+                if (!prepared) {
+                    AutoPickupAdapter.CancelPrompt(Bot);
+                    ItemTaskAdapter.SuspendForBorrow(Bot, Holds);
+                    MovementOrders.SuspendFollowForControl(Bot, Holds);
+                    prepared = true;
+                }
+                return true;
+            }
+            public bool Paused { get {
+                if (!Prepare()) return false;
+                if (!Holds.All(h => h.Retained && h.Yielded)) { WaitReason = "等待旧任务完成本次交互并暂停"; return false; }
+                var native = NativeBlock(Bot, false, true);
+                if (native != null) { WaitReason = native; return false; }
+                WaitReason = "等待更好 AI 交还控制权（扫描预留、动作状态或其他租约）";
+                return true;
+            } }
             public bool IdentityValid => Valid;
             public bool Acquire() => BotTaskBridge.Acquire(Bot, out lease);
             public bool Renew() => Valid && BotTaskBridge.Report(Bot, lease, commandStage)
@@ -223,6 +249,8 @@ namespace PreLuna.Captain.Tasks
             void IControlCommandPermit.Hold() { commandStage = ItemTaskStage.Moving; }
             public void Quiesce()
             {
+                var blocked = NativeBlock(Bot, false, true);
+                if (blocked != null) throw new InvalidOperationException(blocked);
                 var actions = Bot.Actions;
                 var stop = new List<PlayerBotActionBase.Descriptor>();
                 foreach (var action in actions) if (action?.DescBase != null && !action.DescBase.IsTerminated() && action.TryCast<RootPlayerBotAction>() == null) stop.Add(action.DescBase);

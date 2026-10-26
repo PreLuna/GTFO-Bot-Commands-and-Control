@@ -16,6 +16,8 @@ namespace PreLuna.HeadCamera
     }
     internal static class ViewPolicy
     {
+        internal static bool Display(bool playing, bool focused, bool input, bool controls, bool terminal)
+            => playing && focused && !terminal && (input || controls);
         internal static int Select(IReadOnlyList<CameraTarget> candidates, CameraTarget? current, int step)
         {
             if (candidates.Count == 0) return -1;

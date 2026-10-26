@@ -131,8 +131,8 @@ static class MenuInputTests
         var controlledNodes=new Queue<CaptainMenuPlanNode>();controlledNodes.Enqueue(controlled);var controlledLeaves=new List<CaptainMenuLeaf>();
         while(controlledNodes.Count>0){var node=controlledNodes.Dequeue();if(node.Leaf!=null)controlledLeaves.Add(node.Leaf);foreach(var child in node.Children)controlledNodes.Enqueue(child);}
         Check(controlled.Label.Contains("接管"),"Q沿用队长菜单并显示接管上下文");
-        Check(controlledLeaves.Count==5&&controlledLeaves.Exists(l=>l.Handler==1)&&controlledLeaves.Exists(l=>l.Handler==10)
-            &&controlledLeaves.Exists(l=>l.Handler==9)&&controlledLeaves.Exists(l=>l.Handler==43)&&controlledLeaves.Exists(l=>l.Handler==55),"第四批菜单保留拾取开启，增加击杀、集火和退出驻守");
+        Check(controlledLeaves.Count==6&&controlledLeaves.Exists(l=>l.Handler==1)&&controlledLeaves.Exists(l=>l.Handler==10)
+            &&controlledLeaves.Exists(l=>l.Handler==9)&&controlledLeaves.Exists(l=>l.Handler==43)&&controlledLeaves.Exists(l=>l.Handler==55)&&controlledLeaves.Exists(l=>l.Handler==56),"第四批菜单保留拾取开启，增加击杀、集火和两种明确的驻守退出");
         Check(controlledLeaves.TrueForAll(l=>l.Slot==2&&l.Owner==200),"执行人固定当前机器人，不出现其他机器人或全队提交");
         Check(controlledLeaves.FindAll(l=>l.Handler==1||l.Handler==10).TrueForAll(l=>l.Blocked==null),"有效机器人标记可以从原有菜单提交");
         AutoPickupAdapter.CanAnswer=false;ItemTaskAdapter.ControlMenuRequired=true;

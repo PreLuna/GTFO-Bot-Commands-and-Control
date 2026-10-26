@@ -203,6 +203,7 @@ namespace PreLuna.Captain.Tasks
                     cancel.Leaf = new(spec.Code, "取消多人救援分配", -1, 0, 41, null); task.Children.Add(cancel);
                 }
                 else if (spec.Handler is 36 or 37 or 55) Executors(task, spec.Handler, position?.Blocked ?? (position == null ? "请先用鼠标中键标记可站立位置" : null), false);
+                else if (spec.Handler == 56) Executors(task, 56, null, false);
                 else if (spec.Handler == 38) {
                     foreach (bool pause in new[] { true, false }) {
                         var page = Node(pause ? "暂停当前任务（原子交互先收尾）" : "继续当前任务（重新核验）"); task.Children.Add(page);
@@ -489,7 +490,8 @@ namespace PreLuna.Captain.Tasks
                 foreach(var spec in CaptainCommandCatalog.Groups[4].Commands) if(spec.Code is "B08" or "B01") Task(combatPage,spec);
                 Back(combatPage,root);
                 var actionPage=Node("接管退出");root.Children.Add(actionPage);
-                Task(actionPage,new CaptainCommandSpec("A_CONTROL_STATION","退出并驻守此地","以当前机器人位置接单，驻守确认后退出",55));
+                Task(actionPage,new CaptainCommandSpec("A_CONTROL_STATION","结束接管并前往标记点驻守",position?.Label ?? "请先中键标记有效地面位置",55));
+                Task(actionPage,new CaptainCommandSpec("A_CONTROL_HERE","结束接管并原地驻守","当前位置；接单成功后归还本体",56));
                 Back(actionPage,root);return root;
             }
             foreach (var group in CaptainCommandCatalog.Groups) {

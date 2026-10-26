@@ -13,16 +13,16 @@ namespace UnityEngine {
     public enum QueryTriggerInteraction{Ignore}
     public struct RaycastHit{public float distance;}
     public static class Physics {
-        public static bool Wall,Occupied;public static float WallDistance;public static int Casts;
-        public static bool CapsuleCast(Vector3 a,Vector3 b,float r,Vector3 d,out RaycastHit hit,float length,int mask,QueryTriggerInteraction q){Casts++;hit=new(){distance=WallDistance};return Wall;}
+        public static bool Wall,Occupied,FloorOnHorizontal;public static float WallDistance;public static int Casts;
+        public static bool CapsuleCast(Vector3 a,Vector3 b,float r,Vector3 d,out RaycastHit hit,float length,int mask,QueryTriggerInteraction q){Casts++;hit=new(){distance=WallDistance};return Wall||FloorOnHorizontal&&Math.Abs(d.y)<.001f;}
         public static bool CheckCapsule(Vector3 a,Vector3 b,float r,int mask,QueryTriggerInteraction q)=>Occupied;
     }
 }
 namespace UnityEngine.AI {
     public struct NavMeshHit{public UnityEngine.Vector3 position;}
     public static class NavMesh {
-        public static bool Missing,Blocked;public static UnityEngine.Vector3 Shift;
-        public static bool SamplePosition(UnityEngine.Vector3 p,out NavMeshHit hit,float radius,int mask){hit=new(){position=p.sqrMagnitude>.001f?p+Shift:p};return !Missing;}
+        public static bool Missing,Blocked;public static float Slope;public static UnityEngine.Vector3 Shift;
+        public static bool SamplePosition(UnityEngine.Vector3 p,out NavMeshHit hit,float radius,int mask){hit=new(){position=p.sqrMagnitude>.001f?p+Shift:p};if(Slope!=0)hit.position.y=p.z*Slope;return !Missing&&Math.Abs(hit.position.y-p.y)<=radius;}
         public static bool Raycast(UnityEngine.Vector3 from,UnityEngine.Vector3 to,out NavMeshHit hit,int mask){hit=default;return Blocked;}
     }
 }

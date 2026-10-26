@@ -185,3 +185,5 @@ namespace PreLuna.Captain.Tasks {
     internal static class AutoPickupAdapter { public static bool Open(LevelGeneration.ItemInLevel item)=>item.container==null||item.container.m_core.Status==LevelGeneration.eResourceContainerStatus.Open; public static void Forget(IntPtr pointer){} public static void CancelPrompt(Player.PlayerAIBot bot){} }
     internal sealed class ContainerBridge { public IntPtr Key=new(999); public bool Available=true; public LevelGeneration.LG_ResourceContainer_Storage Storage=new(); public UnityEngine.Transform Pose=new(){position=new UnityEngine.Vector3(10)}; public UnityEngine.Transform Placement(Player.InventorySlot slot)=>Pose; }
 }
+
+namespace PreLuna.Captain.Tasks { internal static class BrokerHeartbeatPatch { internal static void Install(System.Type t){} internal static void Uninstall(){} } }

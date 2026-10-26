@@ -12,6 +12,7 @@ static class ServiceTests
         BotControlService.Instance.Reset(); Time.unscaledTime = 0; SNetwork.SNet.IsMaster = true; GameStateManager.CurrentStateName = eGameStateName.InLevel;
         LevelGeneration.Builder.CurrentFloor = new(); PlayerManager.Current = new(); BotTaskBridge.Reset(); PUIWorld.StopThrows = false;
         local = new() { PlayerSlotIndex = 0, Owner = new() { IsBot = false } }; PlayerManager.Current.Slots[0] = local;
+        RescueOrders.Active = ToolSupplyAdapter.Active = ResourceUseAdapter.Active = SharedMeleeBridge.Active = FocusOrders.Active = SingleKillAdapter.Atomic = false; SingleKillAdapter.Cancels = 0;
         bot = MakeBot(1); other = MakeBot(2); ItemTaskAdapter.Jobs.Clear(); ItemTaskAdapter.NativeMenu = new(); MovementOrders.FollowPaused = false;
     }
     static PlayerAIBot MakeBot(int slot) { var b = new PlayerAIBot { Agent = new() { PlayerSlotIndex = slot } }; b.Agent.Bot = b; b.Actions.Add(new RootPlayerBotAction()); PlayerManager.Current.Slots[slot] = b.Agent; return b; }
@@ -22,8 +23,34 @@ static class ServiceTests
         Reset(); bot.Agent.Owner.IsBot = false;
         Check(!BotControlService.Instance.Begin(Target,"micro",out _,out _),"真人不可接管");
         Reset(); bot.Agent.CourseNode = new object(); Check(!BotControlService.Instance.Begin(Target,"micro",out _,out _),"跨空间拒绝");
-        Reset(); BotTaskBridge.UnsafeValue = true; Check(!BotControlService.Instance.Begin(Target,"micro",out _,out _),"首版危险机器人拒绝");
-        Reset(); bot.Actions.Add(new PlayerBotActionBase()); Check(!BotControlService.Instance.Begin(Target,"micro",out _,out _),"未知原版动作拒绝");
+        Reset(); BotTaskBridge.UnsafeValue = true; long relaxed = Begin();
+        Check(BotControlService.Instance.Poll(relaxed,out _) == BotControlState.Active,"AI危险预判不再否决接管");
+        Time.unscaledTime=.1f; BotControlService.Tick(); Check(BotControlService.Instance.Controls(Target.Agent,Target.Owner),"危险预判持续存在仍可续租");
+        Reset(); var unknown = new PlayerBotActionBase(); bot.Actions.Add(unknown); relaxed = Begin();
+        Check(BotControlService.Instance.Poll(relaxed,out var wait) == BotControlState.Waiting && wait.Contains("交互") && bot.Stops == 0,"未知交互显示等待且不强停");
+        unknown.DescBase.Terminated=true; Check(BotControlService.Instance.Poll(relaxed,out _) == BotControlState.Active,"交互收尾后同一申请自动接管");
+        Reset(); local.Locomotion.m_currentStateEnum=17; relaxed=Begin(); Check(BotControlService.Instance.Poll(relaxed,out _) == BotControlState.Active,"StandStill本体允许进入");
+        Reset(); local.Locomotion.m_currentStateEnum=8; Check(!BotControlService.Instance.Begin(Target,"micro",out _,out _),"爬梯本体仍拒绝");
+        Reset(); bot.Actions.Add(new PlayerBotActionAttack()); bot.Actions.Add(new PlayerBotActionUseFirearm()); bot.Actions.Add(new PlayerBotActionReloadWeapon());
+        bot.Actions.Add(new PlayerBotActionEquipItem()); bot.Actions.Add(new PlayerBotActionEvadeProjectile()); bot.Actions.Add(new PlayerBotActionUseBioscan());
+        bot.Actions.Add(new PlayerBotActionBioscanProximity()); bot.Actions.Add(new PlayerBotActionUseEnemyScanner()); relaxed=Begin();
+        Check(BotControlService.Instance.Poll(relaxed,out _) == BotControlState.Active && bot.Stops==8,"普通战斗扫描动作确认停止后接管");
+        Reset(); var swing = new PlayerBotActionMelee { DescBase = new PlayerBotActionMelee.Descriptor { Strike=true } }; bot.Actions.Add(swing); relaxed=Begin();
+        Check(BotControlService.Instance.Poll(relaxed,out wait) == BotControlState.Waiting && wait.Contains("挥击") && bot.Stops==0,"已释放原版挥击等待核验");
+        swing.DescBase.Terminated=true; Check(BotControlService.Instance.Poll(relaxed,out _) == BotControlState.Active,"原版挥击结束后进入");
+        Reset(); bot.Actions.Add(new PlayerBotActionMelee { DescBase=new PlayerBotActionMelee.Descriptor() }); relaxed=Begin();
+        Check(BotControlService.Instance.Poll(relaxed,out _) == BotControlState.Active && bot.Stops==1,"未释放的近战准备可停止");
+        Reset(); RescueOrders.Active=true; relaxed=Begin();
+        Check(BotControlService.Instance.Poll(relaxed,out wait)==BotControlState.Waiting && wait.Contains("救援") && !MovementOrders.FollowPaused,"救援短暂等待且未抢占旧任务");
+        RescueOrders.Active=false; Check(BotControlService.Instance.Poll(relaxed,out _)==BotControlState.Active,"救援收尾自动接管");
+        Reset(); ToolSupplyAdapter.Active=true; relaxed=Begin(); Check(BotControlService.Instance.Poll(relaxed,out wait)==BotControlState.Waiting && wait.Contains("补给"),"工具补给给出等待原因");
+        ToolSupplyAdapter.Active=false; Check(BotControlService.Instance.Poll(relaxed,out _)==BotControlState.Active,"补给收尾自动接管");
+        Reset(); SharedMeleeBridge.Active=true; relaxed=Begin(); Check(BotControlService.Instance.Poll(relaxed,out wait)==BotControlState.Waiting && wait.Contains("协同"),"协同近战不被强行抢占");
+        Reset(); SingleKillAdapter.Atomic=true; relaxed=Begin(); Check(BotControlService.Instance.Poll(relaxed,out wait)==BotControlState.Waiting && wait.Contains("指定击杀") && !MovementOrders.FollowPaused,"指定击杀原子阶段先完成");
+        SingleKillAdapter.Atomic=false; FocusOrders.Active=true; Check(BotControlService.Instance.Poll(relaxed,out _)==BotControlState.Active && !FocusOrders.Active,"击杀交接后解除集火并接管");
+        Reset(); ResourceUseAdapter.Active=true; relaxed=Begin();
+        for(int i=0;i<=8;i++){Time.unscaledTime=i;BotControlService.Instance.Renew(relaxed);BotControlService.Instance.Poll(relaxed,out wait);}
+        Check(BotControlService.Instance.Poll(relaxed,out wait)==BotControlState.Failed && wait.Contains("补给") && bot.Stops==0,"等待超时保留具体原因且不强停补给");
         Reset(); bot.Actions.Add(new PlayerBotActionFollow()); bot.Actions.Add(new PlayerBotActionIdle()); bot.Actions.Add(new PlayerBotActionTurn());
         long routineTicket = Begin(); Check(BotControlService.Instance.Poll(routineTicket,out _) == BotControlState.Active && bot.Stops == 3,"普通跟随／空闲／转向动作可以停止后接管");
         Reset(); var job = new ItemTaskAdapter.Job { Yielded = false }; ItemTaskAdapter.Jobs[bot.Pointer] = job; long ticket = Begin();

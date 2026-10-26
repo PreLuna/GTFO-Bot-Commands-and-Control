@@ -17,7 +17,7 @@ static class CommandTests
         BotControlService.Instance.Reset();Time.unscaledTime=0;Time.Freeze=false;SNetwork.SNet.IsMaster=true;GameStateManager.CurrentStateName=eGameStateName.InLevel;
         Builder.CurrentFloor=new();PlayerManager.Current=new();BotTaskBridge.Reset();ItemTaskAdapter.Jobs.Clear();ItemTaskAdapter.Reserved.Clear();ItemTaskAdapter.Messages.Clear();
         ItemTaskAdapter.NativeMenu=new();OpenTaskAdapter.OldReservations.Clear();ItemTaskSession.Near=true;ItemTargetResolver.Hit=null;
-        MovementOrders.Accept=true;MovementOrders.Protected=false;MovementOrders.AcceptedWhileControlled=false;
+        PositionMarks.Standable=true;MovementOrders.Accept=true;MovementOrders.Protected=false;MovementOrders.AcceptedWhileControlled=false;
         PlayerManager.Current.Slots[0]=new(){Owner=new(){IsBot=false},EyePosition=new(100,1.6f,100),Position=new(100,0,100)};
         bot=MakeBot(1);other=MakeBot(2);old=new();ItemTaskAdapter.Jobs[bot.Pointer]=old;
         Check(BotControlApi.Begin(Target,"micro",out ticket,out _),"接管申请");Check(BotControlApi.Poll(ticket,out _)==BotControlState.Active,"激活接管");
@@ -43,6 +43,20 @@ static class CommandTests
         Check(!BotControlApi.CommandOwns(other.Agent.Pointer.ToInt64(),other.Agent.Owner.Pointer.ToInt64())&&other.Stops==0,"其他机器人保持工作");
         BotControlApi.Release(ticket,true);Tick(.6f);Check(BotTaskBridge.Releases==1&&bot.SyncValues.Leader==PlayerManager.GetLocalPlayerAgent()&&old.Paused,"普通退出召回跟随并保持旧任务暂停");
 
+        Reset();saved=Mark(new object());var ground=ControlCommandAdapter.MenuSnapshot(ticket,bot);
+        Check(ground.HasPosition&&ground.Station!=null&&bot.Agent.Pings==1,"地面中键记录位置、显示原生Ping并可驻守");
+        ControlCommandAdapter.Issue(ground,Entry(55));Check(!BotControlApi.Controls(Target.Agent,Target.Owner)&&MovementOrders.AcceptedWhileControlled,"地面标记经Q确认驻守接单后退出");
+        Reset();PositionMarks.Standable=false;saved=Mark(new object());var wall=ControlCommandAdapter.MenuSnapshot(ticket,bot);
+        Check(wall.HasPosition&&wall.Station==null&&bot.Agent.Pings==1,"墙面可标记但没有落点时不回退到机器人脚下");
+        Reset();saved=Mark(new object());var moved=ControlCommandAdapter.MenuSnapshot(ticket,bot);bot.Agent.Position=new(25,0,20);
+        ControlCommandAdapter.Issue(moved,Entry(55));Check(BotControlApi.Controls(Target.Agent,Target.Owner)&&!MovementOrders.AcceptedWhileControlled,"菜单后机器人位移仍拒绝过时交接");
+        Reset();saved=Mark(new object());Check(ControlPresentation.TryGetMark(ticket,out var visual)&&visual.CanStation,"相同机器人和票据公开现有标记，不重发Ping");
+        Check(bot.Agent.Pings==1&&!ControlPresentation.TryGetMark(ticket+1,out _),"其他会话不能读取旧标记");
+        Time.unscaledTime=61;Check(!ControlPresentation.TryGetMark(ticket,out _),"过期标记从展示层移除");
+        Reset();PositionMarks.Standable=false;saved=Mark(new object());Check(ControlPresentation.TryGetMark(ticket,out visual)&&!visual.CanStation&&visual.Label.Contains("不可驻守"),"墙面原始命中仍可见，不需要可驻守导航点");
+        Reset();var movingEnemy=new Enemies.EnemyAgent();saved=Mark(movingEnemy);movingEnemy.Position=new(8,2,3);
+        Check(ControlPresentation.TryGetMark(ticket,out visual)&&visual.X==8,"敌人标记跟随同一敌人当前位置");movingEnemy.Alive=false;Check(!ControlPresentation.TryGetMark(ticket,out _),"死亡敌人不会留下有效标记");
+        Reset();saved=Mark(new object());Time.unscaledTime=61;Check(ControlCommandAdapter.MenuSnapshot(ticket,bot).Station==null,"过期地面标记不能用于驻守交接");
         Reset();item=new();saved=Mark(item);item.Valid=false;ControlCommandAdapter.Issue(saved,Entry());
         Check(!Busy&&MicroAllowed&&ItemTaskAdapter.Reserved.Count==0,"菜单后目标被取走：拒绝交互并释放临时预约，不锁微调");
         Reset();item=new();saved=Mark(item);ItemTaskAdapter.Reserved.Add(item.Pointer);ControlCommandAdapter.Issue(saved,Entry());
@@ -96,13 +110,13 @@ static class CommandTests
         BotControlApi.Release(ticket,true);Check(!BotControlApi.Controls(Target.Agent,Target.Owner)&&Busy&&BotTaskBridge.Releases==0,"挥击原子阶段退出先恢复本体，保留任务收尾");
         Tick(.3f);Check(ItemTaskAdapter.NativeMenu.Calls==0,"挥击未结束不能抢先召回");MockCombat.Last.Atomic=false;Tick(.5f);
         Check(!Busy&&BotTaskBridge.Releases==1&&ItemTaskAdapter.NativeMenu.Calls==1&&old.Paused,"挥击结束后原召回流程只执行一次");
-        Reset();var here=ControlCommandAdapter.MenuSnapshot(ticket,bot);MovementOrders.Accept=false;ControlCommandAdapter.Issue(here,Entry(55));
+        Reset();var here=ControlCommandAdapter.MenuSnapshot(ticket,bot);MovementOrders.Accept=false;ControlCommandAdapter.Issue(here,Entry(56));
         Check(BotControlApi.Controls(Target.Agent,Target.Owner)&&MicroAllowed&&ItemTaskAdapter.NativeMenu.Calls==0,"驻守接单拒绝时继续接管，不召回或锁住本体");
-        MovementOrders.Accept=true;ControlCommandAdapter.Issue(here,Entry(55));Check(MovementOrders.AcceptedWhileControlled,"驻守必须在接管仍持有权限时确认接单");
+        PositionMarks.Standable=true;MovementOrders.Accept=true;ControlCommandAdapter.Issue(here,Entry(56));Check(MovementOrders.AcceptedWhileControlled,"驻守必须在接管仍持有权限时确认接单");
         Check(!BotControlApi.Controls(Target.Agent,Target.Owner)&&BotTaskBridge.Releases==1&&BotControlApi.Poll(ticket,out var outcome)==BotControlState.Released&&outcome.Contains("驻守"),"确认接单后才释放接管并记录驻守退出结果");
         BotControlApi.Release(ticket,true);Tick(.2f);Check(ItemTaskAdapter.NativeMenu.Calls==0&&old.Paused,"重复客户端退出也不能给已接单的驻守排入召回");
         Check(BotControlApi.RecallProtected(Target.Agent,Target.Owner)&&!BotControlApi.RecallProtected(other.Agent.Pointer.ToInt64(),other.Agent.Owner.Pointer.ToInt64()),"驻守交接召回保护只作用于目标机器人");
-        Reset();here=ControlCommandAdapter.MenuSnapshot(ticket,bot);enemy=new();saved=Mark(enemy);ControlCommandAdapter.Issue(saved,Entry(9));ControlCommandAdapter.Issue(here,Entry(55));
+        Reset();here=ControlCommandAdapter.MenuSnapshot(ticket,bot);enemy=new();saved=Mark(enemy);ControlCommandAdapter.Issue(saved,Entry(9));ControlCommandAdapter.Issue(here,Entry(56));
         Check(Busy&&BotControlApi.Controls(Target.Agent,Target.Owner)&&!MovementOrders.AcceptedWhileControlled,"战斗任务未完成时拒绝覆盖为驻守退出");
         // Fifth batch: pre-commit cancellation, lost leases/identities, delayed verification and paused clocks.
         Reset();item=new();saved=Mark(item);ControlCommandAdapter.Issue(saved,Entry());BotControlApi.Release(ticket,true);
