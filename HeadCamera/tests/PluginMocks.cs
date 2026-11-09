@@ -10,6 +10,8 @@ namespace BepInEx.Configuration {
  public class ConfigDescription {public ConfigDescription(string text,object range){}}
  public class AcceptableValueRange<T> {public AcceptableValueRange(T min,T max){}}
  public class ConfigFile {
+  public string ConfigFilePath {get;set;}="test.cfg";
+  public bool SaveOnConfigSet {get;set;}=true;
   readonly Dictionary<(string,string),object> values=new();public int Saves;
   public void Set<T>(string section,string key,T value)=>values[(section,key)]=new ConfigEntry<T>(value);
   public T Value<T>(string section,string key)=>((ConfigEntry<T>)values[(section,key)]).Value;

@@ -6,16 +6,16 @@ $microRoot=$repo
 $bin=Join-Path $repo 'out/tests'
 New-Item -ItemType Directory -Path $bin -Force | Out-Null
 $refs=@(Get-ChildItem $RuntimeRoot -Filter '*.dll' | Where-Object { $_.Name -match '^(System\.|mscorlib\.|netstandard\.)' -and $_.Name -notmatch '\.Native\.' } | ForEach-Object FullName)
-function RunSuite([string]$name,[string[]]$sources) {
+function RunSuite([string]$name,[string[]]$sources,[string[]]$arguments=@()) {
     if(@($sources | Where-Object {[IO.Path]::GetFileName($_) -eq 'BotControlApi.cs'}).Count){$sources+=Join-Path $root 'Captain\src\BotControlCommands.cs'}
     $output=Join-Path $bin ($name+'.dll')
     & (Join-Path $BuildToolsRoot 'tools/Compile.ps1') -Sources $sources -References $refs -Output $output -Executable
     ('{"runtimeOptions":{"tfm":"net6.0","framework":{"name":"Microsoft.NETCore.App","version":"'+(Split-Path $RuntimeRoot -Leaf)+'"}}}') | Set-Content (Join-Path $bin ($name+'.runtimeconfig.json')) -Encoding utf8
-    & dotnet $output | Tee-Object -FilePath (Join-Path $bin ($name+'.log'))
+    & dotnet $output @arguments | Tee-Object -FilePath (Join-Path $bin ($name+'.log'))
     if($LASTEXITCODE -ne 0){throw ('Test failed: '+$name)}
 }
 RunSuite 'ControlTests' @((Join-Path $root 'Captain\src\BotControlApi.cs'),(Join-Path $root 'HeadCamera\src\ViewPolicy.cs'),(Join-Path $root 'HeadCamera\src\ToggleGesture.cs'),(Join-Path $microRoot 'MicroMaster\src\ControlSafety.cs'),(Join-Path $root 'IntegrationTests/Control/ControlTests.cs'))
-RunSuite 'ConfigUpgradeTests' @((Join-Path $root 'HeadCamera/src/Plugin.cs'),(Join-Path $root 'HeadCamera/src/ViewPolicy.cs'),(Join-Path $root 'HeadCamera/src/CaptureAnalysis.cs'),(Join-Path $root 'HeadCamera/tests/PluginMocks.cs'),(Join-Path $root 'HeadCamera/tests/ConfigUpgradeTests.cs'))
+RunSuite 'ConfigUpgradeTests' @((Join-Path $root 'HeadCamera/src/Plugin.cs'),(Join-Path $root 'HeadCamera/src/ViewPolicy.cs'),(Join-Path $root 'HeadCamera/src/CaptureAnalysis.cs'),(Join-Path $root 'HeadCamera/src/Control/HeadCameraControlModels.cs'),(Join-Path $root 'HeadCamera/src/Control/HeadCameraControlFileStore.cs'),(Join-Path $root 'HeadCamera/src/Control/HeadCameraControlState.cs'),(Join-Path $root 'HeadCamera/tests/PluginMocks.cs'),(Join-Path $root 'HeadCamera/tests/ConfigUpgradeTests.cs'))
 RunSuite 'ControlFeedbackTests' @((Join-Path $root 'HeadCamera/src/ViewPolicy.cs'),(Join-Path $root 'HeadCamera/src/ControlFeedback.cs'),(Join-Path $root 'HeadCamera/tests/ControlFeedbackTests.cs'))
 $runtimeSources=@('ControlRuntime.cs','ControlHooks.cs','ControlSafety.cs','ManualMotionPolicy.cs','NativeFlashlight.cs','NativeFlashlightCompatibility.cs','NativeLightSettings.cs','BotFlashlights.cs','NativeControlView.cs') | ForEach-Object {Join-Path $microRoot ('MicroMaster\src\'+$_)}
 RunSuite 'RuntimeSafetyTests' @($runtimeSources+(Join-Path $root 'HeadCamera/src/NativeBotLamp.cs')+(Join-Path $root 'Captain\src\BotControlApi.cs')+(Join-Path $root 'MicroMaster/tests/RuntimeMocks.cs')+(Join-Path $root 'MicroMaster/tests/RuntimeSafetyTests.cs'))
@@ -68,9 +68,15 @@ RunSuite 'KillContinuationTests' $continuationSources
 RunSuite 'RescueTests' @((Join-Path $root 'Captain.Commands\src\RescuePolicy.cs'),(Join-Path $root 'Captain.Commands\tests\RescueTests.cs'))
 $rescueSources=@('RescueOrders.cs','RescuePolicy.cs','TaskBoard.cs') | ForEach-Object {Join-Path $root ('Captain.Commands\src\'+$_)}
 RunSuite 'RescueAdapterTests' @($rescueSources+(Join-Path $root 'Captain.Commands\tests\RescueAdapterMocks.cs')+(Join-Path $root 'Captain.Commands\tests\RescueAdapterTests.cs'))
+RunSuite 'BoosterPolicyTests' @((Join-Path $root 'Captain.Boosters/src/BoosterSelection.cs'),(Join-Path $root 'Captain.Boosters/tests/BoosterPolicyTests.cs'))
+RunSuite 'PerfectBoosterPolicyTests' @((Join-Path $root 'Captain.Boosters/src/BoosterSelection.cs'),(Join-Path $root 'Captain.Boosters/src/PerfectBoosterPolicy.cs'),(Join-Path $root 'Captain.Boosters/tests/PerfectBoosterPolicyTests.cs'))
+$boosterSources=@('BoosterSelection.cs','BotBoosterAdapter.cs','BoosterViewPolicy.cs','BotBoosterView.cs','NativeBoosterState.cs')|ForEach-Object {Join-Path $root ('Captain.Boosters/src/'+$_)}
+RunSuite 'BoosterAdapterTests' @($boosterSources+(Join-Path $root 'Captain.Boosters/tests/BoosterAdapterMocks.cs')+(Join-Path $root 'Captain.Boosters/tests/BoosterAdapterTests.cs')) @((Join-Path $bin 'BoosterAdapterConfig'))
 $buildRecord=Join-Path $repo 'out/build-manifest.json'
 if(Test-Path -LiteralPath $buildRecord){
     $built=Get-Content -LiteralPath $buildRecord -Raw | ConvertFrom-Json
+    & (Join-Path $root 'IntegrationTests/Boosters/Test-OrdinaryPerfect.ps1') -GameRoot $built.GameRoot -RuntimeRoot $RuntimeRoot -BuildToolsRoot $BuildToolsRoot
+    & (Join-Path $root 'IntegrationTests/Boosters/Verify-InstalledContracts.ps1') -GameRoot $built.GameRoot -RepositoryRoot $repo | Tee-Object -FilePath (Join-Path $bin 'BoosterInstalledContracts.log')
     & (Join-Path $root 'IntegrationTests/Loader/Verify-Dependencies.ps1') -RepositoryRoot $repo -GameRoot $built.GameRoot |
         Tee-Object -FilePath (Join-Path $bin 'PluginDependencyTests.log')
 }else{Write-Output 'SKIP: actual BepInEx dependency checks require Build.ps1 first; source/mock tests above are independent.'}

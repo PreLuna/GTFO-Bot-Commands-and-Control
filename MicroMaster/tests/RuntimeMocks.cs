@@ -130,7 +130,12 @@ namespace Enemies {
 namespace Player {
     public class PlayerAgent:Agents.Agent { public GameData.PlayerDataBlock PlayerData=new(); public Transform transform=new();
         public SNetwork.Owner Owner=new();
-        public int PlayerSlotIndex;
+        int playerSlotIndex;
+        public int SlotReads,NativeDestroys,NativeDespawns;
+        public bool ThrowSlotRead;
+        public int PlayerSlotIndex {get {SlotReads++;if(Owner==null||ThrowSlotRead)throw new NullReferenceException("PlayerSlotIndex requires a live owner");return playerSlotIndex;}set {playerSlotIndex=value;}}
+        public void OnDestroy(){NativeSwitchHooks.Call("PlayerDeparting",this);NativeDestroys++;}
+        public void OnDespawn(){NativeSwitchHooks.Call("PlayerDeparting",this);NativeDespawns++;}
         public bool IsBeingDestroyed,IsBeingDespawned;
         public Dam_PlayerDamageLocal Damage;
         public PlayerLocomotion Locomotion=new();
@@ -184,7 +189,8 @@ namespace Player {
     public class RootPlayerBotAction:PlayerBotActionBase { public PlayerAIBot m_bot; }
     public class PlayerManager {
         public static PlayerManager Current=new();public PlayerAgent[] Slots=new PlayerAgent[4];
-        public static PlayerAgent GetLocalPlayerAgent()=>Current?.Slots[0];
+        public static bool ThrowLocalLookup;
+        public static PlayerAgent GetLocalPlayerAgent()=>ThrowLocalLookup?throw new InvalidOperationException("local lookup unavailable during teardown"):Current?.Slots[0];
         public PlayerAgent GetPlayerAgentInSlot(int slot)=>Slots[slot];
     }
 }

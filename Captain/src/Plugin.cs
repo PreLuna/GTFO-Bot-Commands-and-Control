@@ -9,6 +9,8 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using GameData;
 using HarmonyLib;
+using System.Globalization;
+using PreLuna.Captain.Control;
 
 [assembly: AssemblyVersion("0.5.1.0")]
 [assembly: AssemblyFileVersion("0.5.4.0")]
@@ -26,10 +28,13 @@ namespace PreLuna.Captain
     {
         public const string Guid = "PreLuna.Captain";
         internal static TranslationCatalog Catalog;
+        internal static Plugin Instance;
         internal static ConfigEntry<bool> ChineseMenus, ChineseItems;
         internal static ManualLogSource Logger;
         // Keep the established config file and saved selections across the split.
         internal static ConfigFile SharedConfig;
+        internal CaptainControlState ControlState;
+        readonly object controlGate = new object();
         private Harmony harmony;
         private static bool warned;
         private sealed class RefreshStamp { }
@@ -38,6 +43,7 @@ namespace PreLuna.Captain
 
         public override void Load()
         {
+            Instance = this;
             Logger = Log;
             KnownTypes.Warning = message => Log.LogWarning(message);
             SharedConfig = Config;
@@ -65,6 +71,49 @@ namespace PreLuna.Captain
             }
             Config.Save();
             Log.LogInfo("你是队长 0.5.4 公共核心已加载：中文显示、共享配置、接管公开协议v1；兼容接口使用定向类型缓存。");
+        }
+
+        public override bool Unload()
+        {
+            ControlState = null;
+            Instance = null;
+            return true;
+        }
+
+        internal CaptainControlState EnsureControlState()
+        {
+            lock (controlGate)
+            {
+                if (ControlState == null)
+                {
+                    ControlState = new CaptainControlState(Config.ConfigFilePath, ReadControl, WriteControl, SerializeControl);
+                    Config.SaveOnConfigSet = false;
+                }
+                return ControlState;
+            }
+        }
+
+        internal static CaptainControlValue ReadControl(string key)
+        {
+            switch (key)
+            {
+                case "chineseMenus": return CaptainControlValue.Boolean(ChineseMenus.Value);
+                case "chineseItems": return CaptainControlValue.Boolean(ChineseItems.Value);
+                default: return null;
+            }
+        }
+
+        internal static void WriteControl(string key, CaptainControlValue value)
+        {
+            if (value == null || !value.TryGetBoolean(out var enabled)) return;
+            if (key == "chineseMenus") ChineseMenus.Value = enabled;
+            else if (key == "chineseItems") ChineseItems.Value = enabled;
+        }
+
+        internal static string SerializeControl(string key)
+        {
+            var value = ReadControl(key);
+            return value != null && value.TryGetBoolean(out var boolean) ? (boolean ? "true" : "false") : null;
         }
 
         private void Patch(MethodInfo target, string prefix, string postfix = null)

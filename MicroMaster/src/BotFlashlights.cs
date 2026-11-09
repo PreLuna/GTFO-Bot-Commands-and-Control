@@ -94,7 +94,17 @@ namespace PreLuna.MicroMaster
         internal string Status(PlayerAgent agent) => Find(agent)?.Status ?? "原生手电：AI自动／等待关卡与房主就绪";
         internal void Remove(PlayerAgent agent)
         {
-            if (agent != null && lamps.TryGetValue(agent.PlayerSlotIndex, out var lamp) && lamp.Identity == (agent.Pointer.ToInt64(), agent.GetInstanceID())) { EndLamp(lamp, false); lamps.Remove(agent.PlayerSlotIndex); }
+            if (agent == null || lamps.Count == 0) return;
+            // Owner (and thus PlayerSlotIndex) may already be gone in OnDestroy.
+            // Match the saved native identity; an old instance cannot retire its replacement.
+            int slot = -1; NativeFlashlight removed = null;
+            foreach (var entry in lamps) {
+                if (entry.Value.Identity.Agent != agent.Pointer.ToInt64() || entry.Value.Identity.Instance != agent.GetInstanceID()) continue;
+                slot = entry.Key; removed = entry.Value; break;
+            }
+            if (removed == null) return;
+            lamps.Remove(slot); // Forget the dying entry even if local restoration fails.
+            EndLamp(removed, false);
         }
         void EndLamp(NativeFlashlight lamp, bool restoreSwitch)
         {

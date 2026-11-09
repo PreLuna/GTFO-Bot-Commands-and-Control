@@ -38,6 +38,7 @@ static class RuntimeSafetyTests
     }
     static PlayerAgent Agent(int slot,bool robot){var a=new PlayerAgent{PlayerSlotIndex=slot,Owner=new(){IsBot=robot}};a.Damage=new(){Owner=a};a.Sync.Agent=a;if(robot){a.Bot=new(){Agent=a};a.Bot.Inventory.Owner=a;}return a;}
     static void Reset(bool begin=true,bool snapshot=true){
+        PlayerManager.ThrowLocalLookup=false;
         Player.FlashlightInventory.AssetsAvailable=true;Player.FlashlightInventory.MissingAssetAttempts=0;
         HeadCameraApi.ThrowClear=false;NativeManualWalk.ThrowStop=false;service.ThrowRelease=false;runtime?.Shutdown();
         CullingSystem.C_CullingManager.VisibleSpotLights.Clear();Time.unscaledTime=0;Time.frameCount=0;InputMapper.FlashlightDown=false;NativeManualWalk.Blocked=false;NativeManualWalk.Stops=NativeManualWalk.Clears=0;NativeManualWalk.Own=null;Input.Held.Clear();Input.Down.Clear();Application.isFocused=true;FocusStateManager.CurrentState=eFocusState.FPS;
@@ -252,7 +253,56 @@ static class RuntimeSafetyTests
         Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);runtime.Shutdown();
         Check(!bot.Bot.Inventory.FlashlightEnabled,"卸载即使没有接管也归还灯");
     }
-    static int Main(){try{Cases();Console.WriteLine("PASS: "+checks+" 生产ControlRuntime／放宽接管／生命周期回调与异常清理检查（Unity场景与服务替身）");return 0;}catch(Exception e){Console.Error.WriteLine(e);return 1;}}
+    static int Main(){try{Cases();DestroyCases();Console.WriteLine("PASS: "+checks+" 生产ControlRuntime／放宽接管／生命周期回调与异常清理检查（Unity场景与服务替身）");return 0;}catch(Exception e){Console.Error.WriteLine(e);return 1;}}
+    static void DestroyCases(){
+        Check(BotControlApi.Register(service),"销毁回归服务注册");
+        Reset(false);SNetwork.SNet.IsMaster=false;PlayerManager.Current.Slots[0]=null;
+        body.Owner=null;int reads=body.SlotReads;body.OnDestroy();
+        Check(body.NativeDestroys==1&&body.SlotReads==reads,"客户端真人Owner已清空且本体已离槽，原版销毁仍执行，不读取PlayerSlotIndex");
+        var untracked=Agent(2,true);untracked.Owner=null;untracked.OnDespawn();untracked.OnDestroy();
+        Check(untracked.NativeDespawns==1&&untracked.NativeDestroys==1&&untracked.SlotReads==0,"无灯登记的离队对象不依赖槽位／Owner");
+
+        Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);
+        var inv=bot.Bot.Inventory;int requests=bot.Sync.Requests,receives=inv.Receives,setups=inv.HelmetSetups;
+        reads=bot.SlotReads;bot.Owner=null;bot.ThrowSlotRead=true;Player.FlashlightInventory.AssetsAvailable=false;
+        bot.OnDespawn();bot.OnDestroy();bot.OnDestroy();
+        Check(bot.NativeDespawns==1&&bot.NativeDestroys==2&&bot.SlotReads==reads,"已登记机器人失去Owner后按缓存身份移除，Despawn／Destroy重复回调均继续原版");
+        Check(!runtime.NativeLightControls(bot)&&!NativeLightLifetime.Allows(bot),"已退役身份保留晚到初始化保护");
+        inv.PrepareHelmetFlashlight();
+        Check(bot.Sync.Requests==requests&&inv.Receives==receives&&inv.HelmetSetups==setups&&Player.FlashlightInventory.MissingAssetAttempts==0,"销毁不恢复原生开关、不广播或加载已卸载资源");
+
+        Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);
+        var old=bot;var replacement=Agent(1,true);replacement.Pointer=old.Pointer;PlayerManager.Current.Slots[1]=replacement;Tick(.2f);
+        old.Owner=null;reads=old.SlotReads;old.OnDestroy();
+        Check(old.NativeDestroys==1&&old.SlotReads==reads,"旧对象地址复用后仍不读取旧槽位");
+        Check(runtime.NativeLightControls(replacement)&&NativeLightLifetime.Allows(replacement),"旧对象销毁不能移除同地址不同实例的新机器人灯管理");
+
+        Reset();inv=bot.Bot.Inventory;requests=bot.Sync.Requests;receives=inv.Receives;reads=bot.SlotReads;bot.Owner=null;bot.OnDestroy();
+        Check(bot.NativeDestroys==1&&bot.SlotReads==reads,"正在接管的机器人Owner清空后原版销毁仍继续");
+        Exited("接管机器人Owner失效销毁",false);
+        Check(bot.Sync.Requests==requests&&inv.Receives==receives,"接管对象销毁不发送灯光恢复");
+
+        Reset();inv=bot.Bot.Inventory;requests=bot.Sync.Requests;receives=inv.Receives;
+        PlayerManager.Current.Slots[0]=null;body.Owner=null;reads=body.SlotReads;body.OnDespawn();body.OnDestroy();
+        Check(body.NativeDespawns==1&&body.NativeDestroys==1&&body.SlotReads==reads,"接管中的本体已离槽时用保存的身份归还控制并继续原版");
+        Exited("接管本体Owner失效销毁",false);
+        Check(bot.Sync.Requests==requests&&inv.Receives==receives,"本体销毁先丢弃全部托管灯，不按普通T退出恢复开关");
+
+        Reset();inv=bot.Bot.Inventory;PlayerManager.ThrowLocalLookup=true;bot.OnDestroy();PlayerManager.ThrowLocalLookup=false;
+        Check(bot.NativeDestroys==1,"注入销毁期间本体查询异常，MOD前缀不阻断原版销毁");
+        Exited("销毁收尾异常仍归还控制",false);
+        Check(Plugin.Instance.Log.Messages.Exists(s=>s.Contains("继续原版销毁")),"收尾异常有明确日志，不静默吞掉");
+
+        for(int cycle=0;cycle<3;cycle++){
+            Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);
+            var ended=bot;ended.Owner=null;ended.OnDespawn();ended.OnDestroy();runtime.StateChanging(eGameStateName.Lobby);runtime.LevelCleanup();
+            Check(ended.NativeDespawns==1&&ended.NativeDestroys==1,"同进程重复关卡轮次"+cycle+"保留原版角色清理");
+            PlayerManager.Current.Slots[1]=bot=Agent(1,true);runtime.StateChanging(eGameStateName.InLevel);Tick(.2f);
+            Check(runtime.NativeLightControls(bot),"同进程重复关卡轮次"+cycle+"新对象可重新建立灯管理");
+        }
+        runtime.Shutdown();
+        BotControlApi.Unregister(service);
+    }
     static object Hook(string name,params object[] args)=>typeof(ControlHooks).GetMethod(name,System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static).Invoke(null,args);
     static void NativeSwitchWrites(){
         Reset(false);Plugin.LightMode.Value=BotFlashlightMode.AllBots;Tick(.1f);

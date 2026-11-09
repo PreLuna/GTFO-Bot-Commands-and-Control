@@ -6,16 +6,18 @@ using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
+using System.Globalization;
+using PreLuna.HeadCamera.Control;
 
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("0.3.15.0")]
+[assembly: AssemblyFileVersion("0.3.16.0")]
 namespace PreLuna.HeadCamera
 {
     [BepInPlugin(Guid, "头戴摄像头", Version)]
     [BepInDependency("PreLuna.FlashlightCustom", BepInDependency.DependencyFlags.SoftDependency)]
     public sealed class Plugin : BasePlugin
     {
-        public const string Guid = "PreLuna.HeadCamera", Version = "0.3.15";
+        public const string Guid = "PreLuna.HeadCamera", Version = "0.3.16";
         internal static Plugin Instance;
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<KeyCode> ToggleKey, NextKey, PreviousKey;
@@ -26,6 +28,7 @@ namespace PreLuna.HeadCamera
         internal static ConfigEntry<bool> CaptureSamples, BufferFix, ProjectionFix;
         internal static ConfigEntry<FeedOutput> OutputMode;
         private CameraRuntime runtime;
+        internal HeadCameraControlState CameraControl;
         private Harmony harmony;
         public override void Load()
         {
@@ -65,6 +68,7 @@ namespace PreLuna.HeadCamera
             LoadStep("界面焦点补丁", () => harmony.Patch(AccessTools.Method(typeof(FocusStateManager), "ChangeState", new[] { typeof(eFocusState), typeof(bool) }), postfix: new HarmonyMethod(typeof(Plugin), nameof(FocusChanged))));
             LoadStep("创建摄像头运行器", () => runtime = AddComponent<CameraRuntime>());
             LoadStep("保存配置", Config.Save);
+            LoadStep("创建控制API", () => { CameraControl = new HeadCameraControlState(Config.ConfigFilePath, ReadControl, WriteControl, SerializeControl); Config.SaveOnConfigSet = false; });
             Log.LogInfo("头戴摄像头 " + Version + " 已加载：" + KeyLabel(ToggleKey.Value) + " 开关，" + SwitchHint + "；渲染宽度=" + Width.Value + " 目标帧率=" + FramesPerSecond.Value + "；进入终端关闭。");
         }
         internal static void LoadStep(string name, Action action)
@@ -94,6 +98,45 @@ namespace PreLuna.HeadCamera
             if (changes > 0) Log.LogInfo("[头戴摄像头] 已一次性升级 " + changes + " 项旧默认配置；其他自定义值保留。");
         }
         internal static string KeyLabel(KeyCode key) => key.ToString(); // ASCII key names also work with the native Latin-only HUD font.
+
+        internal static HeadCameraControlValue ReadControl(string key)
+        {
+            switch (key)
+            {
+                case "enabled": return HeadCameraControlValue.Boolean(Enabled.Value);
+                case "width": return HeadCameraControlValue.Number(Width.Value);
+                case "fps": return HeadCameraControlValue.Number(FramesPerSecond.Value);
+                case "fov": return HeadCameraControlValue.Number(FieldOfView.Value);
+                case "viewDistance": return HeadCameraControlValue.Number(ViewDistance.Value);
+                case "windowWidth": return HeadCameraControlValue.Number(WindowWidth.Value);
+                default: return null;
+            }
+        }
+
+        internal static void WriteControl(string key, HeadCameraControlValue value)
+        {
+            if (value == null) return;
+            if (key == "enabled") { if (value.TryGetBoolean(out var enabled)) Enabled.Value = enabled; return; }
+            if (!value.TryGetNumber(out var number)) return;
+            switch (key)
+            {
+                case "width": Width.Value = (int)number; break;
+                case "fps": FramesPerSecond.Value = (int)number; break;
+                case "fov": FieldOfView.Value = (float)number; break;
+                case "viewDistance": ViewDistance.Value = (float)number; break;
+                case "windowWidth": WindowWidth.Value = (int)number; break;
+            }
+        }
+
+        internal static string SerializeControl(string key)
+        {
+            var value = ReadControl(key);
+            if (value == null) return null;
+            if (value.TryGetBoolean(out var boolean)) return boolean ? "true" : "false";
+            if (value.TryGetInteger(out var integer)) return integer.ToString(CultureInfo.InvariantCulture);
+            if (value.TryGetNumber(out var number)) return number.ToString("0.###", CultureInfo.InvariantCulture);
+            return null;
+        }
         internal static string SwitchHint => KeyLabel(PreviousKey.Value) + " / " + KeyLabel(NextKey.Value) + " 切换";
         static void FocusChanged()
         {
@@ -114,6 +157,7 @@ namespace PreLuna.HeadCamera
             if (runtime != null) UnityEngine.Object.Destroy(runtime);
             harmony?.UnpatchSelf();
             Instance = null;
+            CameraControl = null;
             return true;
         }
     }

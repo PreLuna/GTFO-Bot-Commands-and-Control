@@ -2,7 +2,18 @@
 
 机器人与指令。本仓包含以下MOD／共享组件，各自维护文件放在自己的目录。
 
-[定位入口](#modules) · [依赖与联动](#relations) · [开发与排查](#development) · [来源说明](#sources)
+[当前验收](#current) · [定位入口](#modules) · [依赖与联动](#relations) · [开发与排查](#development) · [来源说明](#sources)
+
+<a id="current"></a>
+## 当前验收与安装
+
+当前关联组合为**MicroMaster0.5.18／HeadCamera0.3.16／ThirdPerson0.6.2**。2026-11-01用户在销毁修复后反馈“测试完全通过”；2026-11-05第三人称身体比例修复后，用户确认第一／第三人称均正常。2026-11-09 两模块新增 ModControl 少量可写 API（HeadCamera 6 字段、MicroMaster 6 字段）；HeadCamera 仅影响装 MOD 的本机玩家，MicroMaster 的 bot 相关效果仅装 MOD 的主机玩家实际生效。本仓未提交／推送／发布。
+
+2026-11-09 **HeadCamera0.3.16／MicroMaster0.5.18 少量可写控制API**：分别新增 `HeadCameraControlApi`/`MicroMasterControlApi`、ControlState/ControlFileStore。HeadCamera 暴露启用/渲染宽度/刷新帧率/视野/最大绘制距离/小窗宽度；MicroMaster 暴露启用/双击间隔/步行速度档位/鼠标灵敏度/反转纵轴/原生手电常亮。写入只更新受管 CFG 行，保留注释/未知键；启动保存配置后关闭 `Config.SaveOnConfigSet`，避免整文件重写。两模块真实写入探针通过（Head fov 80→90→80、Micro walkHaste 0.25→0.3→0.25，outcome 0，CFG 哈希复原）；页面与热键/主机行为已由用户实机确认正常。
+
+2026-11-09 **Captain0.5.4 中文显示控制API（保持版本号以兼容精确依赖）**：Captain 新增 `CaptainControlApi`/ControlState/FileStore，开放 `中文显示/通讯菜单`、`中文显示/携带物品` 两个布尔字段；只写本地 CFG，页面标注重启后生效。控制状态改为首次面板调用时抓取文件哈希，避开 Commands/Boosters/Fixes 加载期共享 `Config.Save()` 造成的假冲突；真实探针 chineseItems true→false→true，两次 outcome 0，CFG 哈希复原。页面已安装，待用户确认重启生效与页面。
+
+已安装组合无需再替换文件或重置CFG。后续日常增量更新只复制当次清单明确列出的文件，保持`BepInEx/plugins/本地定制/PreLuna.<模块>/`既有布局；整仓构建产生的其他MOD不自动安装。新玩家按Releases实际版本说明安装；本地验收与正式发布是两件事，提交／推送／发布仍按当次授权。
 
 <a id="modules"></a>
 ## 定位入口
@@ -12,10 +23,10 @@
 | AI／机器人协同 `CoopBotsCustom` | 1.0.12 | [CoopBotsCustom/baseline](CoopBotsCustom/baseline) | 冻结DLL＋身份迁移 | 由仓级入口／配方核对 |
 | 队长公共核心与中文显示 `Captain` | 0.5.4 | [Captain/src](Captain/src) | 源码＋身份迁移 | [Captain/tests](Captain/tests) |
 | 队长指令与任务仲裁 `Captain.Commands` | 0.5.43 | [Captain.Commands/src](Captain.Commands/src) | 源码＋身份迁移 | [Captain.Commands/tests](Captain.Commands/tests) |
-| 人机强化剂 `Captain.Boosters` | 0.5.2 | [Captain.Boosters/src](Captain.Boosters/src) | 源码＋身份迁移 | [Captain.Boosters/tests](Captain.Boosters/tests) |
+| 人机强化剂 `Captain.Boosters` | 0.5.3 | [Captain.Boosters/src](Captain.Boosters/src) | 源码＋身份迁移 | [Captain.Boosters/tests](Captain.Boosters/tests) |
 | 队长兼容修复 `Captain.Fixes` | 0.5.1 | [Captain.Fixes/src](Captain.Fixes/src) | 源码＋身份迁移 | [Captain.Fixes/tests](Captain.Fixes/tests) |
-| 头戴摄像头 `HeadCamera` | 0.3.15 | [HeadCamera/src](HeadCamera/src) | 源码＋身份迁移 | [HeadCamera/tests](HeadCamera/tests) |
-| 微操大师／直接接管 `MicroMaster` | 0.5.16 | [MicroMaster/src](MicroMaster/src) | 源码＋身份迁移 | [MicroMaster/tests](MicroMaster/tests) |
+| 头戴摄像头 `HeadCamera` | 0.3.16（6字段可写；已实机确认） | [HeadCamera/src](HeadCamera/src) | 源码＋身份迁移 | [HeadCamera/tests](HeadCamera/tests) |
+| 微操大师／直接接管 `MicroMaster` | 0.5.18（6字段可写；bot效果仅主机） | [MicroMaster/src](MicroMaster/src) | 源码＋身份迁移 | [MicroMaster/tests](MicroMaster/tests) |
 
 具体路径、版本、GUID、资源和依赖的机器登记见[repo.json](repo.json)。src是实现，tests是测试；IntegrationTests用于跨MOD场景或调度配方，Shared仅保存真正共享的接口。
 
@@ -65,51 +76,32 @@ Captain提供队长公共接口；Commands、Boosters、Fixes扩展指令、强�
 ./Test.ps1 -RuntimeRoot 'C:/Program Files/dotnet/shared/Microsoft.NETCore.App/6.0.16'
 ```
 
-根Test.ps1调度34组源码／替身回归；存在本仓构建清单时，额外调用[实际加载依赖检查](IntegrationTests/Loader/Verify-Dependencies.ps1)，用本机 BepInEx.BepInDependency 与 VersionRange.IsSatisfied 核对生成 DLL 的硬依赖，复现旧版精确版本拒绝并检查兼容范围边界。没有构建清单时会明确跳过这一项；版本范围检查不执行插件 Load、原生补丁或真实游戏。Captain翻译／类型、部分Commands、Boosters与Fixes仍有未接入该入口的测试；文件存在不代表已运行。
+根Test.ps1调度37组源码／替身回归，包含强化剂策略、普通完美模板策略和人机装配适配器；存在本仓构建清单时，另执行4个真实Harmony进程场景、18项本机BoosterTweaker／interop／输出契约核验，以及[实际加载依赖检查](IntegrationTests/Loader/Verify-Dependencies.ps1)。后者用本机 BepInEx.BepInDependency 与 VersionRange.IsSatisfied 核对生成 DLL 的硬依赖，复现旧版精确版本拒绝并检查兼容范围边界。没有构建清单时会明确跳过需游戏路径的检查；这些离线检查不运行真实游戏。Captain翻译／类型、部分Commands与Fixes仍有未接入该入口的测试；文件存在不代表已运行。
 
-### 头戴摄像头与接管调整验收（HeadCamera 0.3.15／MicroMaster 0.5.16）
+<a id="boosters"></a>
+### 普通完美强化剂与人机装配（0.5.3）
 
-最终组合为HeadCamera **0.3.15**／MicroMaster **0.5.16**。2026-10-26用户复测反馈“几乎没有卡顿”；此前穿模已反馈基本解决。本次调整包括原生第一人称眼点／视野与自身遮挡、应用退出／离关灯光收尾、遗留同步采样卡顿三部分，下面分别记录实现和验证边界。
+Captain.Boosters默认启用`PreLuna.Captain.cfg`的`[完美强化剂] 简化普通模式=true`。保留BoosterTweaker普通完美、不消耗与人机三槽，关闭自定义数值和自定义模板库存。无新增运行依赖，增量仅替换Captain.Boosters DLL；需保留现有BoosterTweaker及其框架，勿删除整个BoosterTweaker DLL。初次升级完整重启游戏，在大厅重新为人机选择三槽；旧条件／效果指纹不猜测迁移。`简化普通模式=false`恢复上游模式选择，修改后重启，不在局内切换规则。
 
-本次安装两DLL已核对与保留交付SHA256一致，HeadCamera内部配置版本为2、保存画面样本=false。最新日志无自动采样输出、头盔灯KeyNotFound或native→managed trampoline错误；两次相机CPU准备16.69／5.32毫秒，首次观察提交41.83毫秒，接管提交12.58／6.37毫秒，恢复观察6.41／7.01毫秒，释放9.78／1.36毫秒。它们是当前场景的阶段CPU墙钟样本，不是纯GPU帧时、全程性能或所有地图验收。装备切换、任意MOD组合等未独立确认项继续保留。
+此前条件补丁仅拦CheckCondition，而当前原生Update／IsImplantActive直接内联查条件字典；原补丁还把上游清空的条件写回。0.5.3移除该方案，在实际库存准备／原版数据转换前匹配运行时模板的完整效果与条件组，再移除负面／中性项、清空条件，正面取该组上限；真人显示与人机目录使用同一有效库存，不取不同历史模板的全局最高值。保留库存ID、次数、Prepared与账号事务原流程，不新增库存条目。原始效果／条件仅在内存快照中用于重复刷新及模板重载匹配，不写回正在参与游戏判定的有效数组。未知模板会记录原因并拒绝准备／有效同步，不静默把原数值当修复成功。
 
-定位卡顿时的旧日志加载HeadCamera0.3.14／MicroMaster0.5.16；功能已基本正常，但创建副相机、接管、退出接管和退出游戏附近出现约1～3秒停顿。
+`[完美强化剂] 沿用快速刷取=true`启用BoosterTweaker已有EnableBoosterFarmer：结算奖励点数设为100000，由原有奖励流程随机补充；这不是逐种枚举补齐全部种类的机制。原有两种自定义模式开启时会把奖励点数归零，本模式关闭它们。是否实际发放、库存容量限制、每局具体获得种类及真人／人机实际效果仍需游戏验收，离线通过不能代替。
 
-当时CFG为[诊断]保存画面样本=true、记录渲染耗时=false。日志记录进入／退出接管后的4次采样，每组1280×720的EXR、4张PNG和说明约17 MB。按样本目录起始时间和capture.txt中的UTC计算，主线程同步采样约1443.56、1189.26、1160.38、1139.44毫秒，包含GPU读回、CPU图像处理／编码和存盘。前两次几乎连续，可解释接管附近的秒级停顿；这些是采样路径的实际墙钟耗时，不能当作纯GPU耗时或整个游戏退出时间。
+简化模式就绪日志以`[普通完美强化剂] provider=True featureActive=True templates=... custom=False customPerfect=False perfect=True noConsume=True noConditions=True noNegative=True farmer=True`为准；设置尚未初始化会延后，不在插件Load中创建库存对象。普通完美Feature需保持开启；卸载或关闭该Feature后不宣称清理成功。BoosterTweaker未安装时人机模块仍可从原版库存装配，不凭空制造完美效果。设置重载受简化规则约束，日志读取实际运行设置，不仅依赖磁盘JSON。
 
-0.3.15首次加载把内部配置版本升到2，并仅一次性关闭遗留保存画面样本；已有版本1的自定义分辨率、帧率、小窗宽度、FOV与按键保持，深度／投影修复开关不变。迁移完成后主动重新启用诊断仍有效；同步采样继续保留给画面排查，正常游玩保持关闭。本轮只替换HeadCamera DLL，MicroMaster继续使用已安装0.5.16，CFG不随交付分发，也不由维护脚本写游戏目录。
+实现入口：[BoosterConditionCompat](Captain.Boosters/src/BoosterConditionCompat.cs)、[PerfectBoosterPolicy](Captain.Boosters/src/PerfectBoosterPolicy.cs)、[BotBoosterAdapter](Captain.Boosters/src/BotBoosterAdapter.cs)。[真实Harmony场景](IntegrationTests/Boosters/Test-OrdinaryPerfect.ps1)覆盖先／后加载、关闭简化、无可选模块；夹具的Update直接按有效条件数组判断，不调用CheckCondition。它验证修复不再依赖那个错误入口，仍不执行原生GTFO代码。安装契约检查见[Verify-InstalledContracts](IntegrationTests/Boosters/Verify-InstalledContracts.ps1)。
 
-状态栏改用ASCII LeftArrow／RightArrow按键名，避免当前原生字体缺少←／→导致的重复警告。相机独立渲染器创建、观察／接管状态首次提交、资源释放和主动采样的既有阶段日志新增CPU耗时，只在阶段发生时记录；没有新增逐帧GPU读回或默认逐帧日志。
+### 角色销毁与重进关卡
 
-独立副渲染器仍在首次开窗时创建，关闭／离关时按原有安全作用域释放。退出游戏还包含原版和TheArchive存盘，旧日志没有这些阶段的耗时，不能认定全部卡顿都来自相机，也不能把DestroyImmediate改成异步销毁而丢掉先前的雾／全局状态恢复。新版消除已经证实的遗留自动采样触发，用户本轮复测已反馈几乎无卡顿；阶段计时保留用于后续定位，不扩展为全场景性能保证。
+MicroMaster0.5.17已修复离关时Owner失效后仍读取PlayerSlotIndex的异常。灯管理改按已保存的原生地址＋Unity实例ID匹配，先删除登记再收尾；旧对象不能误删同地址新实例。接管本体已离槽仍用已保存身份处理退出，灯收尾失败也在finally归还控制；PlayerDeparting前缀隔离自身异常后继续原版OnDespawn／OnDestroy，不全局删除或隐藏游戏模型。用户随后反馈测试完全通过，旧候选“待复测”不再作为当前状态。
 
-测试入口新增[实际Plugin.Load配置迁移回归](HeadCamera/tests/ConfigUpgradeTests.cs)，覆盖v0/v1/v2／未来版本、关闭采样、主动重开和用户画面参数保留。入口仍为[Plugin.UpgradeDefaults](HeadCamera/src/Plugin.cs)、[诊断导出](HeadCamera/src/CaptureDiagnostics.cs)、[NativeCapture](HeadCamera/src/NativeCapture.cs)和[CameraRuntime](HeadCamera/src/CameraRuntime.cs)。字体、物体负缩放／导航、EnemyAnimationFix等其他日志分别归属，不把加载阶段警告认作接管瞬时卡顿的证据。
+源码入口：[BotFlashlights](MicroMaster/src/BotFlashlights.cs)、[ControlRuntime](MicroMaster/src/ControlRuntime.cs)、[ControlHooks](MicroMaster/src/ControlHooks.cs)。前轮实际执行机器人7组件构建、34组回归，其中RuntimeSafetyTests338项、BepInEx依赖范围34项；关联第三人称3组件／28组、两种旧行为反例及现装4个硬前置核对分别有记录。本次文档整理不重跑这些检查。
 
-### 应用退出／离关时的灯光收尾（0.5.16，本轮退出异常未复现）
+### 头戴摄像头的当前显示与采样
 
-当前MicroMaster 0.5.16只修灯光生命周期；HeadCamera继续使用已实测基本通过、穿模基本解决的0.3.14。本轮仅替换MicroMaster DLL，无新增依赖／资源，不重置个人CFG或修改第一人称镜头。
+HeadCamera0.3.15沿用原生站立／蹲伏眼点、正常第一人称FOV和宽高比，取消接管视点额外前移；近裁剪面受阻时暂停该帧，移开重试。拍摄期间隐藏自身上部网格、对齐现有灯并在finally恢复，不复制完整FPS控制器。角色眼点入口为[NativeControlView](MicroMaster/src/NativeControlView.cs)与[FirstPersonCapture](HeadCamera/src/FirstPersonCapture.cs)，模型／灯作用域见[FirstPersonRenderScope](HeadCamera/src/FirstPersonRenderScope.cs)。
 
-先在Globals.Global.OnApplicationQuit原生入口的前缀撤销灯托管，运行器OnApplicationQuit为幂等兜底。离开InLevel、关卡清理、本体或机器人销毁时，在普通接管Exit之前登记对应受管身份并以End(restoreSwitch:false)结束灯服务；不调用Sync／Receive恢复原开关，避免资源卸载期间进入PrepareHelmetFlashlight。只归还已有本地RF显隐并清理管理状态，不新建灯、补光或写GPU参数。
-
-已退出的受管身份按原生地址和Unity实例ID登记到独立于运行器生命周期的守卫，阻止迟到的Sync／Receive／Set及头盔灯／装备灯初始化；运行器先被销毁也有效。真人与未受管身份保留原逻辑，同地址不同实例不继承旧守卫。新关卡InLevel或有效房主／楼层重新建立后重置旧身份；应用退出本身不可被迟到InLevel或Enable撤销。
-
-正常游戏内T／Q退出仍按AllBots／ControlledOnly策略处理；配置关闭、AI模式、组件停用或插件正常卸载，在同一有效世界中保留原开关归还。失去房主／楼层或对象身份无效时不再回退到本地Receive初始化。既有接管输入、驻守交接、原生常亮写入保护和摄像头渲染恢复保持。
-
-入口：[灯服务与身份守卫](MicroMaster/src/BotFlashlights.cs)、[灯结束路径](MicroMaster/src/NativeFlashlight.cs)、[运行器生命周期](MicroMaster/src/ControlRuntime.cs)、[原生边界补丁](MicroMaster/src/ControlHooks.cs)。RuntimeSafetyTests模拟资源字典卸载，覆盖三人机、迟到原生调用、运行器先销毁、重复回调、关卡重入、同地址新实例、房主失效与恢复，以及正常游戏内归还。生成DLL另核对实际Global退出签名和布尔初始化前缀；本轮用户反馈功能正常、最新退出日志未复现该异常，未独立覆盖的生命周期与联机场景仍不能由离线替身代替。
-
-来源日志确认3次KeyNotFound发生在OnApplicationQuit后，原生栈为AssetShardManager.GetLoadedAsset → PrepareHelmetFlashlight；外层触发者并未唯一定位。本次修正封闭本MOD的卸载期回写与受管对象迟到初始化边界，不宣称已修复EnemyAnimationFix、EWC或其他地图日志。本轮测试未再报告此异常；正常T／Q退出、返回大厅／重新进关、直接退出桌面仍作为后续版本固定回归场景保留。
-
-### 接管使用原生第一人称眼点（0.3.14／0.5.15，用户反馈基本通过）
-
-本轮HeadCamera 0.3.14、MicroMaster 0.5.15只改接管拍摄，普通T观察沿用既有头戴位置／前移／80°配置。接管按机器人实时PlayerData.camPosDefault／camPosCrouch和GetCrouch计算眼点，替换接管开始时固定眼高和额外纵向平滑，不再叠加“视点前移”。不移动机器人、借用本体世界位置或复制FPSCamera控制器。FOV跟随本体正常第一人称相机；接管纹理和窗口按原生宽高比生成，切回观察恢复16:9。
-
-仅在副相机同步拍摄作用域内，对目标模型m_gfxHead／Torso／Arms的网格设置forceRenderingOff，原值逐项归还，保留腿和其他对象；不SetActive、不改碰撞体。接管画面继续使用现有装备世界模型，不新增第一人称武器／手臂动画。原生灯参数有效且开灯时，以副相机姿态加m_flashlightCameraOffset对齐既有灯，只刷新原生变换缓存，拍摄finally恢复原局部位置、旋转和缓存。常亮开关、光强／范围／雾设置及原渲染状态恢复保留；此对齐不冒充完整的原生武器动画灯光混合。
-
-近裁剪从主相机当前值开始，检测包围整个近裁剪面角点的空间，贴近几何时缩短近裁剪距离；最低仍遮挡则暂停该帧、清除标记射线并提示，移开后下一拍恢复，不触发五秒故障冷却。不通过前移相机或平移玩家穿墙。模型／灯恢复失败仍熔断拍摄，防止污染本体。
-
-修改入口：[NativeControlView](MicroMaster/src/NativeControlView.cs)、[接管运行器](MicroMaster/src/ControlRuntime.cs)、[拍摄参数／近裁剪](HeadCamera/src/FirstPersonCapture.cs)、[模型与灯作用域](HeadCamera/src/FirstPersonRenderScope.cs)、[NativeCapture](HeadCamera/src/NativeCapture.cs)。根Test入口增加FirstPersonCaptureTests，运行器增加眼点／实时蹲伏／FOV断言，画面运行器增加宽高比切换和遮挡恢复断言；替身不能代替Unity、GPU和游戏实测。
-
-该第一人称版本原需同时替换HeadCamera与MicroMaster两DLL，MicroMaster要求HeadCamera >=0.3.14 <0.4.0；Captain.Commands继续使用已安装0.5.43，无新增插件或资源。退出游戏后从工作区根本地交付/当前取文件，按清单原位置替换；个人CFG无需修改，原视点前移配置只影响观察。该版已获用户“测试基本通过、穿模基本解决”反馈；专项边界仍包括：贴墙／门框、上下俯仰、坡面移动／姿态变化、不同宽高比、近战或工具的头盔灯、T／Q退出及再次接管、本体曝光与雾。以下旧版通过反馈只属于旧版，不等于本轮候选已游戏验收。
+内部配置版本2一次性关闭遗留的同步画面采样，保留有效画面参数及迁移后主动诊断选择。默认`[诊断] 保存画面样本=false`，正常游玩不逐帧GPU读回；早期约1～3秒切换停顿已定位到主线程ReadPixels／编码／存盘，用户在0.3.15反馈“几乎没有卡顿”。阶段CPU计时不等于GPU帧时或全场景性能保证。配置迁移见[Plugin](HeadCamera/src/Plugin.cs)，采样见[CaptureDiagnostics](HeadCamera/src/CaptureDiagnostics.cs)。
 
 ### 微操大师接管兼容与拒绝提示
 
@@ -127,29 +119,38 @@ MicroMaster 0.5.14配合已安装HeadCamera 0.3.13，本轮仅替换MicroMaster 
 
 保留房主、存活机器人及本体身份、同层同维度、唯一会话、租约、原生停止确认、特殊搬运限制与生命周期清理。本体原有普通动作外额外允许 StandStill；倒地、被抓、爬梯、终端等冲突状态仍不可接管，本体实际受伤仍退出。更好 AI 的扫描预留、受保护动作或其他租约可能暂不交权，会显示等待并有界超时，不修改冻结仲裁DLL或全局自动任务策略。具体入口见[ControlRuntime.Request](MicroMaster/src/ControlRuntime.cs)、[队长接管服务](Captain.Commands/src/BotControlService.cs)。需在游戏中确认“入口已注册 → 等待接管 → 接管成功”及等待提示，不能用离线测试代替。
 
-### 当前人机照明结论与维护入口
+<a id="lighting"></a>
+### 人机常亮与必须保留的恢复约束
 
-MicroMaster 0.5.14／HeadCamera 0.3.13已获用户反馈：本轮除武器切换未测试外，其余功能基本正常，常亮与接管／退出的核心功能通过；Q退出后的过曝此前已确认解决。当前状态是**核心功能实测通过，装备切换后的灯光恢复待补测**，不是全部项目通过。雾倍率、全地图或任意MOD组合不从该反馈推导为专项验收。
+默认`[接管手电] 原生手电常亮=true`、`[人机手电] 模式=AllBots`。房主在有效关卡、楼层及人机身份下管理现有原生灯，独立于T／Q和渲染就绪；ControlledOnly仅接管期间，AI或关闭总开关交回原版。真人灯不归此服务管理，接管本身的安全条件保留。普通游戏内归还与离关丢弃分开：卸载资源／销毁时不发送开关恢复，晚到初始化由地址＋实例ID守卫拒绝；新有效关卡可重新建立管理。
 
-默认`[接管手电] 原生手电常亮=true`、`[人机手电] 模式=AllBots`。房主在有效关卡内管理所有已生成且未销毁的人机现有灯，独立于T/Q、AI状态及渲染就绪。0.5.14在Sync／Receive／Set实际写入入口拒绝关灯，不把每帧false改成每帧网络true；装备解绑保留异常安全的本地清理许可，绑定后下一帧恢复。ControlledOnly仅接管期间，AI或关闭总开关交还原版。真人灯不受管理，接管本身的安全条件保留。
+原生RootPlayerBotAction.Update内联灯光判断，单独拦UpdateFlashlightState不足以覆盖。实际Sync／Receive／Set写入入口拒绝受管人机的false，不能把每帧false改成网络true；原版1.5秒关灯冷却也不能靠0.5秒重开轮询解决。装备解绑只在异常安全作用域临时放行，绑定后下一次安全Update重应用，禁止回调内递归Receive。参数非法时保持输入保护，不强启无效灯或跨帧手动刷新GPU。
 
-[人机接管、照明与过曝修复维护笔记](docs/人机接管与照明维护.md)集中记录：源码与交付的对应关系、已安装DLL核对、常亮原理、原版内联漏拦截和冷却冲突、过曝的全局纹理原因、已删除的旧灯方案、仍保留的兼容／诊断代码、修改定位及后续验证顺序。它是后续开发笔记，模块与依赖登记仍以本README及repo.json为主。
+开关、参数和实际像素照明分别判断。NativeBotLamp检查源灯、原生数据、可见灯集合与阴影，只有就绪才隐藏既有RF替代层，失效时归还。拍摄使用BotLightViewScope临时借用既有原生灯的FPS角色和阴影引用，finally恢复后让主相机重新裁剪，不新增观测灯。
 
-工作区源码已包含上述修复。按最新本机交付约定，日常增量文件和替换清单放工作区根`本地交付/当前`，位于各源码仓之外，不进入Git；用户可直接把本次DLL复制到清单指定的游戏位置。旧外部临时目录的交付、备份和证据归入只读ZIP，恢复映射见本机维护索引。当前两个安装DLL与保留文件哈希一致，216项非Markdown构建输入与0.5.14保留源锁一致；交付整理不重建、替换游戏DLL或增加切换装备指令。
+退出过曝修复必须保留：FogShaderState归还`_LitVolume`、`_FogVolume`、`_DensityNoise`、`_IndirectVolume`、`_ReflectionVolume`、`_LitBufferCopy`六个纹理及相关原值，LightBufferBindings归还七个共享缓冲；NativeCapture拍摄finally恢复角色／雾／RenderGlobals，Dispose先恢复主画面绑定再释放自有GPU资源。只恢复亮度数值不足以恢复真实纹理引用；自有雾资源按身份清理，不清空主画面雾球。
+
+旧独立ObservationLight、接管专用灯／阴影工厂和NativeFlashlight跨帧主动GPU刷新路径已移除。`ControlView.Illuminate`默认false仍为公共兼容字段，诊断`raw-plus4EV.png`仍可保留；它们不等于恢复运行时补光或曝光增强。第一人称灯变换的成对缓存刷新、色调映射、纹理／缓冲finally是必要恢复逻辑，不能因名称含Light／Shadow／exposure而一并删除。
+
+| 修改内容 | 生产入口／测试 |
+| --- | --- |
+| 常亮、身份与销毁 | [BotFlashlights](MicroMaster/src/BotFlashlights.cs)、[ControlRuntime](MicroMaster/src/ControlRuntime.cs)、[RuntimeSafetyTests](MicroMaster/tests/RuntimeSafetyTests.cs) |
+| 写入保护、参数与装备交接 | [ControlHooks](MicroMaster/src/ControlHooks.cs)、[NativeFlashlight](MicroMaster/src/NativeFlashlight.cs)、[NativeLightSettings](MicroMaster/src/NativeLightSettings.cs)、[NativeFlashlightCompatibility](MicroMaster/src/NativeFlashlightCompatibility.cs) |
+| 原生灯就绪与角色借用 | [NativeBotLamp](HeadCamera/src/NativeBotLamp.cs)、[BotLightViewScope](HeadCamera/src/BotLightViewScope.cs)、[BotLightViewScopeTests](HeadCamera/tests/BotLightViewScopeTests.cs) |
+| 雾、全局状态与释放顺序 | [NativeCapture](HeadCamera/src/NativeCapture.cs)、[FogCompatibility](HeadCamera/src/FogCompatibility.cs)、[LightBufferBindings](HeadCamera/src/LightBufferBindings.cs) |
+| 已编译接口与接线 | [Verify-Dependencies](IntegrationTests/Loader/Verify-Dependencies.ps1)；只在有实际构建产物时检查 |
+
+后续回归按原复现场景先核对版本与AllBots状态，再验证无T照明、观察／接管、T／Q退出和离关重进；新增装备交接能力时补测不同武器／工具。仍熄灯时区分wants／enabled变化与开关正常却无像素，退出白亮优先查全局绑定与释放顺序。既有用户总体通过不替代任意MOD组合、装备切换指令或全地图专项数据。旧[维护笔记入口](docs/人机接管与照明维护.md)仅作兼容导航，主要说明统一在本README。
 
 ### 接管移动、手电、位置标记与Q菜单
 
-MicroMaster 0.5.3 保留原生步行和碰撞：先把短段目标投影到导航，再沿坡面检测碰撞；长段失败会尝试更短步长，不直接写玩家坐标，不穿墙／跨层。坡面仍必须有连通导航和足够空间，不能保证所有地图小坡均可行。原生步行Update回调中发现障碍时只清路径、阻止该步移动，延后到LateUpdate停止，避免动作在自身更新中被移除。
+MicroMaster保留原生步行和碰撞：先把短段目标投影到导航，再沿坡面检测碰撞；长段失败会尝试更短步长，不直接写玩家坐标，不穿墙／跨层。坡面仍必须有连通导航和足够空间，不能保证所有地图小坡均可行。原生步行Update回调中发现障碍时只清路径、阻止该步移动，延后到LateUpdate停止，避免动作在自身更新中被移除。
 
-### 已有过曝修复与显示（0.5.11／0.3.11起）
-
-0.5.10／0.3.10实测Q退出后仍白亮，按T重新打开后恢复；关闭接管额外手电与禁用插件元数据缓存后仍出现。实际新DLL哈希、日志及57份插件内部身份已核对，无相关重复插件，不能继续归咎旧DLL缓存。此前恢复七份灯缓冲仍遗漏原生PreLitVolume.UpdateShaderParameters直接写入的全局纹理：_LitVolume、_FogVolume、_DensityNoise，其中前两者在关窗被释放。0.3.11起在原有FogShaderState作用域中保存／归还这些纹理、间接光／反射体积与_LitBufferCopy，以及对应尺寸和峰值／色调参数；初始化、拍摄finally及释放前既有RenderGlobals.Restore都使用同一快照。不以数值恢复代替纹理引用恢复，不新增补光或曝光参数。
-
-副相机原先固定UpdateShadows=false，不能为只在远端视角可见的原生聚光灯刷新阴影。0.3.11起沿用本体ClusteredRendering.UpdateShadows设置，执行原生场景阴影流程；没有接管专用灯／阴影工厂。0.5.13保留原生初始化前有效参数输入及Sync常亮，不主动调用灯GPU UpdateData／UpdateTransform，不恢复整组旧灯参数；ControlledOnly退出接管时归还开关和RF显隐，AllBots则到关卡／配置等生命周期结束时归还。现有[接管手电]原生手电常亮=true为正常使用，false仅用于AI／隔离对照，F提示开关不能代表像素照明。
+### 标记、画面叠层与诊断读取
 
 实际Player.log记录RGB111110Float到RGBAFloat读取不支持（格式74→52），此前presented统计的统一-431602080为无效读取，不能作为画面证据。诊断读取先以GPU Blit中转到ARGBFloat，再读取同格式RGBAFloat；正常显示格式不因此改变。采样保持开窗约0.5／2秒、每进程最多6组，默认关闭，不增加逐帧读取。CPU替身和生成IL检查不能代替原生／GPU验收。
 
-配套HeadCamera>=0.3.13<0.4.0、MicroMaster0.5.14，Commands仍使用已安装0.5.43。完全退出游戏仅替换MicroMaster DLL并重启，恢复定位时暂关的常亮选项；常规T单击观察、Q菜单／事件栏／标记和驻守交接保持原机制。用户已反馈核心功能通过；装备切换后的灯光恢复尚未实测，后续修改仍需回归Q退出、本体曝光与雾、首次／重复接管和离关清理。
+关联版本与安装以页首当前组合及repo.json为准；本段保留渲染机制，不再按旧版清单替换DLL。
 
 中键仍沿已提交的机器人相机射线记录物品、门、箱柜、敌人或原始场景命中点，并只调用一次原版机器人TriggerMarkerPing。新增只读展示接口使用同一记录与票据，视频按拍摄相机投影，复用原版通用Ping图标模板，模板未就绪时用菱形文字显示。敌人图标跟随原敌人位置；墙面没有可站立点也保留原命中和“此处不可驻守”提示。标记过期、目标死亡、票据或机器人身份失效、退出后清除；画面外不伪造中心标记。没有增加第二次网络Ping或改用本体标点。
 

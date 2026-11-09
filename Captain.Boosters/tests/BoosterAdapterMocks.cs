@@ -401,6 +401,9 @@ namespace CellMenu
 }
 namespace PreLuna.Captain.Boosters
 {
+    // Inventory normalization itself is exercised with real Harmony in the
+    // OrdinaryPerfect suite; these mocks isolate the bot routing/lifecycle.
+    static class BoosterConditionCompat { public static bool RawConditionsPreserved => false; public static bool NormalizeItem(BoosterImplant b) => true; }
     // Native Unity UI is checked by the production build/JIT; routing tests record display requests.
     static class BotBoosterLayout { public static void Apply(CellMenu.CM_PlayerLobbyBar bar) { } public static void Restore(CellMenu.CM_PlayerLobbyBar bar) { } public static void Reset() { } }
     static class BotBoosterHud {

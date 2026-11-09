@@ -314,10 +314,17 @@ namespace PreLuna.MicroMaster
         internal void LevelCleanup() { lights.BeginTeardown(applicationQuit: false); Exit("关卡清理", false); }
         internal void Departing(PlayerAgent agent)
         {
-            if (agent?.Pointer == PlayerManager.GetLocalPlayerAgent()?.Pointer) lights.BeginTeardown(applicationQuit: false);
-            else lights.Remove(agent);
-            if (Busy && agent != null && (agent.Pointer.ToInt64() == body || agent.Pointer.ToInt64() == target.AgentIdentity))
-                Exit("本体／机器人离队或销毁", false);
+            if (agent == null) return;
+            long identity = agent.Pointer.ToInt64();
+            bool controlledBody = Busy && identity == body && agent.GetInstanceID() == bodyInstance;
+            bool controlledTarget = Busy && identity == target.AgentIdentity && agent.GetInstanceID() == targetInstance;
+            try {
+                if (controlledBody || agent.Pointer == PlayerManager.GetLocalPlayerAgent()?.Pointer) lights.BeginTeardown(applicationQuit: false);
+                else lights.Remove(agent);
+            }
+            finally {
+                if (controlledBody || controlledTarget) Exit("本体／机器人离队或销毁", false);
+            }
         }
         internal void Shutdown(bool discardLights = false)
         {

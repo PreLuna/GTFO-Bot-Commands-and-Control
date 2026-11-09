@@ -7,12 +7,14 @@ using HarmonyLib;
 using UnityEngine;
 using PreLuna.HeadCamera;
 using PreLuna.Captain.Control;
+using System.Globalization;
+using PreLuna.MicroMaster.Control;
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("0.5.16.0")]
+[assembly: AssemblyFileVersion("0.5.18.0")]
 namespace PreLuna.MicroMaster
 {
     [BepInDependency("PreLuna.FlashlightCustom", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInPlugin(Guid, "微操大师", "0.5.16")]
+    [BepInPlugin(Guid, "微操大师", "0.5.18")]
     [BepInDependency("PreLuna.HeadCamera", ">=0.3.14 <0.4.0")]
     [BepInDependency("PreLuna.Captain", "0.5.4")]
     [BepInDependency("PreLuna.Captain.Commands", ">=0.5.42 <0.6.0")]
@@ -32,10 +34,11 @@ namespace PreLuna.MicroMaster
         static void OnFeedback(string message) => ControlRuntime.Current?.CommandFeedback(message);
         Harmony harmony;
         ControlRuntime runtime;
+        internal MicroMasterControlState ControlState;
         public override void Load()
         {
             Instance = this;
-            Log.LogInfo("[启动阶段] MicroMaster 0.5.16 BEGIN pid=" + Environment.ProcessId);
+            Log.LogInfo("[启动阶段] MicroMaster 0.5.17 BEGIN pid=" + Environment.ProcessId);
             LoadStep("读取配置", () => {
             Enabled = Config.Bind("开关", "启用", true, "房主接管、稳定观察、WASD微调；中键标记机器人镜头对象，Q下达开启、拾取、击杀、集火和退出驻守指令。");
             DoubleClickWindow = Config.Bind("按键", "双击间隔", .3f, new ConfigDescription("摄像头统一区分T单击和双击，单位秒。", new AcceptableValueRange<float>(.18f, .6f)));
@@ -57,13 +60,53 @@ namespace PreLuna.MicroMaster
                 LoadStep("可选原生手电兼容", NativeFlashlightCompatibility.Install);
                 PreLuna.Captain.Tasks.ControlPresentation.Feedback += OnFeedback;
                 LoadStep("创建接管运行器", () => runtime = AddComponent<ControlRuntime>());
-                LoadStep("保存配置", Config.Save); Log.LogInfo("微操大师0.5.16已加载：双击T接管，WASD微调，鼠标观察，中键标记物体／位置，Q下达指令／退出驻守，原生手电默认全关卡所有人机常亮（可配置为仅接管／AI自动）；敌群数量、标记与AI危险预判不再限制接管；本体受伤、倒地、被抓与生命周期变化仍自动退出；T退出，F8／Esc紧急退出。");
+                LoadStep("保存配置", Config.Save);
+                LoadStep("创建控制API", () => { ControlState = new MicroMasterControlState(Config.ConfigFilePath, ReadControl, WriteControl, SerializeControl); Config.SaveOnConfigSet = false; });
+                Log.LogInfo("微操大师0.5.18已加载：双击T接管，WASD微调，鼠标观察，中键标记物体／位置，Q下达指令／退出驻守，原生手电默认全关卡所有人机常亮（可配置为仅接管／AI自动）；敌群数量、标记与AI危险预判不再限制接管；本体受伤、倒地、被抓与生命周期变化仍自动退出；T退出，F8／Esc紧急退出。");
             } catch (Exception error) {
                 PreLuna.Captain.Tasks.ControlPresentation.Feedback -= OnFeedback;
                 NativeFlashlightCompatibility.Uninstall(); NativeLightSettings.Clear(); harmony.UnpatchSelf(); Instance = null;
                 Log.LogError("接管入口未启用，已撤销输入补丁：" + error); throw;
             }
         }
+        internal static MicroMasterControlValue ReadControl(string key)
+        {
+            switch (key)
+            {
+                case "enabled": return MicroMasterControlValue.Boolean(Enabled.Value);
+                case "doubleClickWindow": return MicroMasterControlValue.Number(DoubleClickWindow.Value);
+                case "walkHaste": return MicroMasterControlValue.Number(WalkHaste.Value);
+                case "mouseSensitivity": return MicroMasterControlValue.Number(MouseSensitivity.Value);
+                case "invertMouse": return MicroMasterControlValue.Boolean(InvertMouse.Value);
+                case "nativeLight": return MicroMasterControlValue.Boolean(NativeLight.Value);
+                default: return null;
+            }
+        }
+
+        internal static void WriteControl(string key, MicroMasterControlValue value)
+        {
+            if (value == null) return;
+            if (key == "enabled" && value.TryGetBoolean(out var enabled)) { Enabled.Value = enabled; return; }
+            if (key == "invertMouse" && value.TryGetBoolean(out var invert)) { InvertMouse.Value = invert; return; }
+            if (key == "nativeLight" && value.TryGetBoolean(out var light)) { NativeLight.Value = light; return; }
+            if (!value.TryGetNumber(out var number)) return;
+            switch (key)
+            {
+                case "doubleClickWindow": DoubleClickWindow.Value = (float)number; break;
+                case "walkHaste": WalkHaste.Value = (float)number; break;
+                case "mouseSensitivity": MouseSensitivity.Value = (float)number; break;
+            }
+        }
+
+        internal static string SerializeControl(string key)
+        {
+            var value = ReadControl(key);
+            if (value == null) return null;
+            if (value.TryGetBoolean(out var boolean)) return boolean ? "true" : "false";
+            if (value.TryGetNumber(out var number)) return number.ToString("0.###", CultureInfo.InvariantCulture);
+            return null;
+        }
+
         internal static void LoadStep(string name, Action action)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -74,6 +117,7 @@ namespace PreLuna.MicroMaster
         public override bool Unload()
         {
             PreLuna.Captain.Tasks.ControlPresentation.Feedback -= OnFeedback;
+            ControlState = null;
             try { (ControlRuntime.Current ?? runtime)?.Shutdown(); }
             finally { NativeFlashlightCompatibility.Uninstall(); NativeLightSettings.Clear(); harmony?.UnpatchSelf(); Instance = null; if (runtime != null) UnityEngine.Object.Destroy(runtime); }
             return true;

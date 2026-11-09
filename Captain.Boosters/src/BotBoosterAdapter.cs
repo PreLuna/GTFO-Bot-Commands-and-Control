@@ -208,6 +208,7 @@ namespace PreLuna.Captain.Boosters
                     {
                         var implant = item?.Implant;
                         if (implant == null || implant.Uses <= 0 || (int)implant.Category != category) continue;
+                        if (!BoosterConditionCompat.NormalizeItem(implant)) continue;
                         if (implant.Effects == null || implant.Conditions == null
                             || implant.Effects.Length > pBoosterImplantData.IMPLANT_EFFECT_SYNC_COUNT
                             || implant.Conditions.Length > pBoosterImplantData.IMPLANT_CONDITION_SYNC_COUNT)

@@ -152,6 +152,11 @@ namespace PreLuna.MicroMaster
         static void LevelCleanup() => ControlRuntime.Current?.LevelCleanup();
         static void ApplicationQuitting() => ControlRuntime.Current?.OnApplicationQuit();
         static void StateChanging(eGameStateName __0) => ControlRuntime.Current?.StateChanging(__0);
-        static void PlayerDeparting(PlayerAgent __instance) => ControlRuntime.Current?.Departing(__instance);
+        static void PlayerDeparting(PlayerAgent __instance)
+        {
+            // An optional MOD cleanup must never abort the game's native despawn/destroy.
+            try { ControlRuntime.Current?.Departing(__instance); }
+            catch (Exception error) { Plugin.Instance?.Log.LogWarning("[角色销毁清理] MOD收尾异常，继续原版销毁：" + error.GetBaseException().Message); }
+        }
     }
 }

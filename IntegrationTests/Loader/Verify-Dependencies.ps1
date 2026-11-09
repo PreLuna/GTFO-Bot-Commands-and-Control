@@ -199,6 +199,13 @@ try {
  if(!$lifetime -or !($lifetime.Fields | Where-Object {$_.IsStatic -and $_.Name -eq 'retiring'})){throw 'Teardown guard must survive runner destruction.'}
  $nativeEnd=($module.GetTypes() | Where-Object Name -eq 'NativeFlashlight').Methods | Where-Object Name -eq 'End'
  if($nativeEnd.Parameters.Count -ne 1 -or $nativeEnd.Parameters[0].ParameterType.FullName -ne 'System.Boolean'){throw 'Missing discard-without-switch-restore path.'}
+ $remove=($module.GetTypes() | Where-Object Name -eq 'BotFlashlights').Methods | Where-Object Name -eq 'Remove'
+ if($remove.Body.Instructions | Where-Object {$_.Operand -is [Mono.Cecil.MethodReference] -and $_.Operand.Name -in @('get_PlayerSlotIndex','get_Owner')}){throw 'Destroy-time lamp removal must not read the released owner/slot.'}
+ $depart=$hooks.Methods | Where-Object Name -eq 'PlayerDeparting'
+ if($depart.ReturnType.FullName -ne 'System.Void' -or !($depart.Body.ExceptionHandlers | Where-Object HandlerType -eq 'Catch')){throw 'MOD departing prefix must catch its cleanup errors and continue native destruction.'}
+ $departRuntime=($module.GetTypes() | Where-Object Name -eq 'ControlRuntime').Methods | Where-Object Name -eq 'Departing'
+ if(!($departRuntime.Body.ExceptionHandlers | Where-Object HandlerType -eq 'Finally')){throw 'Departing must release the active input lease even when light cleanup fails.'}
+ Write-Output 'PASS: destroy-time removal uses cached identity without Owner/PlayerSlotIndex; optional MOD prefix cannot abort native destruction; active control release has a finally guard.'
  Write-Output 'PASS: early native quit hook, teardown switch/setup guards, runner-independent identity lifetime and discard path are wired into the built plugin.'
  foreach($name in @('BeforeWieldLight','BeforeHelmetLight','AfterLightSetup','LightData','LightOn','LightRange','LightAngle','LightIntensity')){if(!($hooks.Methods | Where-Object {$_.Name -eq $name})){throw ('Missing native lamp boundary hook: '+$name)}}
  $settings=$module.GetTypes() | Where-Object {$_.Name -eq 'NativeLightSettings'}
